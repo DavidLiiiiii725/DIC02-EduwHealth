@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Any, Optional, Tuple
 
-from feature_extractor import FeatureExtractorLLM, ExtractedFeatures
+from analystics.feature_extractor import FeatureExtractorLLM, ExtractedFeatures
 
 
 @dataclass
