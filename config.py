@@ -61,3 +61,38 @@ KB_DOMAINS = {
     "motivation":  "kb_motivation",
     "general":     "kb_general",
 }
+
+# Source files ingested by build_vector_kb.py
+KB_FILES = [
+    "kb.txt",                        # ML fundamentals (original)
+    "kb_learning_disabilities.txt",  # Learning disabilities knowledge base
+    "kb_interventions.txt",          # Intervention strategies library
+]
+
+# ── Mental Health Configuration ───────────────────────────────
+# Recommended model: mental/mental-bert-base-uncased
+# Fallback options: mrm8488/mental-bert  or  distilbert-base-uncased (fine-tuned)
+MENTAL_HEALTH_MODEL = "mental/mental-bert-base-uncased"
+
+# Risk level thresholds: (lower_bound_inclusive, upper_bound_exclusive)
+RISK_THRESHOLDS = {
+    "low":      (0.0, 0.3),
+    "moderate": (0.3, 0.6),
+    "high":     (0.6, 0.8),
+    "severe":   (0.8, 1.01),   # 1.01 so that score==1.0 maps to "severe"
+}
+
+# ── Intervention Configuration ────────────────────────────────
+ENABLE_AUTO_INTERVENTION = True
+HIGH_RISK_ALERT_EMAIL    = "counselor@nyush.edu.cn"
+
+# ── Learning Disabilities Support ─────────────────────────────
+SUPPORTED_DISABILITIES = [
+    "ADHD",
+    "executive_function_deficit",
+    "anxiety_disorder",
+    "learned_helplessness",
+    "motivation_disorder",
+    "academic_burnout",
+    "social_anxiety",
+]

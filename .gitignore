@@ -1,3 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Django
+*.sqlite3
+local_settings.py
+
+# Vector store artifacts (large binary files; rebuild with build_vector_kb.py)
+kb_store/vector.index
+kb_store/vector_texts.jsonl
+
+# OS
+.DS_Store
+Thumbs.db
 __pycache__/
 *.py[cod]
 *.pyo
