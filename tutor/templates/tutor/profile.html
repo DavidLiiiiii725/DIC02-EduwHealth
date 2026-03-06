@@ -1,0 +1,255 @@
+{% load static %}
+{% load tutor_extras %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduwHealth 2.0 — Profile</title>
+<link rel="stylesheet" href="{% static 'tutor/css/global.css' %}">
+<style>
+.page-wrap { display:flex; height:100vh; overflow:hidden; }
+.page-main  { flex:1; overflow-y:auto; padding:32px 40px; max-width:760px; }
+.page-title { font-family:'Fraunces',serif; font-size:1.8rem; font-weight:600; margin-bottom:4px; }
+.page-sub   { color:var(--muted); font-size:0.8rem; margin-bottom:32px; }
+
+.section { margin-bottom:32px; }
+.section-header { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.15em; color:var(--cyan); margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+
+.form-row { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+.form-label { font-size:0.75rem; color:var(--text); }
+.form-hint  { font-size:0.68rem; color:var(--muted); }
+
+.ld-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px; }
+.ld-card {
+  padding:14px; border:1px solid var(--border2); border-radius:var(--radius);
+  cursor:pointer; transition:all 0.15s;
+}
+.ld-card:hover { border-color:var(--blue); }
+.ld-card.confirmed { border-color:var(--blue); background:rgba(45,127,255,0.08); }
+.ld-card.suspected { border-color:var(--cyan); background:rgba(0,212,200,0.06); }
+.ld-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.ld-card-name { font-size:0.85rem; font-weight:500; }
+.ld-card-badges { display:flex; gap:4px; }
+.ld-badge {
+  padding:3px 8px; border-radius:4px; font-size:0.6rem;
+  font-weight:500; cursor:pointer; border:1px solid var(--border2);
+  transition:all 0.15s; color:var(--muted);
+}
+.ld-badge:hover { border-color:var(--text); color:var(--text); }
+.ld-badge.badge-confirmed { background:rgba(45,127,255,0.2); border-color:var(--blue); color:var(--blue); }
+.ld-badge.badge-suspected { background:rgba(0,212,200,0.15); border-color:var(--cyan); color:var(--cyan); }
+
+.sev-row { margin-bottom:14px; }
+.sev-header { display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:6px; }
+.sev-num { color:var(--cyan); font-weight:500; }
+
+.save-bar {
+  position:fixed; bottom:24px; right:40px;
+  display:flex; gap:10px; align-items:center;
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:var(--radius); padding:12px 16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  transform:translateY(80px); transition:transform 0.3s;
+}
+.save-bar.visible { transform:translateY(0); }
+.save-status { font-size:0.75rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="sidebar">
+    <div style="padding:20px 16px 24px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+      <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:800;">EduwHealth <span style="color:var(--cyan)">2.0</span></div>
+    </div>
+    <nav style="padding:0 10px;display:flex;flex-direction:column;gap:2px;">
+      <a href="/chat/"      class="nav-item"><span class="nav-icon">💬</span> Chat</a>
+      <a href="/profile/"   class="nav-item active"><span class="nav-icon">👤</span> Profile</a>
+      <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+    </nav>
+  </div>
+
+  <div class="page-main">
+    <div class="page-title">Learner Profile</div>
+    <div class="page-sub">Your settings tell the system how to adapt to you. Changes take effect immediately.</div>
+
+    <!-- Name -->
+    <div class="section">
+      <div class="section-header">Identity</div>
+      <div class="form-row">
+        <div class="form-label">Display Name</div>
+        <input class="input" id="display-name" type="text" value="{{ learner.display_name }}" style="max-width:280px;">
+      </div>
+      <div class="form-hint">Used in the interface and logs.</div>
+    </div>
+
+    <!-- LD Profile -->
+    <div class="section">
+      <div class="section-header">Learning Differences</div>
+      <div class="ld-grid">
+        {% for ld_type, info in ld_options.items %}
+        <div class="ld-card {% if ld_type in learner.ld_confirmed %}confirmed{% elif ld_type in learner.ld_suspected %}suspected{% endif %}"
+             id="card-{{ ld_type }}">
+          <div class="ld-card-top">
+            <div class="ld-card-name">{{ info.icon }} {{ info.name }}</div>
+            <div class="ld-card-badges">
+              <div class="ld-badge {% if ld_type in learner.ld_confirmed %}badge-confirmed{% endif %}"
+                   onclick="setBadge('{{ ld_type }}','confirmed',this)">✓</div>
+              <div class="ld-badge {% if ld_type in learner.ld_suspected %}badge-suspected{% endif %}"
+                   onclick="setBadge('{{ ld_type }}','suspected',this)">?</div>
+            </div>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);line-height:1.4;">{{ info.desc }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:6px;">✓ = confirmed  · ? = suspected/unsure · click again to remove</div>
+    </div>
+
+    <!-- Severity -->
+    <div class="section" id="severity-section">
+      <div class="section-header">Severity</div>
+      <div id="severity-rows">
+        {% for ld_type, info in ld_options.items %}
+        <div class="sev-row" id="sevrow-{{ ld_type }}" style="{% if ld_type not in learner.ld_confirmed and ld_type not in learner.ld_suspected %}display:none{% endif %}">
+          <div class="sev-header">
+            <span>{{ info.icon }} {{ info.name }}</span>
+            <span class="sev-num" id="sevnum-{{ ld_type }}">{{ learner.ld_severity|get_item:ld_type|default:"0.5"|floatformat:1 }}/1.0</span>
+          </div>
+          <input type="range" min="0" max="10" step="1"
+            value="{{ learner.ld_severity|get_item:ld_type|multiply100|default:5 }}"
+            id="sev-{{ ld_type }}"
+            oninput="updateSev('{{ ld_type }}',this.value)">
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Cognitive baseline -->
+    <div class="section">
+      <div class="section-header">Cognitive Baseline</div>
+      <div class="form-row">
+        <div class="form-label">Focus duration before needing a break</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <input type="range" min="5" max="60" value="{{ learner.attention_min|floatformat:0 }}" id="attn-slider"
+            oninput="document.getElementById('attn-label').textContent=this.value+' min'" style="max-width:240px;">
+          <span id="attn-label" style="font-size:0.8rem;color:var(--cyan);min-width:50px;">{{ learner.attention_min|floatformat:0 }} min</span>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:8px;">
+        <div class="form-label">Frustration sensitivity</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <input type="range" min="1" max="10" value="{{ learner.frustration_thresh|multiply10|floatformat:0 }}" id="frust-slider"
+            oninput="document.getElementById('frust-label').textContent=this.value+'/10'" style="max-width:240px;">
+          <span id="frust-label" style="font-size:0.8rem;color:var(--cyan);min-width:40px;">{{ learner.frustration_thresh|multiply10|floatformat:0 }}/10</span>
+        </div>
+        <div class="form-hint">How quickly does frustration make you want to give up?</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Save bar -->
+<div class="save-bar" id="save-bar">
+  <span class="save-status" id="save-status">Unsaved changes</span>
+  <button class="btn btn-ghost" onclick="resetChanges()">Reset</button>
+  <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const ldState = {
+  confirmed: {{ learner.ld_confirmed|safe }},
+  suspected: {{ learner.ld_suspected|safe }},
+  severity:  {{ learner.ld_severity|safe }},
+};
+
+function setBadge(type, mode, el) {
+  const confirmed = ldState.confirmed;
+  const suspected = ldState.suspected;
+
+  // Toggle off if already set
+  if (mode === 'confirmed' && confirmed.includes(type)) {
+    ldState.confirmed = confirmed.filter(x => x !== type);
+  } else if (mode === 'suspected' && suspected.includes(type)) {
+    ldState.suspected = suspected.filter(x => x !== type);
+  } else {
+    // Remove from other list first
+    ldState.confirmed = confirmed.filter(x => x !== type);
+    ldState.suspected = suspected.filter(x => x !== type);
+    if (mode === 'confirmed') ldState.confirmed.push(type);
+    else ldState.suspected.push(type);
+  }
+
+  updateCardUI(type);
+  updateSeverityRow(type);
+  markDirty();
+}
+
+function updateCardUI(type) {
+  const card = document.getElementById('card-' + type);
+  if (!card) return;
+  card.className = 'ld-card';
+  if (ldState.confirmed.includes(type)) card.classList.add('confirmed');
+  else if (ldState.suspected.includes(type)) card.classList.add('suspected');
+
+  card.querySelectorAll('.ld-badge').forEach((b, i) => {
+    b.classList.remove('badge-confirmed', 'badge-suspected');
+    if (i === 0 && ldState.confirmed.includes(type)) b.classList.add('badge-confirmed');
+    if (i === 1 && ldState.suspected.includes(type)) b.classList.add('badge-suspected');
+  });
+}
+
+function updateSeverityRow(type) {
+  const row = document.getElementById('sevrow-' + type);
+  if (!row) return;
+  const active = ldState.confirmed.includes(type) || ldState.suspected.includes(type);
+  row.style.display = active ? '' : 'none';
+}
+
+function updateSev(type, val) {
+  ldState.severity[type] = val / 10;
+  document.getElementById('sevnum-' + type).textContent = (val/10).toFixed(1) + '/1.0';
+  markDirty();
+}
+
+let dirty = false;
+function markDirty() {
+  dirty = true;
+  document.getElementById('save-bar').classList.add('visible');
+  document.getElementById('save-status').textContent = 'Unsaved changes';
+}
+
+function resetChanges() {
+  window.location.reload();
+}
+
+async function saveProfile() {
+  const btn = document.querySelector('.save-bar .btn-primary');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+
+  const resp = await fetch('/api/profile/save/', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify({
+      display_name:      document.getElementById('display-name').value,
+      ld_confirmed:      ldState.confirmed,
+      ld_suspected:      ldState.suspected,
+      ld_severity:       ldState.severity,
+      attention_min:     document.getElementById('attn-slider').value,
+      frustration_thresh: document.getElementById('frust-slider').value / 10,
+    })
+  });
+  if (resp.ok) {
+    document.getElementById('save-status').textContent = '✓ Saved';
+    btn.textContent = 'Save Changes'; btn.disabled = false; dirty = false;
+    setTimeout(() => document.getElementById('save-bar').classList.remove('visible'), 2000);
+  }
+}
+
+// Monitor all inputs
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', markDirty));
+</script>
+</body>
+</html>

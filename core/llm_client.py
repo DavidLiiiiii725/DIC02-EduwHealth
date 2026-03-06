@@ -1,20 +1,72 @@
 import requests
-from config import OLLAMA_MODEL, OLLAMA_HOST
+from config import LLM_BACKEND, OLLAMA_MODEL, OLLAMA_HOST, GEMINI_API_KEY, GEMINI_MODEL, DEEPSEEK_MODEL, DEEPSEEK_API_KEY
+from openai import OpenAI
+
 
 class LLMClient:
     def __init__(self):
-        self.model = OLLAMA_MODEL
-        self.host = OLLAMA_HOST
+        self.backend = LLM_BACKEND  # "ollama" or "gemini"
 
-    def chat(self, system, user, temperature=0.5):
+    def chat(self, system: str, user: str, temperature: float = 1.3) -> str:
+        if self.backend == "gemini":
+            return self._gemini(system, user, temperature)
+        elif self.backend == "deepseek":
+            return self._deepseek(system, user, temperature)
+        else:
+            return self._ollama(system, user, temperature)
+
+    # ── Ollama ────────────────────────────────────────────────────
+    def _ollama(self, system: str, user: str, temperature: float) -> str:
         payload = {
-            "model": self.model,
+            "model": OLLAMA_MODEL,
             "messages": [
                 {"role": "system", "content": system},
-                {"role": "user", "content": user}
+                {"role": "user",   "content": user},
             ],
             "stream": False,
-            "options": {"temperature": temperature}
+            "options": {"temperature": temperature},
         }
-        r = requests.post(f"{self.host}/api/chat", json=payload)
+        r = requests.post(f"{OLLAMA_HOST}/api/chat", json=payload, timeout=120)
+        r.raise_for_status()
         return r.json()["message"]["content"]
+
+    # ── Gemini ────────────────────────────────────────────────────
+    def _gemini(self, system: str, user: str, temperature: float) -> str:
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models"
+            f"/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+        )
+        payload = {
+            "system_instruction": {
+                "parts": [{"text": system}]
+            },
+            "contents": [
+                {"role": "user", "parts": [{"text": user}]}
+            ],
+            "generationConfig": {
+                "temperature": temperature,
+                "maxOutputTokens": 2048,
+            },
+        }
+        r = requests.post(url, json=payload, timeout=60)
+        r.raise_for_status()
+        data = r.json()
+        return data["candidates"][0]["content"]["parts"][0]["text"]
+
+    def _deepseek(self, system: str, user: str, temperature=1.3) -> str:
+
+        client = OpenAI(
+            api_key=DEEPSEEK_API_KEY,
+            base_url="https://api.deepseek.com")
+
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "system", "content": system},
+                      {"role": "user", "content": user}],
+            stream=False,
+            temperature=temperature,
+            max_tokens=2048,
+        )
+
+        return response.choices[0].message.content
+

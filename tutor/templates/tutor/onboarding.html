@@ -1,0 +1,310 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduwHealth 2.0 — Setup</title>
+<link rel="stylesheet" href="{% static 'tutor/css/global.css' %}">
+<style>
+.ob-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 20%, rgba(45,127,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 85% 80%, rgba(0,212,200,0.05) 0%, transparent 60%),
+    var(--bg);
+}
+.ob-card {
+  width: 100%;
+  max-width: 600px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.5);
+}
+.ob-header {
+  padding: 36px 40px 28px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(45,127,255,0.05), rgba(0,212,200,0.03));
+}
+.ob-logo { font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 800; color: var(--text); }
+.ob-logo span { color: var(--cyan); }
+.ob-subtitle { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+.ob-progress { display: flex; gap: 6px; margin-top: 20px; }
+.ob-step-dot {
+  height: 3px; flex: 1; border-radius: 2px;
+  background: var(--faint); transition: background 0.3s;
+}
+.ob-step-dot.done { background: var(--blue); }
+.ob-step-dot.active { background: var(--cyan); }
+
+.ob-body { padding: 32px 40px; }
+.step { display: none; }
+.step.active { display: block; animation: fadeIn 0.3s ease; }
+
+.step-label {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em;
+  color: var(--cyan); margin-bottom: 8px;
+}
+.step-title { font-family: 'Fraunces', serif; font-size: 1.3rem; margin-bottom: 6px; }
+.step-desc { color: var(--muted); font-size: 0.8rem; margin-bottom: 24px; line-height: 1.6; }
+
+.ld-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.ld-card {
+  padding: 14px 16px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ld-card:hover { border-color: var(--blue); }
+.ld-card.selected { border-color: var(--blue); background: rgba(45,127,255,0.08); }
+.ld-card.suspected-sel { border-color: var(--cyan); background: rgba(0,212,200,0.06); }
+.ld-icon { font-size: 1.4rem; margin-bottom: 6px; }
+.ld-name { font-size: 0.82rem; font-weight: 500; margin-bottom: 3px; }
+.ld-desc { font-size: 0.7rem; color: var(--muted); line-height: 1.4; }
+
+.ld-selection-mode {
+  display: flex; gap: 8px; margin-bottom: 14px;
+}
+.mode-btn {
+  flex: 1; padding: 6px; text-align: center;
+  border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  font-size: 0.72rem; cursor: pointer; transition: all 0.15s;
+}
+.mode-btn.active-mode { border-color: var(--blue); color: var(--blue); background: rgba(45,127,255,0.1); }
+
+.severity-group { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+.sev-row { display: flex; flex-direction: column; gap: 6px; }
+.sev-label { display: flex; justify-content: space-between; font-size: 0.75rem; }
+.sev-label span:first-child { color: var(--text); }
+.sev-val { color: var(--cyan); font-weight: 500; }
+
+.ob-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 40px;
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+<div class="ob-wrap">
+<div class="ob-card">
+  <div class="ob-header">
+    <div class="ob-logo">Eduw<span>Health</span> <small style="font-size:0.6em;color:var(--muted)">2.0</small></div>
+    <div class="ob-subtitle">Cognition-Aware Learning System — Initial Setup</div>
+    <div class="ob-progress">
+      <div class="ob-step-dot active" id="dot-0"></div>
+      <div class="ob-step-dot" id="dot-1"></div>
+      <div class="ob-step-dot" id="dot-2"></div>
+      <div class="ob-step-dot" id="dot-3"></div>
+    </div>
+  </div>
+
+  <div class="ob-body">
+
+    <!-- Step 0: Name -->
+    <div class="step active" id="step-0">
+      <div class="step-label">Step 1 of 4</div>
+      <div class="step-title">What should we call you?</div>
+      <div class="step-desc">This helps personalise your experience. You can change this later.</div>
+      <input class="input" id="name-input" type="text" placeholder="Your name or nickname" style="margin-bottom:8px;">
+    </div>
+
+    <!-- Step 1: LD Type Selection -->
+    <div class="step" id="step-1">
+      <div class="step-label">Step 2 of 4</div>
+      <div class="step-title">Do any of these feel familiar?</div>
+      <div class="step-desc">Select any that apply. This isn't a diagnosis — it helps the system adapt to you. Use the buttons to mark as confirmed or suspected.</div>
+      <div class="ld-selection-mode">
+        <div class="mode-btn active-mode" id="mode-confirmed" onclick="setMode('confirmed')">✓ Confirmed</div>
+        <div class="mode-btn" id="mode-suspected" onclick="setMode('suspected')">? Suspected / unsure</div>
+      </div>
+      <div class="ld-grid">
+        <div class="ld-card" onclick="toggleLD('executive_function', this)">
+          <div class="ld-icon">🧩</div>
+          <div class="ld-name">Executive Function</div>
+          <div class="ld-desc">Planning, organising, starting tasks</div>
+        </div>
+        <div class="ld-card" onclick="toggleLD('adhd', this)">
+          <div class="ld-icon">⚡</div>
+          <div class="ld-name">ADHD</div>
+          <div class="ld-desc">Attention, focus, impulsivity</div>
+        </div>
+        <div class="ld-card" onclick="toggleLD('anxiety', this)">
+          <div class="ld-icon">🌀</div>
+          <div class="ld-name">Anxiety</div>
+          <div class="ld-desc">Worry affecting concentration</div>
+        </div>
+        <div class="ld-card" onclick="toggleLD('motivation_disorder', this)">
+          <div class="ld-icon">🪫</div>
+          <div class="ld-name">Motivation</div>
+          <div class="ld-desc">Learned helplessness, avoidance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Severity -->
+    <div class="step" id="step-2">
+      <div class="step-label">Step 3 of 4</div>
+      <div class="step-title">How much do these affect you?</div>
+      <div class="step-desc">Move the sliders to reflect day-to-day impact. 0 = barely noticeable, 10 = significantly impacts learning.</div>
+      <div class="severity-group" id="severity-group">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Step 3: Attention baseline -->
+    <div class="step" id="step-3">
+      <div class="step-label">Step 4 of 4</div>
+      <div class="step-title">A few quick questions</div>
+      <div class="step-desc">These help calibrate how the system times interventions and breaks.</div>
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div>
+          <div class="sev-label" style="margin-bottom:8px;">
+            <span>How long can you focus before you need a break?</span>
+            <span class="sev-val" id="attn-val">15 min</span>
+          </div>
+          <input type="range" min="5" max="60" value="15" id="attention-slider"
+            oninput="document.getElementById('attn-val').textContent=this.value+' min'">
+        </div>
+        <div>
+          <div class="sev-label" style="margin-bottom:8px;">
+            <span>How quickly do you give up on hard problems?</span>
+            <span class="sev-val" id="frustr-val">Medium</span>
+          </div>
+          <input type="range" min="1" max="10" value="5" id="frustration-slider"
+            oninput="updateFrustLabel(this.value)">
+        </div>
+      </div>
+    </div>
+
+  </div><!-- ob-body -->
+
+  <div class="ob-footer">
+    <button class="btn btn-ghost" id="back-btn" onclick="prevStep()" style="visibility:hidden">← Back</button>
+    <span style="font-size:0.7rem;color:var(--muted)" id="step-counter">1 / 4</span>
+    <button class="btn btn-primary" id="next-btn" onclick="nextStep()">Continue →</button>
+  </div>
+</div>
+</div>
+
+<script>
+const TOTAL = 4;
+let current = 0;
+let selectionMode = 'confirmed';
+const ldState = {}; // {ld_type: 'confirmed'|'suspected'}
+const severity = {};
+
+function setMode(m) {
+  selectionMode = m;
+  document.getElementById('mode-confirmed').classList.toggle('active-mode', m === 'confirmed');
+  document.getElementById('mode-suspected').classList.toggle('active-mode', m === 'suspected');
+}
+
+function toggleLD(type, el) {
+  if (ldState[type] === selectionMode) {
+    delete ldState[type];
+    el.classList.remove('selected', 'suspected-sel');
+  } else {
+    ldState[type] = selectionMode;
+    el.classList.toggle('selected', selectionMode === 'confirmed');
+    el.classList.toggle('suspected-sel', selectionMode === 'suspected');
+    if (selectionMode === 'confirmed') el.classList.remove('suspected-sel');
+    else el.classList.remove('selected');
+  }
+}
+
+function buildSeveritySliders() {
+  const all = Object.keys(ldState);
+  const labels = {
+    executive_function: '🧩 Executive Function',
+    adhd: '⚡ ADHD',
+    anxiety: '🌀 Anxiety',
+    motivation_disorder: '🪫 Motivation',
+  };
+  const g = document.getElementById('severity-group');
+  g.innerHTML = '';
+  if (all.length === 0) {
+    g.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">No conditions selected. You can still continue — the system will adapt as it learns from your interactions.</p>';
+    return;
+  }
+  all.forEach(t => {
+    severity[t] = severity[t] || 0.5;
+    const pct = Math.round(severity[t] * 10);
+    g.innerHTML += `
+      <div class="sev-row">
+        <div class="sev-label">
+          <span>${labels[t] || t}</span>
+          <span class="sev-val" id="sev-val-${t}">${pct}/10</span>
+        </div>
+        <input type="range" min="1" max="10" value="${pct}" id="sev-${t}"
+          oninput="severity['${t}']=this.value/10; document.getElementById('sev-val-${t}').textContent=this.value+'/10'">
+      </div>`;
+  });
+}
+
+function updateFrustLabel(v) {
+  const labels = {1:'Very low',2:'Low',3:'Low',4:'Below avg',5:'Medium',6:'Medium',7:'Above avg',8:'High',9:'High',10:'Very high'};
+  document.getElementById('frustr-val').textContent = labels[v] || v;
+}
+
+function prevStep() {
+  if (current > 0) { current--; render(); }
+}
+
+function nextStep() {
+  if (current === TOTAL - 1) { submit(); return; }
+  if (current === 1) buildSeveritySliders();
+  current++;
+  render();
+}
+
+function render() {
+  document.querySelectorAll('.step').forEach((s,i) => s.classList.toggle('active', i === current));
+  document.querySelectorAll('.ob-step-dot').forEach((d,i) => {
+    d.classList.toggle('done', i < current);
+    d.classList.toggle('active', i === current);
+  });
+  document.getElementById('back-btn').style.visibility = current === 0 ? 'hidden' : 'visible';
+  document.getElementById('next-btn').textContent = current === TOTAL - 1 ? 'Start Learning →' : 'Continue →';
+  document.getElementById('step-counter').textContent = `${current+1} / ${TOTAL}`;
+}
+
+async function submit() {
+  const confirmed = Object.keys(ldState).filter(k => ldState[k] === 'confirmed');
+  const suspected = Object.keys(ldState).filter(k => ldState[k] === 'suspected');
+  const btn = document.getElementById('next-btn');
+  btn.textContent = 'Setting up...';
+  btn.disabled = true;
+
+  const resp = await fetch('/api/onboard/', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({
+      name: document.getElementById('name-input').value || 'Learner',
+      confirmed, suspected,
+      severity,
+      attention_min: document.getElementById('attention-slider').value,
+      frustration_thresh: document.getElementById('frustration-slider').value / 10,
+    })
+  });
+  if (resp.ok) window.location.href = '/chat/';
+}
+
+function getCookie(name) {
+  return document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(name+'='))?.split('=')[1] || '';
+}
+</script>
+</body>
+</html>

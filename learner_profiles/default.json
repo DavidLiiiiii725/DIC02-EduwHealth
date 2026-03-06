@@ -1,0 +1,22 @@
+{
+  "learner_id": "default",
+  "ld_profile": {
+    "confirmed": [],
+    "suspected": [],
+    "severity": {}
+  },
+  "baseline": {
+    "working_memory_span": 5.0,
+    "avg_session_attention_min": 13.077287157113156,
+    "task_initiation_latency_sec": 20.0,
+    "frustration_threshold": 0.55,
+    "recent_success_rate": 0.5387166666666667
+  },
+  "intervention_history": [],
+  "metacog_log": [],
+  "session_count": 4,
+  "total_turns": 8,
+  "scaffold_fade_index": 0.95,
+  "created_at": 1772295600.9025176,
+  "updated_at": 1772343926.0388231
+}

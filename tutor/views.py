@@ -1,0 +1,271 @@
+import json
+import time
+import threading
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_GET
+from django.utils import timezone
+from django.db.models import Avg, Sum
+
+from .models import LearnerProfile, ChatSession, ChatMessage
+
+# ── LD option definitions ─────────────────────────────────────────
+LD_OPTIONS = {
+    'executive_function':  {'name': 'Executive Function', 'icon': '🧩', 'desc': 'Planning, organising, starting tasks, working memory'},
+    'adhd':                {'name': 'ADHD',               'icon': '⚡', 'desc': 'Attention, hyperactivity, impulsivity, focus'},
+    'anxiety':             {'name': 'Anxiety',             'icon': '🌀', 'desc': 'Worry occupying cognitive resources during learning'},
+    'motivation_disorder': {'name': 'Motivation',          'icon': '🪫', 'desc': 'Learned helplessness, avoidance, low self-efficacy'},
+}
+
+# ── Orchestrator singleton per learner ────────────────────────────
+_orchestrators = {}
+_orch_lock = threading.Lock()
+
+
+def _get_orchestrator(learner_id: str):
+    with _orch_lock:
+        if learner_id not in _orchestrators:
+            try:
+                from core.orchestrator import TutorOrchestrator
+                _orchestrators[learner_id] = TutorOrchestrator(learner_id=learner_id)
+            except Exception as e:
+                print(f"[WARN] Orchestrator unavailable: {e}")
+                _orchestrators[learner_id] = None
+        return _orchestrators[learner_id]
+
+
+def _get_or_create_learner(request) -> LearnerProfile:
+    learner_id = request.session.get('learner_id', 'default')
+    learner, _ = LearnerProfile.objects.get_or_create(
+        learner_id=learner_id,
+        defaults={'display_name': 'Learner'}
+    )
+    return learner
+
+
+def _mock_response(user_input: str) -> dict:
+    return {
+        'response': (
+            "⚠️ Agent system not connected (demo mode).\n\n"
+            f"You said: \"{user_input}\"\n\n"
+            "Set EDUWHEALTH_PATH in settings.py and make sure the vector KB is built."
+        ),
+        'active_agent': 'demo',
+        'cognitive_state': {'working_memory_load': 0.3, 'motivation_level': 0.7, 'affect_valence': 0.1, 'cognitive_fatigue': 0.1},
+        'intervention_flags': {}, 'trajectory_flags': {},
+        'risk': 0.0, 'risk_level': 'low', 'escalation': 'OK',
+    }
+
+
+# ══════════════════════════════════════════════════════════════════
+#  PAGE VIEWS
+# ══════════════════════════════════════════════════════════════════
+
+def onboarding(request):
+    if request.session.get('onboarded'):
+        return redirect('chat')
+    return render(request, 'tutor/onboarding.html')
+
+
+def chat(request):
+    learner = _get_or_create_learner(request)
+    session = ChatSession.objects.filter(learner=learner, ended_at__isnull=True).last()
+    if not session:
+        session = ChatSession.objects.create(learner=learner)
+    messages = session.messages.all()
+    return render(request, 'tutor/chat.html', {
+        'learner': learner,
+        'session': session,
+        'messages': messages,
+    })
+
+
+def profile(request):
+    learner = _get_or_create_learner(request)
+    return render(request, 'tutor/profile.html', {
+        'learner': learner,
+        'ld_options': LD_OPTIONS,
+    })
+
+
+def dashboard(request):
+    learner  = _get_or_create_learner(request)
+    sessions = ChatSession.objects.filter(learner=learner).order_by('-started_at')[:20]
+
+    session_data = []
+    for s in sessions:
+        msgs = s.messages.filter(role='assistant').exclude(wm_load__isnull=True)
+        if msgs.exists():
+            session_data.append({
+                'id':      s.id,
+                'date':    s.started_at.strftime('%m/%d %H:%M'),
+                'turns':   s.total_turns,
+                'avg_wm':  round(msgs.aggregate(v=Avg('wm_load'))['v'] or 0, 2),
+                'avg_mot': round(msgs.aggregate(v=Avg('motivation'))['v'] or 0, 2),
+                'avg_aff': round(msgs.aggregate(v=Avg('affect'))['v'] or 0, 2),
+            })
+
+    agent_counts = {}
+    for m in ChatMessage.objects.filter(session__learner=learner, role='assistant'):
+        k = m.active_agent or 'unknown'
+        agent_counts[k] = agent_counts.get(k, 0) + 1
+
+    all_msgs      = ChatMessage.objects.filter(session__learner=learner, role='assistant')
+    total_turns   = sessions.aggregate(t=Sum('total_turns'))['t'] or 0
+    avg_motivation = round(all_msgs.aggregate(v=Avg('motivation'))['v'] or 0, 2)
+    avg_wm         = round(all_msgs.aggregate(v=Avg('wm_load'))['v'] or 0, 2)
+
+    return render(request, 'tutor/dashboard.html', {
+        'learner':           learner,
+        'sessions':          sessions,
+        'session_data_json': json.dumps(session_data),
+        'agent_counts_json': json.dumps(agent_counts),
+        'total_turns':       total_turns,
+        'avg_motivation':    avg_motivation,
+        'avg_wm':            avg_wm,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════
+#  API ENDPOINTS
+# ══════════════════════════════════════════════════════════════════
+
+@csrf_exempt
+@require_POST
+def api_onboard(request):
+    data = json.loads(request.body)
+    learner_id = f"learner_{int(time.time())}"
+    request.session['learner_id'] = learner_id
+    request.session['onboarded']  = True
+
+    learner = LearnerProfile.objects.create(
+        learner_id=learner_id,
+        display_name=data.get('name', 'Learner'),
+        ld_confirmed=data.get('confirmed', []),
+        ld_suspected=data.get('suspected', []),
+        ld_severity=data.get('severity', {}),
+        attention_min=float(data.get('attention_min', 15)),
+        frustration_thresh=float(data.get('frustration_thresh', 0.55)),
+    )
+
+    try:
+        orch = _get_orchestrator(learner_id)
+        if orch:
+            orch.set_learner_ld_profile(
+                confirmed=learner.ld_confirmed,
+                suspected=learner.ld_suspected,
+                severity=learner.ld_severity,
+            )
+    except Exception:
+        pass
+
+    return JsonResponse({'ok': True, 'learner_id': learner_id})
+
+
+@csrf_exempt
+@require_POST
+def api_chat(request):
+    data       = json.loads(request.body)
+    user_input = data.get('message', '').strip()
+    if not user_input:
+        return JsonResponse({'error': 'Empty message'}, status=400)
+
+    learner = _get_or_create_learner(request)
+    session = ChatSession.objects.filter(learner=learner, ended_at__isnull=True).last()
+    if not session:
+        session = ChatSession.objects.create(learner=learner)
+
+    ChatMessage.objects.create(session=session, role='user', content=user_input)
+    session.total_turns += 1
+    session.save()
+
+    orch = _get_orchestrator(learner.learner_id)
+    try:
+        result = orch.handle(user_input) if orch else _mock_response(user_input)
+    except Exception as e:
+        result = _mock_response(user_input)
+        result['response'] = f"[Error: {e}]"
+
+    cs = result.get('cognitive_state', {})
+    ChatMessage.objects.create(
+        session=session,
+        role='assistant',
+        content=result['response'],
+        active_agent=result.get('active_agent', ''),
+        wm_load=cs.get('working_memory_load'),
+        motivation=cs.get('motivation_level'),
+        affect=cs.get('affect_valence'),
+        fatigue=cs.get('cognitive_fatigue'),
+        risk_score=result.get('risk'),
+        risk_level=result.get('risk_level', ''),
+    )
+
+    return JsonResponse({
+        'response':           result['response'],
+        'active_agent':       result.get('active_agent', 'tutor'),
+        'cognitive_state':    cs,
+        'intervention_flags': result.get('intervention_flags', {}),
+        'trajectory_flags':   result.get('trajectory_flags', {}),
+        'risk':               result.get('risk', 0.0),
+        'risk_level':         result.get('risk_level', 'low'),
+        'escalation':         result.get('escalation', 'OK'),
+    })
+
+
+@csrf_exempt
+@require_POST
+def api_profile_save(request):
+    data    = json.loads(request.body)
+    learner = _get_or_create_learner(request)
+    learner.display_name       = data.get('display_name', learner.display_name)
+    learner.ld_confirmed       = data.get('ld_confirmed', learner.ld_confirmed)
+    learner.ld_suspected       = data.get('ld_suspected', learner.ld_suspected)
+    learner.ld_severity        = data.get('ld_severity', learner.ld_severity)
+    learner.attention_min      = float(data.get('attention_min', learner.attention_min))
+    learner.frustration_thresh = float(data.get('frustration_thresh', learner.frustration_thresh))
+    learner.save()
+
+    try:
+        orch = _get_orchestrator(learner.learner_id)
+        if orch:
+            orch.set_learner_ld_profile(
+                confirmed=learner.ld_confirmed,
+                suspected=learner.ld_suspected,
+                severity=learner.ld_severity,
+            )
+    except Exception:
+        pass
+
+    return JsonResponse({'ok': True})
+
+
+@require_GET
+def api_session_history(request, session_id):
+    learner  = _get_or_create_learner(request)
+    session  = get_object_or_404(ChatSession, id=session_id, learner=learner)
+    messages = list(session.messages.values(
+        'role', 'content', 'active_agent', 'timestamp',
+        'wm_load', 'motivation', 'affect', 'fatigue', 'risk_score', 'risk_level'
+    ))
+    for m in messages:
+        if m['timestamp']:
+            m['timestamp'] = m['timestamp'].strftime('%H:%M')
+    return JsonResponse({'messages': messages})
+
+
+@csrf_exempt
+@require_POST
+def api_session_end(request):
+    learner = _get_or_create_learner(request)
+    session = ChatSession.objects.filter(learner=learner, ended_at__isnull=True).last()
+    if session:
+        session.ended_at = timezone.now()
+        session.save()
+    orch = _get_orchestrator(learner.learner_id)
+    if orch:
+        try:
+            orch.end_session()
+        except Exception:
+            pass
+    return JsonResponse({'ok': True})

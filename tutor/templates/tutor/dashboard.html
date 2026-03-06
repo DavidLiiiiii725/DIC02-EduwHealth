@@ -1,0 +1,223 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduwHealth 2.0 — Dashboard</title>
+<link rel="stylesheet" href="{% static 'tutor/css/global.css' %}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+.page-wrap  { display:flex; height:100vh; overflow:hidden; }
+.page-main  { flex:1; overflow-y:auto; padding:32px 40px; }
+.page-title { font-family:'Fraunces',serif; font-size:1.8rem; font-weight:600; margin-bottom:4px; }
+.page-sub   { color:var(--muted); font-size:0.8rem; margin-bottom:32px; }
+
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+.stat-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px 18px;
+}
+.stat-val { font-family:'Fraunces',serif; font-size:1.8rem; font-weight:600; }
+.stat-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); margin-top:4px; }
+.stat-delta { font-size:0.72rem; margin-top:6px; }
+
+.charts-row { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:24px; }
+.chart-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:20px;
+}
+.chart-title { font-size:0.75rem; font-weight:500; margin-bottom:16px; color:var(--text); }
+
+.session-list { display:flex; flex-direction:column; gap:8px; }
+.session-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  cursor:pointer; transition:border-color 0.15s;
+}
+.session-row:hover { border-color:var(--blue); }
+.session-row-date { font-size:0.72rem; color:var(--muted); min-width:80px; }
+.session-row-turns { font-size:0.72rem; min-width:50px; }
+.session-row-bars { flex:1; display:flex; flex-direction:column; gap:4px; }
+.mini-bar-wrap { display:flex; align-items:center; gap:6px; font-size:0.6rem; color:var(--muted); }
+.mini-bar-track { flex:1; height:3px; background:var(--faint); border-radius:2px; }
+.mini-bar-fill  { height:100%; border-radius:2px; }
+
+.detail-panel {
+  position:fixed; right:0; top:0; height:100vh; width:380px;
+  background:var(--surface); border-left:1px solid var(--border);
+  transform:translateX(100%); transition:transform 0.3s;
+  overflow-y:auto; padding:24px; z-index:50;
+}
+.detail-panel.open { transform:translateX(0); }
+.detail-close { position:absolute; top:16px; right:16px; cursor:pointer; font-size:1.2rem; color:var(--muted); }
+
+.msg-detail-item { padding:10px 0; border-bottom:1px solid var(--border); }
+.msg-detail-role { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:4px; }
+.msg-detail-content { font-size:0.8rem; line-height:1.5; white-space:pre-wrap; }
+.msg-detail-meta { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="sidebar">
+    <div style="padding:20px 16px 24px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+      <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:800;">EduwHealth <span style="color:var(--cyan)">2.0</span></div>
+    </div>
+    <nav style="padding:0 10px;display:flex;flex-direction:column;gap:2px;">
+      <a href="/chat/"      class="nav-item"><span class="nav-icon">💬</span> Chat</a>
+      <a href="/profile/"   class="nav-item"><span class="nav-icon">👤</span> Profile</a>
+      <a href="/dashboard/" class="nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
+    </nav>
+  </div>
+
+  <div class="page-main">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">{{ learner.display_name }} · Learning analytics and session history</div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--blue)">{{ sessions|length }}</div>
+        <div class="stat-label">Total Sessions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--green)">{{ total_turns }}</div>
+        <div class="stat-label">Total Turns</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--cyan)">{{ avg_motivation }}</div>
+        <div class="stat-label">Avg Motivation</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--amber)">{{ avg_wm }}</div>
+        <div class="stat-label">Avg WM Load</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Cognitive State Over Sessions</div>
+        <canvas id="line-chart" height="160"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Agent Usage</div>
+        <canvas id="pie-chart" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- Session list -->
+    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.14em;color:var(--muted);margin-bottom:12px;">Session History</div>
+    <div class="session-list">
+      {% if sessions %}
+      {% for s in sessions %}
+      <div class="session-row" onclick="loadSession({{ s.id }})">
+        <div class="session-row-date">{{ s.started_at|date:"m/d H:i" }}</div>
+        <div class="session-row-turns" style="color:var(--muted)">{{ s.total_turns }} turns</div>
+        <div class="session-row-bars">
+          {% with sd=session_data_json %}
+          <div class="mini-bar-wrap">
+            <span style="min-width:28px">WM</span>
+            <div class="mini-bar-track"><div class="mini-bar-fill" style="width:40%;background:var(--blue)"></div></div>
+          </div>
+          <div class="mini-bar-wrap">
+            <span style="min-width:28px">Mot</span>
+            <div class="mini-bar-track"><div class="mini-bar-fill" style="width:65%;background:var(--green)"></div></div>
+          </div>
+          {% endwith %}
+        </div>
+        {% if s.ended_at %}<span class="tag tag-muted">ended</span>{% else %}<span class="tag tag-green">active</span>{% endif %}
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="padding:40px;text-align:center;color:var(--muted);font-size:0.8rem;">No sessions yet. Start a chat to see data here.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Session detail panel -->
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-close" onclick="closeDetail()">✕</div>
+  <div style="font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:20px;" id="detail-title">Session</div>
+  <div id="detail-messages"></div>
+</div>
+
+<script>
+const SESSION_DATA   = {{ session_data_json|safe }};
+const AGENT_COUNTS   = {{ agent_counts_json|safe }};
+
+// ── Line chart ────────────────────────────────────────────────
+const lineCtx = document.getElementById('line-chart').getContext('2d');
+new Chart(lineCtx, {
+  type: 'line',
+  data: {
+    labels: SESSION_DATA.map(s => s.date),
+    datasets: [
+      { label:'WM Load',   data:SESSION_DATA.map(s=>s.avg_wm),  borderColor:'#2D7FFF', backgroundColor:'rgba(45,127,255,0.05)', tension:0.4, pointRadius:3 },
+      { label:'Motivation',data:SESSION_DATA.map(s=>s.avg_mot), borderColor:'#00E5A0', backgroundColor:'rgba(0,229,160,0.05)',  tension:0.4, pointRadius:3 },
+      { label:'Affect',    data:SESSION_DATA.map(s=>s.avg_aff), borderColor:'#00D4C8', backgroundColor:'rgba(0,212,200,0.05)',  tension:0.4, pointRadius:3 },
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ labels:{ color:'#4A6680', font:{size:11,family:'DM Mono'} } } },
+    scales:{
+      x:{ ticks:{color:'#4A6680',font:{size:10}}, grid:{color:'#1C2E4A'} },
+      y:{ ticks:{color:'#4A6680',font:{size:10}}, grid:{color:'#1C2E4A'}, min:0, max:1 }
+    }
+  }
+});
+
+// ── Pie chart ─────────────────────────────────────────────────
+const pieCtx = document.getElementById('pie-chart').getContext('2d');
+const agentColors = { tutor:'#2D7FFF', coach:'#00E5A0', ld_specialist:'#00D4C8', meta_cognition:'#7C4DFF', critic:'#FFB340', demo:'#4A6680', unknown:'#1C2E4A' };
+new Chart(pieCtx, {
+  type: 'doughnut',
+  data: {
+    labels: Object.keys(AGENT_COUNTS),
+    datasets: [{ data: Object.values(AGENT_COUNTS), backgroundColor: Object.keys(AGENT_COUNTS).map(k=>agentColors[k]||'#4A6680'), borderWidth:0, hoverOffset:4 }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{ position:'bottom', labels:{ color:'#4A6680', font:{size:10,family:'DM Mono'}, padding:12 } }
+    }
+  }
+});
+
+// ── Session detail ─────────────────────────────────────────────
+async function loadSession(id) {
+  const resp = await fetch(`/api/session/${id}/history/`);
+  const data = await resp.json();
+  const msgs = data.messages;
+
+  document.getElementById('detail-title').textContent = `Session #${id}`;
+  const container = document.getElementById('detail-messages');
+  const agentNames = {tutor:'Tutor',coach:'Coach',ld_specialist:'LD Specialist',meta_cognition:'MetaCog',critic:'Critic'};
+
+  container.innerHTML = msgs.map(m => `
+    <div class="msg-detail-item">
+      <div class="msg-detail-role" style="color:${m.role==='user'?'var(--blue)':'var(--green)'}">${m.role.toUpperCase()} · ${m.timestamp}</div>
+      <div class="msg-detail-content">${escHtml(m.content)}</div>
+      <div class="msg-detail-meta">
+        ${m.active_agent ? `<span class="tag tag-muted">${agentNames[m.active_agent]||m.active_agent}</span>` : ''}
+        ${m.wm_load!=null ? `<span class="tag tag-blue">WM ${(m.wm_load*100).toFixed(0)}%</span>` : ''}
+        ${m.risk_score!=null && m.risk_score>0.1 ? `<span class="tag tag-amber">Risk ${m.risk_score.toFixed(2)}</span>` : ''}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('detail-panel').classList.add('open');
+}
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+}
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+</script>
+</body>
+</html>

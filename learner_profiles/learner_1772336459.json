@@ -1,0 +1,28 @@
+{
+  "learner_id": "learner_1772336459",
+  "ld_profile": {
+    "confirmed": [],
+    "suspected": [
+      "adhd",
+      "motivation_disorder"
+    ],
+    "severity": {
+      "adhd": 1,
+      "motivation_disorder": 1
+    }
+  },
+  "baseline": {
+    "working_memory_span": 5.0,
+    "avg_session_attention_min": 15.0,
+    "task_initiation_latency_sec": 20.0,
+    "frustration_threshold": 0.55,
+    "recent_success_rate": 0.55
+  },
+  "intervention_history": [],
+  "metacog_log": [],
+  "session_count": 1,
+  "total_turns": 1,
+  "scaffold_fade_index": 0.95,
+  "created_at": 1772336476.852399,
+  "updated_at": 1772336736.096982
+}
