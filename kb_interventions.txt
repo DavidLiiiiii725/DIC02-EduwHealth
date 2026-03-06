@@ -1,0 +1,265 @@
+# Intervention Strategies Knowledge Base
+# EduwHealth 2.0 — Evidence-Based Intervention Library
+# ─────────────────────────────────────────────────────────────────
+
+---
+
+## Topic: Tiered Intervention Framework
+
+Overview:
+EduwHealth uses a three-tier response-to-intervention (RTI) model. Tier assignment is driven by risk level, disability profile, and history of previous interventions.
+
+Tier 1 — Universal Support (ALL learners):
+- Clear, chunked explanations with visual anchors
+- Regular comprehension checks (every 10-15 minutes)
+- Growth mindset language in all feedback
+- Predictable session structure with explicit agenda
+- Positive reinforcement for effort and process (not only outcome)
+
+Tier 2 — Targeted Support (moderate risk / suspected LD):
+- Structured scaffolding matched to disability type (see per-LD protocols below)
+- Increased check-in frequency
+- Simplified task structure with explicit sub-goals
+- Prompt metacognitive reflection after each task segment
+- Alert tutor to monitor progress more closely
+
+Tier 3 — Intensive Support (high / severe risk / confirmed LD):
+- Immediate escalation to human counsellor or support staff
+- Highly individualised task design
+- Daily monitoring of emotional state and risk indicators
+- Collaborative goal-setting with learner (builds agency)
+- Family / support network notification (where consent given)
+
+---
+
+## Topic: ADHD-Specific Interventions
+
+Attention and Focus:
+- Break tasks into chunks of 10-15 minutes maximum
+- Use a visual timer (Pomodoro technique) with mandatory short breaks
+- Provide a written agenda before starting any session
+- Use noise-cancelling headphones or FM system during lectures
+- Seat learner close to the source of instruction, away from distractions
+
+Working Memory Support:
+- External memory aids: written checklists, graphic organisers, mind maps
+- Repeat key instructions in writing after giving them verbally
+- Allow use of reference cards for procedures and formulas
+- Use spaced retrieval practice (Anki-style flashcards) to offload long-term storage
+
+Writing Support:
+- Provide structured templates with sentence starters
+- Allow speech-to-text input for initial drafting
+- Break writing tasks into Plan → Draft → Revise phases with separate deadlines
+- Offer AI writing assistant tools for real-time suggestion
+- Limit revision scope per pass (e.g., "This round: only check topic sentences")
+
+Behavioural Strategies:
+- Implement token economy or points system for task completion
+- Use contingency contracts with explicit if-then rewards
+- Teach self-monitoring with structured check-in protocol
+
+Technology Tools:
+- Text-to-speech readers (NaturalReader, Read&Write)
+- Speech-to-text (Whisper, Dragon NaturallySpeaking)
+- Digital organisers (Notion, Trello with checklist templates)
+- Prescription digital therapeutics (EndeavorRx for paediatric ADHD)
+
+---
+
+## Topic: Executive Function Deficit Interventions
+
+Planning and Initiation:
+- Guided pre-task planning template (5 minutes maximum)
+- Break large projects into weekly milestones with visual progress tracker
+- Teach the "two-minute rule": if a sub-task takes < 2 min, do it immediately
+- Use implementation intentions: "I will [action] at [time] in [location]"
+
+Organisation:
+- Standardised folder structure (physical and digital) for all coursework
+- Weekly organisation check: purge irrelevant materials, sort by priority
+- Colour coding for subject and urgency
+- Single consolidated task list (avoid multiple tracking systems)
+
+Cognitive Flexibility:
+- Explicit instruction in "plan B thinking": what to do when first approach fails
+- Role-play flexible thinking scenarios before high-stress periods
+- Teach the STOP-THINK-ACT protocol for impulsive decision-making
+
+Self-Monitoring:
+- Goal-progress chart updated at the end of every session
+- Structured self-evaluation rubric for writing and problem-solving tasks
+- Daily emotional check-in (1-5 scale) to catch early signs of overwhelm
+
+---
+
+## Topic: Anxiety Disorder Interventions
+
+Cognitive Restructuring:
+- Identify and challenge catastrophic thinking patterns ("This will be a disaster")
+- Evidence review: list previous successful completions of similar tasks
+- Separate factual assessment from anxious prediction
+- Use Socratic questioning: "What is the worst realistic outcome? How would you cope?"
+
+Behavioural Strategies:
+- Graded task exposure: progress from low-stakes to higher-stakes versions of feared tasks
+- Systematic desensitisation to academic anxiety triggers (presentations, timed tests)
+- Reward approach behaviour (not avoidance)
+
+Relaxation and Physiological Regulation:
+- Diaphragmatic breathing (4-4-6 pattern: inhale 4s, hold 4s, exhale 6s)
+- Progressive muscle relaxation (5-minute protocol before high-stakes sessions)
+- Mindfulness body scan (10 minutes; app: Headspace, Calm)
+
+Study Environment:
+- Quiet, low-distraction space for assessments and study
+- Permission for brief "anxiety break" if panic symptoms arise
+- Fidget tools permitted during focused work
+
+Academic Accommodations:
+- Extended time on assessments (typically 50-100% additional time)
+- Alternative oral or written formats for presentations
+- Permission to leave and re-enter examination rooms
+- Access to written versions of all verbal instructions
+
+Communication Scripts:
+- Teach learner scripts to advocate for accommodations: "I process information better when I can review written instructions. May I have a copy?"
+- Rehearse asking for clarification: "I want to make sure I understood — did you say X or Y?"
+
+---
+
+## Topic: Motivational Disorder Interventions
+
+Micro-Success Architecture:
+- Identify the smallest possible first step that guarantees success
+- Provide immediate specific positive feedback on completion
+- Build a visible "success ladder" that shows cumulative progress
+- Explicitly link small successes to the learner's effort and strategy (not luck)
+
+Autonomy and Agency Building:
+- Offer genuine choices within academic tasks (topic, format, deadline)
+- Involve learner in setting their own goals and success criteria
+- Reflect completed work back to learner as evidence of capability
+
+Social Reinforcement:
+- Peer learning partnerships with learners at similar ability levels
+- Group celebrations of collective progress
+- Teacher / mentor check-ins focused on strengths (not deficits)
+
+Expectancy and Value Interventions:
+- Help learner identify personal relevance of academic content
+- Utility value writing: brief essays connecting coursework to personal goals
+- Expectancy scaffolding: "Given how you handled X, I believe you can handle Y"
+
+Attributional Retraining Protocol:
+1. Record attribution for a failure event (learner self-report)
+2. Collaboratively examine evidence for and against the attribution
+3. Generate alternative explanations (e.g., task difficulty, strategy mismatch)
+4. Practice substituting the alternative explanation when similar events recur
+5. Review attributional patterns monthly
+
+---
+
+## Topic: Risk-Level Response Protocols
+
+Low Risk:
+- Continue standard instructional support
+- Periodic (every 5 turns) check-in question: "How are you finding this?"
+- Offer growth-mindset reinforcement when errors occur
+- Log in session summary; no immediate escalation
+
+Moderate Risk:
+- Increase affective check-in frequency (every 2-3 turns)
+- Activate Tier 2 scaffolding matched to learner's LD profile
+- Provide explicit normalisation: "Many students find this challenging"
+- Flag in session report for human review within 24 hours
+- Suggest learner access self-help resources (breathing exercise, study tip)
+
+High Risk:
+- Immediate compassionate acknowledgement of distress
+- Reduce academic task demands for the remainder of the session
+- Provide direct links to campus mental health resources
+- Notify counsellor or support staff within 1 hour (where consent given)
+- Do not leave learner with escalating distress without support referral
+- Document in learner profile with full context
+
+Severe Risk (crisis):
+- Immediately surface crisis support information (hotline, on-call counsellor)
+- Cease academic activity; focus entirely on safety and connection
+- Mandatory human escalation: alert counsellor in real time
+- Do not attempt to manage crisis through AI responses alone
+- Follow institutional crisis protocol; document all actions taken
+
+---
+
+## Topic: Technology-Assisted Intervention Tools
+
+Writing and Composition:
+- LLM writing assistants (Microsoft Copilot, Google Gemini in Docs)
+- Speech-to-text (Whisper API, Dragon)
+- Grammar / style checkers (Grammarly, LanguageTool)
+- Outline generators (Notion AI, ChatGPT with structured prompts)
+- ReadabilityScore.com for self-assessment of text complexity
+
+Attention and Focus:
+- Pomodoro timer apps (Focus Booster, Forest)
+- Website blockers (Cold Turkey, Freedom) during study sessions
+- EndeavorRx (prescription digital therapeutic for ADHD, ages 8-12)
+- Noise-cancelling headphones + white noise / brown noise playlists
+
+Memory and Organisation:
+- Anki (spaced repetition flashcard system)
+- Notion / Obsidian (knowledge management with templates)
+- Google Calendar with task reminders
+- Workflowy (hierarchical task lists for EFD)
+
+Emotional Regulation and Mental Health:
+- Woebot (AI-based CBT chatbot)
+- Headspace / Calm (guided mindfulness and breathing)
+- Moodfit / Daylio (mood tracking for pattern identification)
+- Crisis Text Line / campus counselling live chat
+
+Assessment and Monitoring:
+- QbTest (objective ADHD motor activity measurement)
+- ASESS Scale (academic self-efficacy)
+- GAD-7 (generalised anxiety disorder screening, 7-item)
+- PHQ-9 (patient health questionnaire for depression screening)
+- MBI-SS (Maslach Burnout Inventory, student version)
+
+---
+
+## Topic: Metacognitive Training Methods
+
+Overview:
+Metacognition — thinking about one's own thinking — is a high-leverage target for intervention because improvements transfer broadly across academic tasks and disability types.
+
+Self-Monitoring Training:
+- Teach learners to rate their comprehension after each information chunk (1 = confused, 5 = clear)
+- Use "traffic light" self-assessment: red (stuck), amber (uncertain), green (confident)
+- Periodically ask: "What was the main point of what you just read/heard?"
+
+Self-Regulation Training:
+- Introduce the SRSD (Self-Regulated Strategy Development) model for writing:
+  1. Develop background knowledge
+  2. Discuss the strategy
+  3. Model the strategy
+  4. Memorise the strategy
+  5. Support strategy use
+  6. Perform independently
+- Teach goal-setting: specific, measurable, time-bound session goals
+- After-session reflection: "What worked? What would I do differently next time?"
+
+Error Analysis:
+- Normalise errors as data, not failure
+- Structured error log: task → error → likely cause → what to try next time
+- Teach self-correction protocol: check → identify → explain → correct
+
+Calibration Training:
+- Provide repeated prediction-then-test cycles: "How well do you think you'll do? Let's find out."
+- Track calibration accuracy over time; celebrate improving self-awareness
+- Use the Dunning-Kruger awareness exercise: show learners how initial overconfidence decreases and then improves with competence
+
+Dialogic Metacognition:
+- Socratic questioning from AI tutor: "What strategy are you using?" "Is it working?"
+- Peer metacognitive discussion: pairs compare their planning and monitoring approaches
+- Written metacognitive journals: 5-minute end-of-session reflection (what, why, next steps)

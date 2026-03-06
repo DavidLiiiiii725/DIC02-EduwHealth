@@ -6,7 +6,18 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import torch
 
-RAW_FILE = Path("kb.txt")
+# ── Knowledge base source files ───────────────────────────────────
+# Import the list of KB files from config; fall back to defaults if
+# config does not yet define KB_FILES.
+try:
+    from config import KB_FILES as _CFG_KB_FILES
+    RAW_FILES = [Path(p) for p in _CFG_KB_FILES]
+except ImportError:
+    RAW_FILES = [Path("kb.txt")]
+
+# Legacy single-file constant kept for backward compatibility
+RAW_FILE = RAW_FILES[0] if RAW_FILES else Path("kb.txt")
+
 OUT_DIR = Path("kb_store")
 
 MODEL_NAME = "all-MiniLM-L6-v2"
@@ -104,22 +115,49 @@ def count_existing_items(jsonl_path: Path) -> int:
     return n
 
 
+def collect_all_chunks(raw_files):
+    """
+    Load and chunk all KB source files, tagging each chunk with its
+    source filename so that retrieval results can be filtered by domain.
+
+    Returns a list of (chunk_text, source_name) tuples.
+    """
+    tagged = []
+    for raw_file in raw_files:
+        if not raw_file.exists():
+            print(f"[WARN] KB file not found, skipping: {raw_file}")
+            continue
+        text = raw_file.read_text(encoding="utf-8")
+        chunks = topic_aware_chunk_text(text, max_chars=CHUNK_MAX_CHARS, overlap=CHUNK_OVERLAP)
+        for ch in chunks:
+            tagged.append((ch, raw_file.name))
+        print(f"  - {raw_file.name}: {len(chunks)} chunks")
+    return tagged
+
+
 def main():
     print(torch.cuda.is_available())
-    if not RAW_FILE.exists():
-        raise FileNotFoundError(f"Raw KB file not found: {RAW_FILE}")
+
+    # Validate that at least one KB file is available
+    available = [f for f in RAW_FILES if f.exists()]
+    if not available:
+        raise FileNotFoundError(
+            f"No KB files found. Expected one or more of: {[str(f) for f in RAW_FILES]}"
+        )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     index_path = OUT_DIR / "vector.index"
     jsonl_path = OUT_DIR / "vector_texts.jsonl"
 
-    print("[1/5] Loading raw KB...")
-    text = RAW_FILE.read_text(encoding="utf-8")
-    chunks = topic_aware_chunk_text(text, max_chars=CHUNK_MAX_CHARS, overlap=CHUNK_OVERLAP)
-    print(f"[2/5] Total chunks: {len(chunks)}")
+    print(f"[1/5] Loading raw KB from {len(available)} file(s)…")
+    tagged_chunks = collect_all_chunks(RAW_FILES)
+    chunks     = [ch   for ch, _    in tagged_chunks]
+    sources    = [src  for _,  src  in tagged_chunks]
+    print(f"[2/5] Total chunks across all KB files: {len(chunks)}")
 
     print("[3/5] Loading embedding model...")
-    model = SentenceTransformer(MODEL_NAME, device="cuda")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = SentenceTransformer(MODEL_NAME, device=device)
 
     print("[4/5] Loading/creating FAISS index...")
     index = load_or_create_index(index_path)
@@ -131,18 +169,21 @@ def main():
         if already >= len(chunks):
             print("[DONE] Nothing to add.")
             return
-        chunks_to_add = chunks[already:]
+        chunks_to_add  = chunks[already:]
+        sources_to_add = sources[already:]
         start_id = already
     else:
-        chunks_to_add = chunks
+        chunks_to_add  = chunks
+        sources_to_add = sources
         start_id = 0
 
     print(f"[5/5] Encoding & adding to index (chunks to add: {len(chunks_to_add)})...")
 
     with open(jsonl_path, "a", encoding="utf-8") as f_jsonl:
         for base in range(0, len(chunks_to_add), ADD_BATCH_CHUNKS):
-            batch_chunks = chunks_to_add[base: base + ADD_BATCH_CHUNKS]
-            batch_ids = range(start_id + base, start_id + base + len(batch_chunks))
+            batch_chunks  = chunks_to_add [base: base + ADD_BATCH_CHUNKS]
+            batch_sources = sources_to_add[base: base + ADD_BATCH_CHUNKS]
+            batch_ids     = range(start_id + base, start_id + base + len(batch_chunks))
 
             # 分批 encode
             emb = model.encode(
@@ -155,10 +196,19 @@ def main():
 
             index.add(emb)
             del emb
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
-            for cid, ch in zip(batch_ids, batch_chunks):
-                obj = {"text": ch, "meta": {"source": RAW_FILE.name, "chunk_id": cid}}
+            for cid, ch, src in zip(batch_ids, batch_chunks, batch_sources):
+                obj = {
+                    "text": ch,
+                    "meta": {
+                        "source":   src,
+                        "chunk_id": cid,
+                        # kb_domain tag enables domain-filtered retrieval
+                        "kb_domain": _source_to_domain(src),
+                    },
+                }
                 f_jsonl.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
                 # 每批落盘
@@ -171,6 +221,16 @@ def main():
     print(f"- index:  {index_path}")
     print(f"- texts:  {jsonl_path}")
     print(f"- total vectors: {index.ntotal}")
+
+
+def _source_to_domain(source_name: str) -> str:
+    """Map a source filename to a logical domain label for filtering."""
+    name = source_name.lower()
+    if "learning_disab" in name:
+        return "learning_disabilities"
+    if "intervention" in name:
+        return "interventions"
+    return "general"
 
 
 if __name__ == "__main__":
