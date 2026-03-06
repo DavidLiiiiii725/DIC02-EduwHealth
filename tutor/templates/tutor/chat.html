@@ -212,8 +212,16 @@
         <div class="active-agent-badge" id="agent-badge" style="border-color:var(--blue);color:var(--blue);">
           <span id="agent-badge-text">Tutor</span>
         </div>
+        <div class="risk-indicator" id="risk-topbar-indicator" data-risk-level="low">
+          <span class="risk-icon">🛡️</span>
+          <span class="risk-text">LOW</span>
+          <span class="risk-confidence">—</span>
+        </div>
       </div>
-      <div style="font-size:0.7rem;color:var(--muted);">{{ session.started_at|date:"H:i" }}</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="document.getElementById('interventionPanel').classList.toggle('open')" style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;padding:4px 10px;cursor:pointer;" title="查看干预建议">💡 策略</button>
+        <div style="font-size:0.7rem;color:var(--muted);">{{ session.started_at|date:"H:i" }}</div>
+      </div>
     </div>
 
     <div class="messages-wrap" id="messages-wrap">
@@ -297,9 +305,11 @@
 
     <div>
       <div class="panel-section-title">LD Profile</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;" id="ld-tags">
+      <div class="ld-badges" id="ld-tags">
         {% for ld in learner.ld_confirmed %}
-        <span class="tag tag-blue">{{ ld }}</span>
+        <span class="ld-badge ld-confirmed">
+          <span>{{ ld }}</span>
+        </span>
         {% endfor %}
         {% for ld in learner.ld_suspected %}
         <span class="tag tag-muted">{{ ld }}?</span>
@@ -311,6 +321,41 @@
     </div>
 
   </div><!-- right panel -->
+</div>
+
+<!-- Intervention Panel -->
+<div class="intervention-panel" id="interventionPanel">
+  <div class="intervention-header">
+    <h3>💡 推荐策略</h3>
+    <button class="close-btn" onclick="closeInterventionPanel()">×</button>
+  </div>
+
+  <div class="intervention-priority" id="interventionPriority" data-priority="routine">
+    <span class="priority-badge" id="priorityBadge">ROUTINE</span>
+  </div>
+
+  <div class="intervention-list" id="interventionList">
+    <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:0.8rem;">
+      完成一次对话后，系统会根据你的学习状态推荐个性化策略。
+    </div>
+  </div>
+
+  <div class="intervention-footer">
+    <button class="btn-primary" onclick="applyIntervention()" style="width:100%;">应用策略</button>
+  </div>
+</div>
+
+<!-- High-Risk Alert Modal -->
+<div class="risk-alert-modal" id="riskAlertModal" style="display:none;">
+  <div class="alert-content">
+    <div class="alert-icon">⚠️</div>
+    <h3>检测到高风险状态</h3>
+    <p>系统注意到你可能遇到了困难。需要查看建议的支持策略吗？</p>
+    <div class="alert-actions">
+      <button class="btn-primary" onclick="showInterventions()">查看策略</button>
+      <button class="btn-secondary" onclick="closeRiskAlert()">继续</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -359,6 +404,29 @@ async function sendMessage() {
     typing.remove();
     appendMsg('assistant', data.response, data.active_agent);
     updatePanel(data);
+
+    // 更新风险指示器
+    if (data.risk_assessment) {
+      updateRiskIndicator(data.risk_assessment);
+      monitorRiskChanges(data.risk_assessment.risk_level, data.interventions || []);
+    }
+
+    // 更新干预建议面板数据
+    if (data.interventions && data.interventions.length > 0) {
+      currentInterventions = data.interventions;
+      // 更新优先级显示
+      const priority = data.intervention_priority || 'routine';
+      const priorityEl = document.getElementById('interventionPriority');
+      const priorityBadge = document.getElementById('priorityBadge');
+      if (priorityEl) priorityEl.dataset.priority = priority;
+      if (priorityBadge) priorityBadge.textContent = priority.toUpperCase();
+
+      // High risk: show intervention panel after alert has had time to appear
+      if (data.risk_assessment &&
+          (data.risk_assessment.risk_level === 'high' || data.risk_assessment.risk_level === 'severe')) {
+        setTimeout(function() { showInterventionPanel(data.interventions); }, 2500); // delay so alert shows first
+      }
+    }
   } catch(e) {
     typing.remove();
     appendMsg('assistant', 'Connection error. Please try again.', 'error');
@@ -425,7 +493,15 @@ function updatePanel(data) {
   setFlag('flag-fat',  fl.fatigue_high);
   setFlag('flag-traj', tr.motivation_declining);
 
-  // Risk
+  // Risk topbar indicator
+  const riskAssessment = data.risk_assessment || {
+    risk_level: data.risk_level || 'low',
+    risk_score: data.risk || 0,
+    confidence: 0.85
+  };
+  updateRiskIndicator(riskAssessment);
+
+  // Risk (existing right-panel display)
   const risk = data.risk;
   if (risk != null) {
     document.getElementById('risk-score').textContent = risk.toFixed(2);
@@ -455,5 +531,6 @@ async function endSession() {
   window.location.reload();
 }
 </script>
+<script src="{% static 'tutor/js/chat-enhancements.js' %}"></script>
 </body>
 </html>
