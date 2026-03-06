@@ -202,14 +202,32 @@ def api_chat(request):
     )
 
     return JsonResponse({
-        'response':           result['response'],
-        'active_agent':       result.get('active_agent', 'tutor'),
-        'cognitive_state':    cs,
-        'intervention_flags': result.get('intervention_flags', {}),
-        'trajectory_flags':   result.get('trajectory_flags', {}),
-        'risk':               result.get('risk', 0.0),
-        'risk_level':         result.get('risk_level', 'low'),
-        'escalation':         result.get('escalation', 'OK'),
+        'response':              result['response'],
+        'active_agent':          result.get('active_agent', 'tutor'),
+        'cognitive_state':       cs,
+        'intervention_flags':    result.get('intervention_flags', {}),
+        'trajectory_flags':      result.get('trajectory_flags', {}),
+        'risk':                  result.get('risk', 0.0),
+        'risk_level':            result.get('risk_level', 'low'),
+        'escalation':            result.get('escalation', 'OK'),
+
+        # Risk assessment object for frontend risk indicator
+        'risk_assessment': {
+            'risk_level':  result.get('risk_level', 'low'),
+            'risk_score':  result.get('risk', 0.0),
+            'confidence':  result.get('risk_confidence', 0.85),
+        },
+
+        # Intervention recommendations
+        'interventions':          result.get('interventions', []),
+        'intervention_priority':  result.get('intervention_priority', 'routine'),
+
+        # Key affective indicators
+        'key_indicators': {
+            'anxiety':         result.get('anxiety_index', 0.0),
+            'depression':      result.get('depression_index', 0.0),
+            'positive_affect': result.get('positive_affect', 0.0),
+        },
     })
 
 
@@ -269,3 +287,31 @@ def api_session_end(request):
         except Exception:
             pass
     return JsonResponse({'ok': True})
+
+
+@csrf_exempt
+@require_POST
+def api_interventions_apply(request):
+    """Record the learner's choice of an intervention strategy."""
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    learner = _get_or_create_learner(request)
+    intervention_id = data.get('intervention_id')
+    intervention_type = data.get('intervention_type', '')
+
+    # Attempt to forward the choice to the orchestrator if it supports it
+    orch = _get_orchestrator(learner.learner_id)
+    if orch:
+        try:
+            if hasattr(orch, 'record_intervention_applied'):
+                orch.record_intervention_applied(
+                    intervention_id=intervention_id,
+                    intervention_type=intervention_type,
+                )
+        except Exception:
+            pass
+
+    return JsonResponse({'ok': True, 'intervention_id': intervention_id})

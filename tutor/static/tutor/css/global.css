@@ -291,6 +291,302 @@ a:hover { opacity: 0.8; }
   color: var(--blue);
 }
 
+/* ── Risk Indicator ────────────────────────────────────── */
+.risk-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: 1px solid;
+  transition: all 0.3s;
+}
+
+.risk-indicator[data-risk-level="low"] {
+  background: rgba(0, 229, 160, 0.1);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.risk-indicator[data-risk-level="moderate"] {
+  background: rgba(255, 179, 64, 0.1);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.risk-indicator[data-risk-level="high"] {
+  background: rgba(255, 77, 106, 0.15);
+  border-color: var(--red);
+  color: var(--red);
+  animation: pulseWarning 2s infinite;
+}
+
+.risk-indicator[data-risk-level="severe"] {
+  background: rgba(255, 77, 106, 0.2);
+  border-color: var(--red);
+  color: var(--red);
+  animation: pulseUrgent 1s infinite;
+}
+
+@keyframes pulseWarning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes pulseUrgent {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+/* ── LD Badges ─────────────────────────────────────────── */
+.ld-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ld-badge {
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.68rem;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ld-confirmed {
+  background: rgba(45, 127, 255, 0.1);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+/* ── Intervention Panel ────────────────────────────────── */
+.intervention-panel {
+  position: fixed;
+  right: -400px;
+  top: 0;
+  width: 380px;
+  height: 100vh;
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  box-shadow: -4px 0 32px rgba(0,0,0,0.5);
+  transition: right 0.3s ease;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.intervention-panel.open {
+  right: 0;
+}
+
+.intervention-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.intervention-header h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: var(--text);
+}
+
+.intervention-priority {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.priority-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+
+.priority-badge[data-priority="immediate"],
+.intervention-priority[data-priority="immediate"] .priority-badge {
+  background: rgba(255, 77, 106, 0.2);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.priority-badge[data-priority="soon"],
+.intervention-priority[data-priority="soon"] .priority-badge {
+  background: rgba(255, 179, 64, 0.15);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+}
+
+.priority-badge[data-priority="routine"],
+.intervention-priority[data-priority="routine"] .priority-badge {
+  background: rgba(0, 229, 160, 0.1);
+  color: var(--green);
+  border: 1px solid var(--green);
+}
+
+.intervention-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.intervention-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.intervention-card:hover {
+  border-color: var(--border2);
+}
+
+.intervention-card.selected {
+  border-color: var(--blue);
+}
+
+.intervention-type {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+
+.intervention-strategy {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.intervention-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.intervention-steps li {
+  padding: 6px 0 6px 20px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  position: relative;
+  line-height: 1.5;
+}
+
+.intervention-steps li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--cyan);
+}
+
+.intervention-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Risk Alert Modal ──────────────────────────────────── */
+.risk-alert-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.3s ease;
+}
+
+.alert-content {
+  background: var(--surface);
+  border: 2px solid var(--red);
+  border-radius: var(--radius);
+  padding: 32px;
+  max-width: 480px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.alert-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.alert-content h3 {
+  margin-bottom: 12px;
+  color: var(--red);
+}
+
+.alert-content p {
+  color: var(--muted);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.alert-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--cyan);
+}
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--text);
+}
+
 /* ── Range slider ────────────────────────────────────────── */
 input[type=range] {
   -webkit-appearance: none;

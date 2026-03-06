@@ -30,3 +30,21 @@ kb_store/vector_texts.jsonl
 # OS
 .DS_Store
 Thumbs.db
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.env
+.venv
+env/
+venv/
+*.sqlite3
+.idea/
+.DS_Store
+node_modules/
+*.log
