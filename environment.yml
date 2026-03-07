@@ -1,0 +1,35 @@
+name: eduwhealth
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  # Install faiss via conda for best compatibility (choose one below)
+  # GPU version (recommended if server has NVIDIA GPU):
+  - faiss-gpu
+  # CPU-only version (uncomment and comment out faiss-gpu if no GPU):
+  # - faiss-cpu
+  - pip:
+    # ── Web framework ─────────────────────────────────────────────
+    - django>=4.2
+    - gunicorn>=21.0
+    # ── ML / NLP core ─────────────────────────────────────────────
+    - torch>=2.0.0
+    - torchvision
+    - transformers>=4.35.0
+    - sentence-transformers>=2.2.0
+    - datasets>=2.14.0
+    - scikit-learn>=1.3.0
+    # ── LangGraph (agent pipeline) ────────────────────────────────
+    - langgraph>=0.0.40
+    # ── Knowledge graph ───────────────────────────────────────────
+    - networkx>=3.0
+    # ── LLM clients ───────────────────────────────────────────────
+    - openai>=1.0.0
+    - requests>=2.31.0
+    # ── Explainability (analytics/explain.py) ────────────────────
+    - shap>=0.44.0
