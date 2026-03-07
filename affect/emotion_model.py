@@ -11,5 +11,8 @@ class EmotionDetector:
         print("[APU] Emotion model loaded.")
 
     def detect(self, text):
-        scores = self.model(text)[0]
+        raw = self.model(text)
+        # Newer versions of transformers return a nested list: [[{...}, ...]]
+        # Older versions return a flat list: [{...}, ...]
+        scores = raw[0] if isinstance(raw[0], list) else raw
         return {s["label"]: s["score"] for s in scores}
