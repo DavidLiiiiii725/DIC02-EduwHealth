@@ -64,6 +64,7 @@ class IELTSSection(models.Model):
     order        = models.PositiveSmallIntegerField()
     heading      = models.CharField(max_length=300, blank=True, default='')
     body         = models.TextField()
+    image_path   = models.CharField(max_length=500, blank=True, default='')
 
     class Meta:
         ordering = ['order']

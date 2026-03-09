@@ -3,34 +3,222 @@
 # EduwHealth 2.0  –  IELTS Reading Agent
 #
 # Responsibilities:
-#   1. Parse a raw IELTS reading passage (article + questions)
-#      into structured sections and question objects.
-#   2. Deliver sections one at a time with guided prompts
-#      adapted to the learner's LD profile (ADHD, anxiety, …).
-#   3. Evaluate answers and generate adaptive hints.
-#   4. Self-optimise the study strategy based on performance and
+#   1. Convert an IELTS reading PDF to paragraph images (A, B, C, …)
+#      using PyMuPDF — no OCR, direct PDF-to-image rendering.
+#   2. Extract comprehension questions as text for Q&A interaction.
+#   3. Deliver paragraphs with ADHD-adaptive guided prompts.
+#   4. Evaluate answers and generate adaptive hints.
+#   5. Self-optimise the study strategy based on performance and
 #      cognitive state, logging recommendations for the learner.
 # ─────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
+import io
+import os
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
-# ── Parsing helpers ───────────────────────────────────────────────
+# ── PDF paragraph image extraction ───────────────────────────────
 
-def _split_passage_and_questions(raw: str):
-    """Return (passage_text, questions_raw) by heuristic splitting.
+def extract_paragraph_images(
+    pdf_bytes: bytes,
+    output_dir: str,
+    passage_id: int,
+    zoom: float = 2.0,
+) -> List[Dict[str, Any]]:
+    """Convert an IELTS PDF to one high-resolution image per paragraph.
 
-    Strategy:
-    • Look for a "Questions" / "Questions 1–N" marker or a line that
-      starts with "1." or "1 " followed by a question pattern.
-    • Everything before that marker is the passage; everything after
-      is the questions block.
-    • Also handles cases where questions appear BEFORE the main passage
-      (e.g. some IELTS PDFs place comprehension questions on the first page).
+    Paragraphs are identified by their single-letter label (A–I or A–Z)
+    that appears at the start of a text block on the passage pages.
+    The questions pages are detected and skipped for image rendering,
+    but their text is extracted separately via extract_questions_from_pdf().
+
+    Args:
+        pdf_bytes:   Raw bytes of the uploaded PDF file.
+        output_dir:  Absolute filesystem path to save the PNG images.
+        passage_id:  Used to namespace the output filenames.
+        zoom:        Render scale (2.0 = 144 DPI).  Higher = sharper but larger.
+
+    Returns:
+        List of dicts:
+        [
+          {
+            'label':      'A',         # paragraph letter
+            'order':      1,           # 1-based index
+            'image_path': 'passage_images/1_para_A.png',  # relative to MEDIA_ROOT
+            'heading':    'Paragraph A',
+            'body':       '',          # empty – passage is image-only
+          },
+          …
+        ]
     """
-    # Common IELTS markers that signal the start of the question section
+    try:
+        import fitz  # PyMuPDF
+    except ImportError:
+        raise RuntimeError(
+            "PyMuPDF is required for PDF-to-image conversion. "
+            "Run: pip install pymupdf"
+        )
+
+    os.makedirs(output_dir, exist_ok=True)
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    mat = fitz.Matrix(zoom, zoom)
+
+    # ── Step 1: collect all text blocks with page + position info ──
+    all_blocks: List[Dict] = []
+    page_pixmaps: List[Any] = []
+    page_rects: List[Any] = []
+
+    for page_num, page in enumerate(doc):
+        pix = page.get_pixmap(matrix=mat)
+        page_pixmaps.append(pix)
+        page_rects.append(page.rect)
+
+        blocks = page.get_text("blocks")  # (x0,y0,x1,y1,text,block_no,block_type)
+        for b in blocks:
+            text = b[4].strip()
+            if not text:
+                continue
+            all_blocks.append({
+                'page': page_num,
+                'x0': b[0], 'y0': b[1], 'x1': b[2], 'y1': b[3],
+                'text': text,
+            })
+
+    # ── Step 2: find IELTS paragraph labels (A–Z at line/block start) ──
+    # Typical IELTS paragraph: block starts with single capital letter followed
+    # by a space/tab and then alphabetic content (not a question number).
+    para_blocks: List[Dict] = []
+    para_label_re = re.compile(r'^([A-Z])\s+[A-Z\u2018\u201C"\'(]')
+
+    for blk in all_blocks:
+        # Skip blocks that look like question markers (e.g. "Questions 1-5")
+        if re.match(r'^Questions?\s+\d', blk['text'], re.IGNORECASE):
+            continue
+        m = para_label_re.match(blk['text'])
+        if m:
+            para_blocks.append({**blk, 'label': m.group(1)})
+
+    # ── Step 3: deduplicate labels (keep first occurrence) ──
+    seen_labels: set = set()
+    unique_para_blocks: List[Dict] = []
+    for pb in para_blocks:
+        if pb['label'] not in seen_labels:
+            seen_labels.add(pb['label'])
+            unique_para_blocks.append(pb)
+    unique_para_blocks.sort(key=lambda b: (b['page'], b['y0']))
+
+    # ── Step 4: crop one image per paragraph ──
+    paragraphs: List[Dict] = []
+    from PIL import Image
+
+    for i, para in enumerate(unique_para_blocks):
+        page_num = para['page']
+        page_rect = page_rects[page_num]
+        pix = page_pixmaps[page_num]
+
+        # Determine the bottom boundary: top of the next para on the same page
+        # or the bottom of the page.
+        if i + 1 < len(unique_para_blocks) and unique_para_blocks[i + 1]['page'] == page_num:
+            y_end = unique_para_blocks[i + 1]['y0'] - 4  # 4pt gap
+        else:
+            y_end = page_rect.height
+
+        # Convert PDF coordinates to pixel coordinates
+        y_start_px = int(para['y0'] * zoom) - 4  # small top padding
+        y_end_px   = int(y_end * zoom) + 4
+        y_start_px = max(0, y_start_px)
+        y_end_px   = min(pix.height, y_end_px)
+
+        if y_end_px <= y_start_px:
+            continue
+
+        # Crop from pix (fitz.Pixmap) → PIL Image → save
+        img_bytes = pix.tobytes("png")
+        full_img = Image.open(io.BytesIO(img_bytes))
+        cropped = full_img.crop((0, y_start_px, full_img.width, y_end_px))
+
+        rel_path = f"passage_images/{passage_id}_para_{para['label']}.png"
+        abs_path = os.path.join(output_dir, f"{passage_id}_para_{para['label']}.png")
+        cropped.save(abs_path, "PNG", optimize=True)
+
+        paragraphs.append({
+            'label':      para['label'],
+            'order':      i + 1,
+            'image_path': rel_path,
+            'heading':    f"Paragraph {para['label']}",
+            'body':       '',           # body is image-only
+        })
+
+    doc.close()
+
+    # Fallback: if no labeled paragraphs found, convert each page to an image
+    if not paragraphs:
+        paragraphs = _fallback_page_images(
+            pdf_bytes, output_dir, passage_id, zoom
+        )
+
+    return paragraphs
+
+
+def _fallback_page_images(
+    pdf_bytes: bytes,
+    output_dir: str,
+    passage_id: int,
+    zoom: float = 2.0,
+) -> List[Dict[str, Any]]:
+    """Fallback: one image per page when no paragraph labels are found."""
+    try:
+        import fitz
+    except ImportError:
+        return []
+
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    mat = fitz.Matrix(zoom, zoom)
+    pages = []
+    for page_num, page in enumerate(doc, start=1):
+        pix = page.get_pixmap(matrix=mat)
+        rel_path = f"passage_images/{passage_id}_page_{page_num}.png"
+        abs_path = os.path.join(output_dir, f"{passage_id}_page_{page_num}.png")
+        pix.save(abs_path)
+        pages.append({
+            'label':      str(page_num),
+            'order':      page_num,
+            'image_path': rel_path,
+            'heading':    f"Page {page_num}",
+            'body':       '',
+        })
+    doc.close()
+    return pages
+
+
+def extract_questions_from_pdf(pdf_bytes: bytes) -> List[str]:
+    """Extract only the comprehension questions text from the PDF.
+
+    This reads the native PDF text structure (not OCR) and looks for
+    numbered question items (1., 2., …) in the questions section.
+    """
+    try:
+        import fitz
+    except ImportError:
+        return []
+
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    full_text_parts = []
+    for page in doc:
+        full_text_parts.append(page.get_text())
+    doc.close()
+
+    raw = '\n'.join(full_text_parts)
+    _, questions_raw = _split_passage_and_questions(raw)
+    return _extract_questions(questions_raw)
+
+
+# ── Text helpers (for question extraction only) ───────────────────
+
+def _split_passage_and_questions(raw: str) -> Tuple[str, str]:
+    """Return (passage_text, questions_raw) by heuristic splitting."""
     q_marker = re.search(
         r'(?m)^(Questions?\s+\d|Question\s+\d|\*\*Questions|'
         r'QUESTIONS|Questions and answers|Reading comprehension questions'
@@ -41,26 +229,18 @@ def _split_passage_and_questions(raw: str):
     if q_marker:
         before = raw[: q_marker.start()].strip()
         after  = raw[q_marker.start():].strip()
-
-        # Heuristic: if 'before' is very short (< 20% of total), questions
-        # likely precede the passage — swap them.
         if before and len(before) < len(raw) * 0.20:
-            # Questions appear at the beginning; passage comes after
             return after, before
         return before, after
 
-    # Fallback: find the first standalone "1." line
     first_q = re.search(r'(?m)^\s*1[\.\)]\s+\S', raw)
     if first_q:
         before = raw[: first_q.start()].strip()
         after  = raw[first_q.start():].strip()
-
-        # Same swap heuristic: if 'before' is tiny, questions are first
         if before and len(before) < len(raw) * 0.20:
             return after, before
         return before, after
 
-    # No questions found – treat everything as passage
     return raw.strip(), ''
 
 
@@ -69,12 +249,10 @@ def _extract_questions(questions_raw: str) -> List[str]:
     if not questions_raw:
         return []
 
-    # Split on lines that start with a number followed by . or )
     parts = re.split(r'(?m)(?=^\s*\d+[\.\)]\s)', questions_raw)
     questions = []
     for part in parts:
         cleaned = re.sub(r'^\s*\d+[\.\)]\s*', '', part.strip())
-        # Skip header lines like "Questions 1–5" or "Questions 1-13"
         if re.match(r'^Questions?\s+[\d–\-]+', cleaned, re.IGNORECASE):
             continue
         if cleaned:
@@ -82,102 +260,25 @@ def _extract_questions(questions_raw: str) -> List[str]:
     return questions
 
 
-def _split_into_sections(passage_text: str, num_sections: int = 3) -> List[dict]:
-    """Split the passage into roughly equal sections.
-
-    If the text contains explicit heading markers (e.g. bold Paragraph A/B/C
-    or labelled sections), split on those.  Otherwise divide evenly by
-    paragraphs.
-    """
-    # Try explicit heading patterns (Paragraph A, Section 1, etc.)
-    heading_split = re.split(
-        r'(?m)((?:Paragraph|Section|Part)\s+[A-Z\d]+\b[^\n]*)',
-        passage_text,
-    )
-    if len(heading_split) > 3:
-        sections = []
-        for i in range(1, len(heading_split), 2):
-            heading = heading_split[i].strip()
-            body = heading_split[i + 1].strip() if i + 1 < len(heading_split) else ''
-            if body:
-                sections.append({'heading': heading, 'body': body})
-        if sections:
-            return sections
-
-    # Fallback: split by paragraphs then group
-    paragraphs = [p.strip() for p in re.split(r'\n{2,}', passage_text) if p.strip()]
-    if not paragraphs:
-        return [{'heading': 'Full Passage', 'body': passage_text}]
-
-    chunk_size = max(1, len(paragraphs) // num_sections)
-    sections = []
-    for i in range(num_sections):
-        start = i * chunk_size
-        end = (i + 1) * chunk_size if i < num_sections - 1 else len(paragraphs)
-        body = '\n\n'.join(paragraphs[start:end])
-        if body:
-            sections.append({'heading': f'Section {i + 1}', 'body': body})
-    return sections
-
-
-def _assign_questions_to_sections(
-    questions: List[str], sections: List[dict]
-) -> List[List[int]]:
-    """Assign question indices to sections evenly.
-
-    Returns a list of lists: assignments[section_idx] = [q_idx, …]
-    """
-    if not questions or not sections:
-        return [[] for _ in sections]
-
-    # Simple strategy: distribute questions evenly across sections,
-    # last section gets any remainder
-    assignments: List[List[int]] = [[] for _ in sections]
-    per_section = len(questions) // len(sections)
-    remainder = len(questions) % len(sections)
-
-    q_idx = 0
-    for s_idx, _ in enumerate(sections):
-        count = per_section + (1 if s_idx < remainder else 0)
-        for _ in range(count):
-            if q_idx < len(questions):
-                assignments[s_idx].append(q_idx)
-                q_idx += 1
-    return assignments
-
-
-def parse_passage(raw_text: str, num_sections: int = 3):
-    """Full parse pipeline.
-
-    Returns:
-        {
-          "sections": [{"heading": str, "body": str, "question_indices": [int]}],
-          "questions": [str],
-        }
-    """
-    passage_text, questions_raw = _split_passage_and_questions(raw_text)
-    questions = _extract_questions(questions_raw)
-    sections = _split_into_sections(passage_text, num_sections=num_sections)
-    assignments = _assign_questions_to_sections(questions, sections)
-
-    for i, sec in enumerate(sections):
-        sec['question_indices'] = assignments[i]
-
-    return {'sections': sections, 'questions': questions}
-
-
 # ── Guidance generation (LLM-free fallback) ──────────────────────
 
+# Threshold: hints_used > questions_answered × HINT_USAGE_THRESHOLD → high hint usage warning
+_HINT_USAGE_THRESHOLD = 1.5
+
 _ADHD_TIPS = [
-    "⚡ Read the heading first – it tells you what the section is about.",
-    "⚡ Underline any name, date, or number you see.",
-    "⚡ Read one sentence at a time.  Stop and think after each one.",
+    "⚡ Focus: look at the paragraph letter first — it anchors your place.",
+    "⚡ Read the first sentence slowly, then let your eyes scan the rest.",
+    "⚡ Underline names, dates, or numbers as you read.",
+    "⚡ Take one sentence at a time. Pause and breathe after each one.",
+    "⚡ If your mind wanders, return to the paragraph letter and restart.",
 ]
 
 _GENERAL_TIPS = [
-    "Skim the section once quickly, then read carefully.",
-    "Pay attention to topic sentences (usually the first sentence of each paragraph).",
+    "Skim the paragraph once quickly, then read it carefully.",
+    "Pay attention to the topic sentence (usually the first sentence).",
     "Look for keywords that match the question wording.",
+    "Note any signal words: 'however', 'therefore', 'in contrast'.",
+    "Connect the paragraph to the passage title for context.",
 ]
 
 
@@ -188,27 +289,29 @@ def _build_section_intro(
     ld_profile: dict,
     attempt_score: Optional[float],
 ) -> str:
-    """Generate a short guiding message to display before a section."""
+    """Generate a short guiding message to display before a paragraph."""
     all_ld = set(
         ld_profile.get('confirmed', []) + ld_profile.get('suspected', [])
     )
 
     lines = []
-    lines.append(f"📖 Section {section_num} of {total_sections}: **{section['heading']}**")
+    lines.append(
+        f"📖 Paragraph {section_num} of {total_sections}: **{section['heading']}**"
+    )
 
     if attempt_score is not None and attempt_score < 0.5:
         lines.append(
-            "\n💡 You found the previous section tricky – take your time here."
+            "\n💡 The previous paragraph was tricky — take your time here."
         )
 
     if 'adhd' in all_ld:
-        lines.append('\n' + _ADHD_TIPS[section_num % len(_ADHD_TIPS)])
+        tip = _ADHD_TIPS[(section_num - 1) % len(_ADHD_TIPS)]
+        lines.append('\n' + tip)
     else:
-        lines.append('\n' + _GENERAL_TIPS[section_num % len(_GENERAL_TIPS)])
+        tip = _GENERAL_TIPS[(section_num - 1) % len(_GENERAL_TIPS)]
+        lines.append('\n' + tip)
 
-    lines.append(
-        "\nRead the passage below, then answer the questions at the bottom."
-    )
+    lines.append("\nRead the paragraph image, then answer the questions on the right.")
     return '\n'.join(lines)
 
 
@@ -295,7 +398,15 @@ def _evaluate_answer(
 
 
 def _build_strategy(attempt_data: dict, ld_profile: dict) -> str:
-    """Generate a personalised study strategy based on attempt history."""
+    """Generate a personalised, adaptive study strategy based on attempt history.
+
+    The strategy is informed by:
+    • Score accuracy (proportion of correct answers)
+    • Hint usage (frequency and distribution across questions)
+    • Learner LD profile (ADHD, anxiety, etc.)
+
+    Returns a Markdown-formatted strategy string.
+    """
     all_ld = set(
         ld_profile.get('confirmed', []) + ld_profile.get('suspected', [])
     )
@@ -304,45 +415,92 @@ def _build_strategy(attempt_data: dict, ld_profile: dict) -> str:
 
     total = len(answers)
     correct = sum(1 for v in answers.values() if isinstance(v, dict) and v.get('correct'))
+    pct = int(correct / total * 100) if total > 0 else 0
 
-    lines = ['### 📊 Your Learning Strategy Summary\n']
+    lines = ['### 📊 Adaptive Learning Strategy\n']
 
     if total > 0:
-        pct = int(correct / total * 100)
-        lines.append(f"**Score so far:** {correct}/{total} ({pct}%)\n")
+        lines.append(f"**Your score:** {correct}/{total} ({pct}%)\n")
 
-    if hints_used > 2:
+    # ── Performance-based strategy ───────────────────────────────
+    if pct >= 80:
         lines.append(
-            "💡 **Strategy tip:** You requested several hints.  "
-            "Try the SQ3R method next time:\n"
-            "1. **Survey** – skim headings and bold words\n"
-            "2. **Question** – turn headings into questions\n"
-            "3. **Read** – read to answer your questions\n"
-            "4. **Recite** – close the text and recall\n"
-            "5. **Review** – check your recall against the text\n"
+            "✅ **Excellent work!** You have a strong grasp of the passage.\n\n"
+            "💡 **Next-level tip:** Practice **inferential reading** — look for\n"
+            "what the author *implies* rather than what they *state directly*.\n"
         )
-    elif total > 0 and pct < 50:
+    elif pct >= 50:
         lines.append(
-            "💡 **Strategy tip:** Focus on the **topic sentence** of each paragraph "
-            "(usually the first sentence).  IELTS questions almost always refer back to these.\n"
+            "🟡 **Good effort.** You understood the main ideas but missed some details.\n\n"
+            "💡 **Strategy:** Use the **Scan-Locate-Verify** technique:\n"
+            "1. **Scan** – read the question and circle key nouns/verbs\n"
+            "2. **Locate** – find those exact words (or synonyms) in the passage\n"
+            "3. **Verify** – re-read the surrounding sentences before answering\n"
         )
     else:
         lines.append(
-            "💡 **Strategy tip:** You are doing well!  "
-            "For even better results, practise **skimming** (fast read for gist) "
-            "before **scanning** (targeted search for specific information).\n"
+            "❌ **Needs more practice.** Try reading each paragraph twice:\n"
+            "once for gist, once for detail.\n\n"
+            "💡 **SQ3R Method:**\n"
+            "1. **Survey** – skim headings and bold words (30 seconds)\n"
+            "2. **Question** – turn each paragraph label into a question\n"
+            "3. **Read** – read carefully to answer your question\n"
+            "4. **Recite** – close the passage and recall the main point\n"
+            "5. **Review** – check your recall and correct any errors\n"
         )
 
+    # ── Hint-based strategy ───────────────────────────────────────
+    if hints_used > total * _HINT_USAGE_THRESHOLD and total > 0:
+        lines.append(
+            "\n⚠️ **Hint usage was high.** Before requesting a hint next time:\n"
+            "- Re-read the paragraph once more at a slower pace\n"
+            "- Highlight or underline every proper noun, number, and date\n"
+            "- Ask yourself: 'Which sentence answers the question directly?'\n"
+        )
+
+    # ── ADHD-specific adaptive strategies ────────────────────────
     if 'adhd' in all_ld:
+        lines.append("\n---\n### ⚡ ADHD Support Strategies\n")
+
+        if pct < 50:
+            lines.append(
+                "**Chunking:** The passage is already split into labelled paragraphs.\n"
+                "Treat each paragraph as a *separate mini-reading task*.\n"
+                "Finish paragraph A completely before moving to B.\n\n"
+            )
+
         lines.append(
-            "\n⚡ **ADHD tip:** Use a pencil/finger to track the line you are reading. "
-            "Take a 2-minute movement break between sections."
+            "**Body-doubling tip:** Read the passage aloud to yourself —\n"
+            "hearing the words activates an extra attention channel.\n\n"
         )
+        lines.append(
+            "**Movement breaks:** After every 2 paragraphs, stand up, stretch,\n"
+            "or do 10 jumping jacks. Physical movement resets focus.\n\n"
+        )
+        lines.append(
+            "**Finger-tracking:** Use your finger or a ruler under each line\n"
+            "to prevent eye-skipping and keep your place.\n\n"
+        )
+        if hints_used > 2:
+            lines.append(
+                "**External working memory:** Write a 1-sentence summary of\n"
+                "each paragraph on paper *before* answering questions.\n"
+                "This offloads memory demand and reduces the need for hints.\n"
+            )
+
+    # ── Anxiety-specific strategies ───────────────────────────────
     if 'anxiety' in all_ld:
+        lines.append("\n---\n### 🌀 Anxiety Management Tips\n")
         lines.append(
-            "\n🌀 **Anxiety tip:** Remember – IELTS questions test comprehension, not "
-            "prior knowledge.  All answers are *in the text*."
+            "Remember: every answer is *in the passage*. You don't need\n"
+            "prior knowledge — only careful reading.\n\n"
         )
+        if pct < 60:
+            lines.append(
+                "If you feel stuck, try the **'park and return'** strategy:\n"
+                "skip the difficult question, answer easier ones first,\n"
+                "then return with a clearer mind.\n"
+            )
 
     return '\n'.join(lines)
 
