@@ -337,21 +337,49 @@ def reading(request):
 @csrf_exempt
 @require_POST
 def api_reading_upload(request):
-    """Parse and store a new IELTS reading passage.
+    """Parse and store a new IELTS reading passage from an uploaded PDF.
 
-    Body: { "title": str, "text": str, "num_sections": int (optional) }
+    Request: multipart/form-data
+        pdf         (file, required) — PDF file containing the passage + questions
+        title       (str, optional)  — passage title; defaults to the filename stem
+        num_sections (str, optional) — number of sections (2–5, default 3)
     """
-    try:
-        data = json.loads(request.body)
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    pdf_file = request.FILES.get('pdf')
+    if not pdf_file:
+        return JsonResponse({'error': 'No PDF file uploaded. Please attach a file with field name "pdf".'}, status=400)
 
-    raw_text = data.get('text', '').strip()
+    if not pdf_file.name.lower().endswith('.pdf'):
+        return JsonResponse({'error': 'Only PDF files are supported.'}, status=400)
+
+    # ── Extract text from PDF ─────────────────────────────────────
+    try:
+        import io
+        from pypdf import PdfReader
+        reader = PdfReader(io.BytesIO(pdf_file.read()))
+        pages_text = []
+        for page in reader.pages:
+            text = page.extract_text() or ''
+            if text.strip():
+                pages_text.append(text)
+        raw_text = '\n\n'.join(pages_text).strip()
+    except Exception as e:
+        return JsonResponse({'error': f'Could not read PDF: {e}'}, status=400)
+
     if not raw_text:
-        return JsonResponse({'error': 'text is required'}, status=400)
+        return JsonResponse({'error': 'The PDF appears to be empty or contains only images. Please upload a text-based PDF.'}, status=400)
+
+    # ── Title: prefer explicit param, then filename stem ──────────
+    title = request.POST.get('title', '').strip()
+    if not title:
+        import os
+        title = os.path.splitext(pdf_file.name)[0].replace('_', ' ').replace('-', ' ').strip() or 'IELTS Reading Passage'
+
+    try:
+        num_sections = max(2, min(5, int(request.POST.get('num_sections', 3))))
+    except (ValueError, TypeError):
+        num_sections = 3
 
     learner = _get_or_create_learner(request)
-    num_sections = int(data.get('num_sections', 3))
 
     # Deactivate previous passages
     IELTSPassage.objects.filter(learner=learner, is_active=True).update(is_active=False)
@@ -364,7 +392,7 @@ def api_reading_upload(request):
 
     passage = IELTSPassage.objects.create(
         learner=learner,
-        title=data.get('title', '').strip() or 'IELTS Reading Passage',
+        title=title,
         raw_text=raw_text,
     )
 
@@ -437,6 +465,8 @@ def api_reading_upload(request):
         'total_questions': len(q_objs),
         'current_section': section_data,
         'guidance': guidance,
+        'title': title,
+        'pages': len(reader.pages),
     })
 
 

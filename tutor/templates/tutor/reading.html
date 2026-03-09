@@ -36,6 +36,46 @@
 .upload-card h2 { font-family:'Fraunces',serif; font-size:1.3rem; margin-bottom:8px; }
 .upload-card p  { font-size:0.8rem; color:var(--muted); margin-bottom:20px; line-height:1.7; }
 
+/* ── PDF drop zone ── */
+.pdf-drop-zone {
+  border:2px dashed var(--border2);
+  border-radius:var(--radius);
+  padding:40px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color 0.2s, background 0.2s;
+  position:relative;
+  margin-bottom:16px;
+}
+.pdf-drop-zone:hover,
+.pdf-drop-zone.drag-over {
+  border-color:var(--cyan);
+  background:rgba(0,212,200,0.04);
+}
+.pdf-drop-zone input[type=file] {
+  position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+}
+.pdf-drop-icon { font-size:2.4rem; line-height:1; margin-bottom:10px; }
+.pdf-drop-text { font-size:0.85rem; color:var(--muted); }
+.pdf-drop-hint { font-size:0.72rem; color:var(--faint); margin-top:6px; }
+
+/* ── File badge (shown after selection) ── */
+.pdf-badge {
+  display:none; align-items:center; gap:12px;
+  background:rgba(0,212,200,0.08); border:1px solid rgba(0,212,200,0.25);
+  border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:16px;
+}
+.pdf-badge.visible { display:flex; }
+.pdf-badge-icon { font-size:1.4rem; flex-shrink:0; }
+.pdf-badge-name { font-size:0.83rem; font-weight:500; word-break:break-all; }
+.pdf-badge-meta { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+.pdf-badge-remove {
+  margin-left:auto; flex-shrink:0;
+  background:none; border:none; color:var(--muted); font-size:1rem;
+  cursor:pointer; padding:2px 6px; border-radius:4px;
+}
+.pdf-badge-remove:hover { color:var(--red); }
+
 .form-group { margin-bottom:16px; }
 .form-label { font-size:0.72rem; color:var(--muted); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:0.1em; }
 .form-input {
@@ -220,28 +260,34 @@ textarea.q-answer:focus { border-color:var(--blue); }
       <!-- ── UPLOAD PANEL ── -->
       <div class="upload-panel" id="upload-panel">
         <div class="upload-card">
-          <h2>Upload an IELTS Reading Passage</h2>
+          <h2>Upload an IELTS Reading PDF</h2>
           <p>
-            Paste your IELTS reading article and its questions below.<br>
-            The agent will split the text into sections and guide you through it one part at a time —
-            adapting to your learning needs as you go.
+            Select or drag-and-drop a PDF containing your IELTS reading passage and questions.<br>
+            The agent will extract the text, split it into sections, and guide you through it one part at a time.
           </p>
-          <div class="form-group">
-            <label class="form-label" for="passage-title">Passage Title (optional)</label>
-            <input type="text" id="passage-title" class="form-input" placeholder="e.g. The History of the Internet">
+
+          <!-- Drag-and-drop zone -->
+          <div class="pdf-drop-zone" id="drop-zone" onclick="document.getElementById('pdf-input').click()">
+            <input type="file" id="pdf-input" accept=".pdf,application/pdf"
+                   onchange="onFileSelected(this.files[0])" onclick="event.stopPropagation()">
+            <div class="pdf-drop-icon">📄</div>
+            <div class="pdf-drop-text">Click to select a PDF, or drag it here</div>
+            <div class="pdf-drop-hint">Only PDF files are supported · max 20 MB</div>
           </div>
+
+          <!-- File preview badge -->
+          <div class="pdf-badge" id="pdf-badge">
+            <span class="pdf-badge-icon">📑</span>
+            <div>
+              <div class="pdf-badge-name" id="pdf-badge-name"></div>
+              <div class="pdf-badge-meta" id="pdf-badge-meta"></div>
+            </div>
+            <button class="pdf-badge-remove" title="Remove" onclick="removeFile()">✕</button>
+          </div>
+
           <div class="form-group">
-            <label class="form-label" for="passage-text">Article + Questions</label>
-            <textarea id="passage-text" class="form-input"
-              placeholder="Paste the full IELTS passage here, followed by the questions (e.g. Questions 1-13 …).
-
-Example:
-Paragraph A
-The internet began as …
-
-Questions 1–5
-1. What year did …
-2. According to the text …"></textarea>
+            <label class="form-label" for="passage-title">Passage Title (optional — defaults to filename)</label>
+            <input type="text" id="passage-title" class="form-input" placeholder="e.g. The History of the Internet">
           </div>
           <div class="form-group">
             <label class="form-label" for="num-sections">Number of Sections</label>
@@ -253,7 +299,7 @@ Questions 1–5
             </select>
           </div>
           <div style="display:flex;gap:10px;align-items:center;">
-            <button class="btn-primary" id="upload-btn" onclick="uploadPassage()">Start Reading →</button>
+            <button class="btn-primary" id="upload-btn" onclick="uploadPassage()" disabled>Start Reading →</button>
             <span id="upload-status" style="font-size:0.75rem;color:var(--muted);"></span>
           </div>
         </div>
@@ -353,24 +399,77 @@ let state = {
 })();
 {% endif %}
 
+// ── File handling ──────────────────────────────────────────────
+let _selectedFile = null;
+
+function onFileSelected(file) {
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.pdf')) {
+    showToast('⚠️ Please select a PDF file.');
+    document.getElementById('pdf-input').value = '';
+    return;
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    showToast('⚠️ File is too large (max 20 MB).');
+    document.getElementById('pdf-input').value = '';
+    return;
+  }
+  _selectedFile = file;
+
+  const badge = document.getElementById('pdf-badge');
+  document.getElementById('pdf-badge-name').textContent = file.name;
+  document.getElementById('pdf-badge-meta').textContent =
+    (file.size / 1024).toFixed(0) + ' KB';
+  badge.classList.add('visible');
+  document.getElementById('pdf-badge-name').textContent = file.name;
+
+  document.getElementById('upload-btn').disabled = false;
+  document.getElementById('drop-zone').style.display = 'none';
+}
+
+function removeFile() {
+  _selectedFile = null;
+  document.getElementById('pdf-input').value = '';
+  document.getElementById('pdf-badge').classList.remove('visible');
+  document.getElementById('drop-zone').style.display = '';
+  document.getElementById('upload-btn').disabled = true;
+}
+
+// Drag-and-drop support
+(function() {
+  const zone = document.getElementById('drop-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) onFileSelected(file);
+  });
+})();
+
 // ── Upload ─────────────────────────────────────────────────────
 async function uploadPassage() {
-  const text  = document.getElementById('passage-text').value.trim();
-  const title = document.getElementById('passage-title').value.trim();
-  const numSections = parseInt(document.getElementById('num-sections').value);
+  if (!_selectedFile) { showToast('⚠️ Please select a PDF first.'); return; }
 
-  if (!text) { showToast('⚠️ Please paste a passage first.'); return; }
+  const title = document.getElementById('passage-title').value.trim();
+  const numSections = document.getElementById('num-sections').value;
 
   const btn    = document.getElementById('upload-btn');
   const status = document.getElementById('upload-status');
   btn.disabled = true;
-  status.textContent = 'Analyzing…';
+  status.textContent = 'Extracting text from PDF…';
 
   try {
+    const form = new FormData();
+    form.append('pdf', _selectedFile);
+    form.append('title', title);
+    form.append('num_sections', numSections);
+
     const resp = await fetch('/api/reading/upload/', {
       method:  'POST',
-      headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
-      body:    JSON.stringify({ title, text, num_sections: numSections }),
+      headers: {'X-CSRFToken': getCsrf()},
+      body:    form,
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Upload failed');
@@ -380,14 +479,14 @@ async function uploadPassage() {
     state.totalSections = data.total_sections;
 
     document.getElementById('topbar-sub').textContent =
-      `${title || 'IELTS Passage'} · ${data.total_sections} sections · ${data.total_questions} questions`;
+      `${data.title || _selectedFile.name} · ${data.total_sections} sections · ${data.total_questions} questions`;
     document.getElementById('strategy-btn').style.display = '';
 
     renderSection(data.current_section, data.guidance, data.total_sections);
   } catch(e) {
     showToast('❌ ' + e.message);
-  } finally {
     btn.disabled = false;
+  } finally {
     status.textContent = '';
   }
 }
@@ -585,10 +684,14 @@ function closeStrategy() {
 // ── Reset ──────────────────────────────────────────────────────
 function resetPassage() {
   state = { passageId:null, attemptId:null, totalSections:0, currentSection:null, answeredQs:{} };
+  _selectedFile = null;
+  document.getElementById('pdf-input').value = '';
+  document.getElementById('pdf-badge').classList.remove('visible');
+  document.getElementById('drop-zone').style.display = '';
+  document.getElementById('upload-btn').disabled = true;
   document.getElementById('session-wrap').style.display  = 'none';
   document.getElementById('upload-panel').style.display  = 'flex';
   document.getElementById('strategy-btn').style.display  = 'none';
-  document.getElementById('passage-text').value  = '';
   document.getElementById('passage-title').value = '';
   document.getElementById('topbar-sub').textContent = 'Upload a passage to begin guided reading';
 }
