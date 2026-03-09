@@ -352,6 +352,188 @@ textarea.q-answer:focus { border-color:var(--blue); }
 .modal-content h3 { margin: 0.8em 0 0.4em; font-size: 1rem; font-family: 'Lexend', sans-serif; }
 .modal-content ul, .modal-content ol { padding-left: 1.4em; margin: 0.3em 0; }
 .modal-content li { margin: 0.2em 0; line-height: 1.7; }
+
+/* ══════════════════════════════════════════════════════════════
+   FLOATING LLM ASSISTANT WIDGET
+   Always visible in the bottom-right corner of the viewport.
+══════════════════════════════════════════════════════════════ */
+.assistant-widget {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* Floating toggle button */
+.assistant-toggle {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1A5FCC 0%, #0d3a7a 100%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 16px rgba(26,95,204,0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.assistant-toggle:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 22px rgba(26,95,204,0.55);
+}
+.assistant-toggle.has-update {
+  animation: assistant-pulse 1.8s ease-in-out infinite;
+}
+@keyframes assistant-pulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(26,95,204,0.45); }
+  50%       { box-shadow: 0 4px 28px rgba(26,95,204,0.85); }
+}
+
+/* Unread badge */
+.assistant-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #e8472a;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+
+/* Chat panel */
+.assistant-panel {
+  width: 320px;
+  max-height: 460px;
+  background: #fff;
+  border: 1px solid #d0d8e8;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: assistant-slide-in 0.25s ease;
+}
+@keyframes assistant-slide-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.assistant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #1A5FCC 0%, #0d3a7a 100%);
+  color: #fff;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.assistant-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.assistant-avatar-sm {
+  font-size: 1.1rem;
+}
+.assistant-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.assistant-close:hover { color: #fff; }
+
+.assistant-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-behavior: smooth;
+}
+
+.assistant-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: fadeIn 0.3s ease;
+}
+.assistant-msg-bubble {
+  background: #f0f4ff;
+  border: 1px solid #d0d8f0;
+  border-radius: 10px 10px 10px 2px;
+  padding: 10px 13px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: #111;
+}
+.assistant-msg-bubble p  { margin: 0.25em 0; }
+.assistant-msg-bubble strong { color: #1A5FCC; }
+.assistant-msg-bubble em { color: #555; font-style: italic; }
+.assistant-msg-time {
+  font-size: 0.62rem;
+  color: #999;
+  padding-left: 4px;
+}
+
+/* Typing indicator */
+.assistant-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  background: #f0f4ff;
+  border: 1px solid #d0d8f0;
+  border-radius: 10px 10px 10px 2px;
+  width: fit-content;
+}
+.assistant-typing span {
+  width: 7px; height: 7px;
+  background: #1A5FCC;
+  border-radius: 50%;
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+.assistant-typing span:nth-child(2) { animation-delay: 0.2s; }
+.assistant-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.9); }
+  40%           { opacity: 1;   transform: scale(1.1); }
+}
+
+.assistant-footer {
+  padding: 8px 14px;
+  border-top: 1px solid #e8eef8;
+  font-size: 0.65rem;
+  color: #aaa;
+  font-family: 'Lexend', sans-serif;
+  text-align: center;
+  flex-shrink: 0;
+}
 </style>
 </head>
 <body>
@@ -491,6 +673,33 @@ textarea.q-answer:focus { border-color:var(--blue); }
 
 <!-- Toast notification -->
 <div class="toast" id="toast"></div>
+
+<!-- ── FLOATING AI READING ASSISTANT ─────────────────────────── -->
+<div class="assistant-widget" id="assistant-widget">
+
+  <!-- Expandable chat panel (hidden by default) -->
+  <div class="assistant-panel" id="assistant-panel" style="display:none;">
+    <div class="assistant-header">
+      <div class="assistant-header-left">
+        <span class="assistant-avatar-sm">🤖</span>
+        <span>Reading Assistant</span>
+      </div>
+      <button class="assistant-close" title="Minimise" onclick="toggleAssistant()">✕</button>
+    </div>
+    <div class="assistant-messages" id="assistant-messages">
+      <!-- Messages injected by JS -->
+    </div>
+    <div class="assistant-footer">Updates automatically as you read &amp; answer</div>
+  </div>
+
+  <!-- Floating toggle button (always visible) -->
+  <button class="assistant-toggle" id="assistant-toggle" title="Reading Assistant"
+          onclick="toggleAssistant()" aria-label="Toggle Reading Assistant">
+    🤖
+    <span class="assistant-badge" id="assistant-badge" style="display:none;">1</span>
+  </button>
+
+</div>
 
 <script>
 // ── Minimal Markdown renderer (no external dependency) ─────────
@@ -709,6 +918,16 @@ async function uploadPassage() {
       `${data.title || _selectedFile.name} · ${data.total_sections} paragraphs · ${data.total_questions} questions`;
     document.getElementById('strategy-btn').style.display = '';
 
+    // Welcome message in the assistant
+    _assistantAddMessage(marked.parse(
+      `👋 **Hi! I'm your Reading Assistant.**\n\n` +
+      `I'll guide you through *${escHtml(data.title || _selectedFile.name)}* ` +
+      `(${data.total_sections} paragraphs, ${data.total_questions} questions).\n\n` +
+      `I'll give you **keyword tips** and **adaptive hints** as you read. ` +
+      `Click the 🤖 button any time to open or close me!`
+    ));
+    _assistantNotify();
+
     renderSection(data.current_section, data.guidance, data.total_sections);
   } catch(e) {
     showToast('❌ ' + e.message);
@@ -786,6 +1005,12 @@ function renderSection(sec, guidance, totalSections) {
 
   // Scroll back to top
   document.getElementById('passage-panel').scrollTop = 0;
+
+  // ── Trigger assistant tip for this section ────────────────────
+  if (state.attemptId) {
+    // Small delay so the section renders before the assistant appears
+    setTimeout(() => refreshAssistantTip(state.attemptId), 600);
+  }
 }
 
 // ── Render visible paragraphs (image or text) ─────────────────
@@ -941,6 +1166,11 @@ async function submitAnswer(qId) {
   ta.remove();
   const actRow = card.querySelector('.q-actions');
   if (actRow) actRow.remove();
+
+  // ── Refresh assistant after every answered question ────────
+  if (state.attemptId) {
+    setTimeout(() => refreshAssistantTip(state.attemptId), 400);
+  }
 }
 
 // ── Hint ───────────────────────────────────────────────────────
@@ -1066,6 +1296,15 @@ function resetPassage() {
   const qPanel = document.getElementById('questions-panel');
   if (qPanel) qPanel.innerHTML = '';
 
+  // Clear assistant widget
+  const assistantMsgs = document.getElementById('assistant-messages');
+  if (assistantMsgs) assistantMsgs.innerHTML = '';
+  _assistantUnread = 0;
+  const badge  = document.getElementById('assistant-badge');
+  const toggle = document.getElementById('assistant-toggle');
+  if (badge)  badge.style.display = 'none';
+  if (toggle) toggle.classList.remove('has-update');
+
   document.getElementById('session-wrap').style.display  = 'none';
   document.getElementById('upload-panel').style.display  = 'flex';
   document.getElementById('strategy-btn').style.display  = 'none';
@@ -1091,6 +1330,102 @@ function escHtml(str) {
   return String(str)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
+}
+
+// ── Floating Assistant ─────────────────────────────────────────
+// State: is the panel open, and how many unread messages
+let _assistantOpen    = false;
+let _assistantUnread  = 0;
+
+function toggleAssistant() {
+  _assistantOpen = !_assistantOpen;
+  const panel  = document.getElementById('assistant-panel');
+  const badge  = document.getElementById('assistant-badge');
+  const toggle = document.getElementById('assistant-toggle');
+
+  if (_assistantOpen) {
+    panel.style.display = 'flex';
+    // Clear unread badge
+    _assistantUnread = 0;
+    badge.style.display = 'none';
+    toggle.classList.remove('has-update');
+    // Scroll messages to bottom
+    const msgs = document.getElementById('assistant-messages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+// Add a message bubble to the assistant panel
+function _assistantAddMessage(html) {
+  const container = document.getElementById('assistant-messages');
+  if (!container) return;
+
+  // Remove typing indicator if present
+  const typing = container.querySelector('.assistant-typing');
+  if (typing) typing.remove();
+
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' +
+                  now.getMinutes().toString().padStart(2,'0');
+
+  const msgEl = document.createElement('div');
+  msgEl.className = 'assistant-msg';
+  msgEl.innerHTML = `
+    <div class="assistant-msg-bubble">${html}</div>
+    <div class="assistant-msg-time">${timeStr}</div>
+  `;
+  container.appendChild(msgEl);
+  container.scrollTop = container.scrollHeight;
+}
+
+// Show a typing indicator, then replace with the actual tip
+function _assistantShowTyping() {
+  const container = document.getElementById('assistant-messages');
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = 'assistant-typing';
+  el.innerHTML = '<span></span><span></span><span></span>';
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+// Notify user of a new message (badge + pulse) without auto-opening
+function _assistantNotify() {
+  if (_assistantOpen) return;  // panel is already open — no badge needed
+  _assistantUnread++;
+  const badge  = document.getElementById('assistant-badge');
+  const toggle = document.getElementById('assistant-toggle');
+  if (badge)  { badge.textContent = _assistantUnread; badge.style.display = 'flex'; }
+  if (toggle) toggle.classList.add('has-update');
+}
+
+// Fetch a tip from the backend and display it
+async function refreshAssistantTip(attemptId) {
+  if (!attemptId) return;
+
+  _assistantShowTyping();
+
+  try {
+    const resp = await fetch('/api/reading/assistant/', {
+      method:  'POST',
+      headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+      body:    JSON.stringify({ attempt_id: attemptId }),
+    });
+    const data = await resp.json();
+    if (data.tip) {
+      _assistantAddMessage(marked.parse(data.tip));
+      _assistantNotify();
+    }
+  } catch (_) {
+    // Silently ignore network errors for the assistant
+    const container = document.getElementById('assistant-messages');
+    if (container) {
+      const typing = container.querySelector('.assistant-typing');
+      if (typing) typing.remove();
+    }
+  }
 }
 </script>
 </body>

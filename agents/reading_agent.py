@@ -505,6 +505,139 @@ def _build_strategy(attempt_data: dict, ld_profile: dict) -> str:
     return '\n'.join(lines)
 
 
+# ── Floating assistant tip (proactive, performance-aware) ─────────
+
+def _extract_heading_keywords(heading: str) -> List[str]:
+    """Extract meaningful keywords from a section heading."""
+    stop_words = {
+        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to',
+        'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'it',
+        'paragraph', 'section', 'part', 'this', 'that',
+    }
+    words = re.findall(r'\b[A-Za-z]{4,}\b', heading)
+    return [w for w in words if w.lower() not in stop_words][:4]
+
+
+def _build_assistant_tip(
+    para_order: int,
+    total_sections: int,
+    answers: dict,
+    hints_used: int,
+    ld_profile: dict,
+    current_section_heading: str = '',
+    section_body: str = '',
+) -> str:
+    """Generate a proactive assistant tip based on current reading progress.
+
+    Provides adaptive guidance including:
+    • Encouragement and score feedback
+    • Keyword extraction from the current paragraph heading / body
+    • ADHD-specific focus tips
+    • Hint-usage advice
+    """
+    all_ld = set(
+        ld_profile.get('confirmed', []) + ld_profile.get('suspected', [])
+    )
+
+    total_answered = len(answers)
+    correct = sum(1 for v in answers.values() if isinstance(v, dict) and v.get('correct'))
+    pct = int(correct / total_answered * 100) if total_answered > 0 else None
+
+    lines: List[str] = []
+
+    # ── Position indicator ────────────────────────────────────────
+    remaining = total_sections - para_order
+    if remaining > 0:
+        lines.append(
+            f"📍 **Paragraph {para_order} of {total_sections}** — "
+            f"{remaining} more to go."
+        )
+    else:
+        lines.append(
+            f"📍 **Paragraph {para_order} of {total_sections}** — "
+            "this is the **last paragraph**!"
+        )
+
+    # ── Performance feedback ──────────────────────────────────────
+    if pct is not None:
+        if pct >= 70:
+            lines.append(
+                f"\n✅ You're scoring **{pct}%** — excellent reading comprehension!"
+            )
+        elif pct >= 40:
+            lines.append(
+                f"\n🟡 Current score: **{pct}%**. "
+                "Try scanning for keywords that mirror the question wording."
+            )
+        else:
+            lines.append(
+                f"\n💪 Score so far: **{pct}%**. "
+                "Every paragraph is a fresh chance — keep going!"
+            )
+
+    # ── Hint-usage advice ─────────────────────────────────────────
+    if total_answered > 0 and hints_used > total_answered * _HINT_USAGE_THRESHOLD:
+        lines.append(
+            "\n⚠️ You've used quite a few hints. "
+            "Before clicking **Hint**, try re-reading the first sentence "
+            "of the paragraph — the topic sentence often contains the answer."
+        )
+
+    # ── Keyword extraction ────────────────────────────────────────
+    # Combine heading + body to find domain-specific terms.
+    keyword_source = (current_section_heading + ' ' + section_body).strip()
+    if keyword_source:
+        kw_candidates = re.findall(r'\b[A-Z][a-z]{3,}\b|\b[a-z]{5,}\b', keyword_source)
+        stop_words = {
+            'about', 'above', 'after', 'again', 'against', 'along', 'also',
+            'although', 'another', 'because', 'before', 'being', 'between',
+            'during', 'every', 'first', 'found', 'great', 'however', 'include',
+            'into', 'just', 'known', 'like', 'made', 'make', 'many', 'more',
+            'most', 'much', 'must', 'never', 'often', 'only', 'other', 'over',
+            'paragraph', 'people', 'section', 'since', 'some', 'such', 'than',
+            'that', 'their', 'them', 'then', 'there', 'these', 'they', 'this',
+            'those', 'through', 'time', 'under', 'until', 'upon', 'used',
+            'very', 'when', 'where', 'which', 'while', 'with', 'within',
+            'would', 'your',
+        }
+        seen: set = set()
+        keywords: List[str] = []
+        for w in kw_candidates:
+            lw = w.lower()
+            if lw not in stop_words and lw not in seen and len(lw) >= 5:
+                seen.add(lw)
+                keywords.append(w)
+            if len(keywords) >= 5:
+                break
+
+        if keywords:
+            lines.append(
+                "\n🔑 **Key words to look for:** "
+                + ', '.join(f'*{k}*' for k in keywords)
+            )
+
+    # ── ADHD-specific tip ────────────────────────────────────────
+    if 'adhd' in all_ld:
+        adhd_tips = [
+            "⚡ Focus: trace each line with your finger as you read.",
+            "⚡ Read the first sentence, pause, then continue.",
+            "⚡ If you lose focus, come back to the paragraph heading and start again.",
+            "⚡ One sentence at a time — don't rush.",
+            "⚡ Glance at the paragraph heading before you start reading the body text.",
+        ]
+        tip = adhd_tips[(para_order - 1) % len(adhd_tips)]
+        lines.append(f"\n{tip}")
+
+    # ── Anxiety tip ──────────────────────────────────────────────
+    if 'anxiety' in all_ld:
+        lines.append(
+            "\n🌀 Remember: every answer is *in the passage*. "
+            "Trust your reading — you don't need prior knowledge."
+        )
+
+    return '\n'.join(lines)
+
+
 # ── Main agent entry point ────────────────────────────────────────
 
 def reading_agent_guide_section(
@@ -540,3 +673,36 @@ def reading_agent_evaluate(
 def reading_agent_strategy(attempt_data: dict, ld_profile: dict) -> str:
     """Generate a personalised learning strategy."""
     return _build_strategy(attempt_data, ld_profile)
+
+
+def reading_agent_assistant_tip(
+    para_order: int,
+    total_sections: int,
+    answers: dict,
+    hints_used: int,
+    ld_profile: dict,
+    current_section_heading: str = '',
+    section_body: str = '',
+) -> str:
+    """Return a proactive assistant tip for the current reading state.
+
+    Args:
+        para_order:              Current paragraph number (1-based).
+        total_sections:          Total paragraphs in the passage.
+        answers:                 Dict mapping question IDs to answer result dicts.
+        hints_used:              Total hint requests so far.
+        ld_profile:              Learner LD profile dict.
+        current_section_heading: Heading of the paragraph being viewed.
+        section_body:            Body text of the current paragraph (may be empty
+                                 when the section is image-only; raw_text is used
+                                 as fallback in the view layer).
+    """
+    return _build_assistant_tip(
+        para_order=para_order,
+        total_sections=total_sections,
+        answers=answers,
+        hints_used=hints_used,
+        ld_profile=ld_profile,
+        current_section_heading=current_section_heading,
+        section_body=section_body,
+    )
