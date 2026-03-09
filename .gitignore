@@ -48,3 +48,4 @@ venv/
 .DS_Store
 node_modules/
 *.log
+db.sqlite3

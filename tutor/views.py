@@ -391,6 +391,21 @@ def api_reading_upload(request):
         passage.delete()
         return JsonResponse({'error': 'No paragraphs found in the PDF. Please upload a standard IELTS reading passage.'}, status=400)
 
+    # ── Extract text for evaluation/hint context (not displayed to user) ──
+    # We store the full passage text in raw_text so the hint/evaluation backend
+    # has textual context even though the passage is displayed as images.
+    try:
+        import fitz as _fitz
+        _doc = _fitz.open(stream=pdf_bytes, filetype="pdf")
+        raw_text = '\n'.join(p.get_text() for p in _doc).strip()
+        _doc.close()
+    except Exception:
+        raw_text = ''
+
+    # Update passage with extracted raw text (for evaluation context)
+    passage.raw_text = raw_text
+    passage.save()
+
     # ── Extract questions from native PDF text (not OCR) ─────────
     try:
         questions = extract_questions_from_pdf(pdf_bytes)

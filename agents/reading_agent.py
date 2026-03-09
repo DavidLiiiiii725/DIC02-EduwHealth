@@ -86,11 +86,11 @@ def extract_paragraph_images(
                 'text': text,
             })
 
-    # ── Step 2: find IELTS paragraph labels (A–I at line/block start) ──
-    # Typical IELTS paragraph: block starts with single capital A–I followed
+    # ── Step 2: find IELTS paragraph labels (A–Z at line/block start) ──
+    # Typical IELTS paragraph: block starts with single capital letter followed
     # by a space/tab and then alphabetic content (not a question number).
     para_blocks: List[Dict] = []
-    para_label_re = re.compile(r'^([A-I])\s+[A-Z\u2018\u201C"\'(]')
+    para_label_re = re.compile(r'^([A-Z])\s+[A-Z\u2018\u201C"\'(]')
 
     for blk in all_blocks:
         # Skip blocks that look like question markers (e.g. "Questions 1-5")
@@ -261,6 +261,9 @@ def _extract_questions(questions_raw: str) -> List[str]:
 
 
 # ── Guidance generation (LLM-free fallback) ──────────────────────
+
+# Threshold: hints_used > questions_answered × HINT_USAGE_THRESHOLD → high hint usage warning
+_HINT_USAGE_THRESHOLD = 1.5
 
 _ADHD_TIPS = [
     "⚡ Focus: look at the paragraph letter first — it anchors your place.",
@@ -447,7 +450,7 @@ def _build_strategy(attempt_data: dict, ld_profile: dict) -> str:
         )
 
     # ── Hint-based strategy ───────────────────────────────────────
-    if hints_used > total * 1.5 and total > 0:
+    if hints_used > total * _HINT_USAGE_THRESHOLD and total > 0:
         lines.append(
             "\n⚠️ **Hint usage was high.** Before requesting a hint next time:\n"
             "- Re-read the paragraph once more at a slower pace\n"
