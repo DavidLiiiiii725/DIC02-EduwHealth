@@ -44,3 +44,58 @@ class ChatMessage(models.Model):
 
     class Meta:
         ordering = ['timestamp']
+
+
+# ── IELTS Reading ─────────────────────────────────────────────────
+
+class IELTSPassage(models.Model):
+    learner      = models.ForeignKey(LearnerProfile, on_delete=models.CASCADE, related_name='passages')
+    title        = models.CharField(max_length=300, blank=True, default='')
+    raw_text     = models.TextField()
+    created_at   = models.DateTimeField(auto_now_add=True)
+    is_active    = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Passage {self.id}: {self.title or '(untitled)'}"
+
+
+class IELTSSection(models.Model):
+    passage      = models.ForeignKey(IELTSPassage, on_delete=models.CASCADE, related_name='sections')
+    order        = models.PositiveSmallIntegerField()
+    heading      = models.CharField(max_length=300, blank=True, default='')
+    body         = models.TextField()
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"Section {self.order} of Passage {self.passage_id}"
+
+
+class IELTSQuestion(models.Model):
+    passage      = models.ForeignKey(IELTSPassage, on_delete=models.CASCADE, related_name='questions')
+    section      = models.ForeignKey(IELTSSection, on_delete=models.SET_NULL, null=True, blank=True, related_name='questions')
+    order        = models.PositiveSmallIntegerField()
+    text         = models.TextField()
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"Q{self.order}: {self.text[:60]}"
+
+
+class ReadingAttempt(models.Model):
+    learner       = models.ForeignKey(LearnerProfile, on_delete=models.CASCADE, related_name='reading_attempts')
+    passage       = models.ForeignKey(IELTSPassage, on_delete=models.CASCADE, related_name='attempts')
+    current_section_order = models.PositiveSmallIntegerField(default=1)
+    completed     = models.BooleanField(default=False)
+    score         = models.FloatField(null=True, blank=True)
+    answers       = models.JSONField(default=dict)
+    hints_used    = models.IntegerField(default=0)
+    strategy_log  = models.JSONField(default=list)
+    started_at    = models.DateTimeField(auto_now_add=True)
+    updated_at    = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Attempt by {self.learner.display_name} on Passage {self.passage_id}"
