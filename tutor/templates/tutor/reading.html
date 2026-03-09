@@ -1,0 +1,617 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduwHealth 2.0 — IELTS Reading</title>
+<link rel="stylesheet" href="{% static 'tutor/css/global.css' %}">
+<style>
+/* ── Layout ── */
+.reading-shell { display:flex; height:100vh; overflow:hidden; }
+.reading-main  { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+.reading-topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 24px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+  flex-shrink:0;
+}
+.reading-topbar-title { font-family:'Fraunces',serif; font-size:1.1rem; font-weight:600; }
+.reading-topbar-sub   { font-size:0.68rem; color:var(--muted); margin-top:2px; }
+
+.reading-body { flex:1; display:flex; overflow:hidden; }
+
+/* ── Upload panel (shown when no active passage) ── */
+.upload-panel {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:flex-start; padding:40px 32px; overflow-y:auto;
+  max-width:720px; margin:0 auto; width:100%;
+}
+.upload-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:32px; width:100%; margin-bottom:20px;
+}
+.upload-card h2 { font-family:'Fraunces',serif; font-size:1.3rem; margin-bottom:8px; }
+.upload-card p  { font-size:0.8rem; color:var(--muted); margin-bottom:20px; line-height:1.7; }
+
+.form-group { margin-bottom:16px; }
+.form-label { font-size:0.72rem; color:var(--muted); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:0.1em; }
+.form-input {
+  width:100%; background:var(--surface2); border:1px solid var(--border2);
+  border-radius:var(--radius-sm); color:var(--text); font-family:'DM Mono',monospace;
+  font-size:0.83rem; padding:10px 14px; outline:none; transition:border-color 0.15s;
+}
+.form-input:focus { border-color:var(--cyan); }
+textarea.form-input { min-height:220px; resize:vertical; line-height:1.6; }
+
+.btn-primary {
+  background:var(--cyan); color:#080C14;
+  border:none; border-radius:var(--radius-sm);
+  padding:10px 24px; font-family:'DM Mono',monospace; font-size:0.85rem;
+  font-weight:500; cursor:pointer; transition:all 0.15s;
+}
+.btn-primary:hover { opacity:0.85; }
+.btn-primary:disabled { opacity:0.4; cursor:default; }
+
+.btn-secondary {
+  background:transparent; color:var(--muted);
+  border:1px solid var(--border2); border-radius:var(--radius-sm);
+  padding:8px 18px; font-family:'DM Mono',monospace; font-size:0.8rem;
+  cursor:pointer; transition:all 0.15s;
+}
+.btn-secondary:hover { border-color:var(--cyan); color:var(--cyan); }
+
+/* ── Reading session layout ── */
+.session-wrap { flex:1; display:flex; overflow:hidden; }
+
+.passage-panel {
+  flex:1; overflow-y:auto; padding:28px 32px;
+  border-right:1px solid var(--border);
+}
+.passage-guidance {
+  background:rgba(0,212,200,0.07); border:1px solid rgba(0,212,200,0.2);
+  border-radius:var(--radius-sm); padding:14px 18px; margin-bottom:20px;
+  font-size:0.82rem; line-height:1.7; white-space:pre-wrap;
+}
+.passage-heading {
+  font-family:'Fraunces',serif; font-size:1.2rem; font-weight:600;
+  margin-bottom:14px; color:var(--cyan);
+}
+.passage-body {
+  font-size:0.86rem; line-height:1.85; white-space:pre-wrap; color:var(--text);
+}
+
+/* ── Section progress bar ── */
+.progress-track {
+  display:flex; gap:6px; margin-bottom:20px; align-items:center;
+}
+.progress-dot {
+  width:10px; height:10px; border-radius:50%;
+  background:var(--faint); transition:all 0.3s;
+  flex-shrink:0;
+}
+.progress-dot.done    { background:var(--green); }
+.progress-dot.current { background:var(--cyan); box-shadow:0 0 8px rgba(0,212,200,0.5); }
+.progress-label { font-size:0.68rem; color:var(--muted); margin-left:6px; }
+
+/* ── Questions panel ── */
+.questions-panel {
+  width:340px; min-width:300px; overflow-y:auto;
+  padding:24px 20px; display:flex; flex-direction:column; gap:18px;
+}
+.q-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:16px;
+}
+.q-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:8px; }
+.q-text  { font-size:0.82rem; line-height:1.6; margin-bottom:12px; }
+.q-answered { font-size:0.75rem; padding:6px 10px; border-radius:4px; margin-bottom:8px; }
+.q-answered.correct   { background:rgba(0,229,160,0.1); color:var(--green); border:1px solid rgba(0,229,160,0.25); }
+.q-answered.incorrect { background:rgba(255,77,106,0.1); color:var(--red);   border:1px solid rgba(255,77,106,0.25); }
+.q-answered.partial   { background:rgba(255,179,64,0.1); color:var(--amber); border:1px solid rgba(255,179,64,0.25); }
+textarea.q-answer {
+  width:100%; background:var(--surface2); border:1px solid var(--border2);
+  border-radius:var(--radius-sm); color:var(--text); font-family:'DM Mono',monospace;
+  font-size:0.8rem; padding:8px 12px; resize:vertical; min-height:70px;
+  outline:none; transition:border-color 0.15s; line-height:1.5;
+}
+textarea.q-answer:focus { border-color:var(--blue); }
+.q-actions { display:flex; gap:8px; }
+.hint-btn {
+  flex:1; background:transparent; border:1px solid var(--border2);
+  border-radius:var(--radius-sm); color:var(--muted); font-size:0.75rem;
+  padding:6px 8px; cursor:pointer; transition:all 0.15s;
+}
+.hint-btn:hover { border-color:var(--amber); color:var(--amber); }
+.submit-btn {
+  flex:1; background:var(--blue); border:none;
+  border-radius:var(--radius-sm); color:#fff; font-size:0.75rem;
+  padding:6px 8px; cursor:pointer; transition:all 0.15s;
+}
+.submit-btn:hover { opacity:0.85; }
+.hint-box {
+  margin-top:10px; padding:10px 12px;
+  background:rgba(255,179,64,0.07); border:1px solid rgba(255,179,64,0.2);
+  border-radius:var(--radius-sm); font-size:0.78rem; line-height:1.6;
+  white-space:pre-wrap; display:none;
+}
+
+/* ── Next section / complete ── */
+.action-bar {
+  padding:16px 32px; border-top:1px solid var(--border);
+  background:var(--surface); display:flex; justify-content:space-between;
+  align-items:center; flex-shrink:0;
+}
+.action-bar-info { font-size:0.75rem; color:var(--muted); }
+
+/* ── Strategy modal ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:none; align-items:center; justify-content:center; z-index:100;
+}
+.modal-overlay.open { display:flex; }
+.modal-box {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:32px; max-width:560px; width:90%;
+  max-height:80vh; overflow-y:auto;
+}
+.modal-box h2 { font-family:'Fraunces',serif; font-size:1.2rem; margin-bottom:16px; }
+.modal-content { font-size:0.82rem; line-height:1.75; white-space:pre-wrap; }
+.modal-close {
+  margin-top:20px; background:var(--faint); border:1px solid var(--border2);
+  border-radius:var(--radius-sm); color:var(--text); padding:8px 20px;
+  font-size:0.8rem; cursor:pointer;
+}
+
+/* ── Toast ── */
+.toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:12px 18px;
+  font-size:0.8rem; box-shadow:var(--shadow);
+  transform:translateY(60px); opacity:0; transition:all 0.3s;
+  z-index:200;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+</style>
+</head>
+<body>
+<div class="reading-shell">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div style="padding:20px 16px 24px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+      <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:800;">EduwHealth <span style="color:var(--cyan)">2.0</span></div>
+      <div style="font-size:0.62rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.1em;">IELTS Learning</div>
+    </div>
+    <nav style="padding:0 10px;flex:1;display:flex;flex-direction:column;gap:2px;">
+      <a href="/chat/"      class="nav-item"><span class="nav-icon">💬</span> Chat</a>
+      <a href="/reading/"   class="nav-item active"><span class="nav-icon">📖</span> Reading</a>
+      <a href="/profile/"   class="nav-item"><span class="nav-icon">👤</span> Profile</a>
+      <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+    </nav>
+    <div style="padding:16px;border-top:1px solid var(--border);margin-top:auto;">
+      <div style="font-size:0.7rem;color:var(--muted);">Learner</div>
+      <div style="font-size:0.82rem;margin-top:2px;">{{ learner.display_name }}</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="reading-main">
+    <!-- Topbar -->
+    <div class="reading-topbar">
+      <div>
+        <div class="reading-topbar-title">📖 IELTS Reading Assistant</div>
+        <div class="reading-topbar-sub" id="topbar-sub">Upload a passage to begin guided reading</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn-secondary" id="strategy-btn" onclick="showStrategy()" style="display:none">💡 Strategy</button>
+        <button class="btn-secondary" onclick="resetPassage()">↩ New Passage</button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="reading-body">
+
+      <!-- ── UPLOAD PANEL ── -->
+      <div class="upload-panel" id="upload-panel">
+        <div class="upload-card">
+          <h2>Upload an IELTS Reading Passage</h2>
+          <p>
+            Paste your IELTS reading article and its questions below.<br>
+            The agent will split the text into sections and guide you through it one part at a time —
+            adapting to your learning needs as you go.
+          </p>
+          <div class="form-group">
+            <label class="form-label" for="passage-title">Passage Title (optional)</label>
+            <input type="text" id="passage-title" class="form-input" placeholder="e.g. The History of the Internet">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="passage-text">Article + Questions</label>
+            <textarea id="passage-text" class="form-input"
+              placeholder="Paste the full IELTS passage here, followed by the questions (e.g. Questions 1-13 …).
+
+Example:
+Paragraph A
+The internet began as …
+
+Questions 1–5
+1. What year did …
+2. According to the text …"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="num-sections">Number of Sections</label>
+            <select id="num-sections" class="form-input" style="height:40px;">
+              <option value="2">2 sections</option>
+              <option value="3" selected>3 sections (IELTS standard)</option>
+              <option value="4">4 sections</option>
+              <option value="5">5 sections</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn-primary" id="upload-btn" onclick="uploadPassage()">Start Reading →</button>
+            <span id="upload-status" style="font-size:0.75rem;color:var(--muted);"></span>
+          </div>
+        </div>
+
+        <!-- Sample passages hint -->
+        <div class="upload-card" style="opacity:0.7;">
+          <h2 style="font-size:1rem;">💡 Tips for ADHD & Learning Differences</h2>
+          <ul style="font-size:0.8rem;color:var(--muted);line-height:2;padding-left:18px;">
+            <li>The agent breaks the passage into bite-sized sections.</li>
+            <li>Read each section <strong>before</strong> answering its questions.</li>
+            <li>Use the <strong>💡 Hint</strong> button if you get stuck — no penalty!</li>
+            <li>Check your <strong>Strategy</strong> report after each session.</li>
+            <li>Take a short break between sections if you feel fatigued.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ── READING SESSION ── -->
+      <div id="session-wrap" class="session-wrap" style="display:none;">
+
+        <!-- Passage panel -->
+        <div class="passage-panel" id="passage-panel">
+          <!-- Progress dots injected by JS -->
+          <div class="progress-track" id="progress-track"></div>
+          <!-- Guidance message -->
+          <div class="passage-guidance" id="passage-guidance"></div>
+          <!-- Section body -->
+          <div class="passage-heading" id="section-heading"></div>
+          <div class="passage-body"   id="section-body"></div>
+        </div>
+
+        <!-- Questions + action bar wrapper -->
+        <div style="display:flex;flex-direction:column;width:340px;min-width:300px;border-left:1px solid var(--border);">
+          <div class="questions-panel" id="questions-panel"></div>
+          <div class="action-bar" id="action-bar">
+            <span class="action-bar-info" id="action-info"></span>
+            <button class="btn-primary" id="next-btn" onclick="nextSection()">Next Section →</button>
+          </div>
+        </div>
+
+      </div><!-- /session-wrap -->
+
+    </div><!-- /reading-body -->
+  </div><!-- /reading-main -->
+</div><!-- /reading-shell -->
+
+<!-- Strategy modal -->
+<div class="modal-overlay" id="strategy-modal">
+  <div class="modal-box">
+    <h2>📊 Your Learning Strategy</h2>
+    <div class="modal-content" id="strategy-content">Loading…</div>
+    <button class="modal-close" onclick="closeStrategy()">Close</button>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let state = {
+  passageId:      null,
+  attemptId:      null,
+  totalSections:  0,
+  currentSection: null,   // { id, order, heading, body, questions:[{id,order,text}] }
+  answeredQs:     {},     // qId -> {correct, score, feedback}
+};
+
+// ── Init ───────────────────────────────────────────────────────
+{% if attempt and not attempt.completed %}
+// Resume an existing attempt on page load
+(async () => {
+  const passageId  = {{ attempt.passage_id }};
+  const attemptId  = {{ attempt.id }};
+  const secOrder   = {{ attempt.current_section_order }};
+  const totalSecs  = {{ attempt.passage.sections.count }};
+
+  state.passageId     = passageId;
+  state.attemptId     = attemptId;
+  state.totalSections = totalSecs;
+
+  // Load current section from the passage
+  const resp = await fetch('/api/reading/next-section/', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken': getCsrf()},
+    body: JSON.stringify({ attempt_id: attemptId }),
+  });
+  // If already past last section, treat as fresh start
+  if (resp.ok) {
+    const data = await resp.json();
+    if (data.done) {
+      showCompletionScreen(data.score, data.strategy);
+    } else {
+      renderSection(data.current_section, data.guidance, totalSecs);
+    }
+  }
+})();
+{% endif %}
+
+// ── Upload ─────────────────────────────────────────────────────
+async function uploadPassage() {
+  const text  = document.getElementById('passage-text').value.trim();
+  const title = document.getElementById('passage-title').value.trim();
+  const numSections = parseInt(document.getElementById('num-sections').value);
+
+  if (!text) { showToast('⚠️ Please paste a passage first.'); return; }
+
+  const btn    = document.getElementById('upload-btn');
+  const status = document.getElementById('upload-status');
+  btn.disabled = true;
+  status.textContent = 'Analyzing…';
+
+  try {
+    const resp = await fetch('/api/reading/upload/', {
+      method:  'POST',
+      headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+      body:    JSON.stringify({ title, text, num_sections: numSections }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Upload failed');
+
+    state.passageId     = data.passage_id;
+    state.attemptId     = data.attempt_id;
+    state.totalSections = data.total_sections;
+
+    document.getElementById('topbar-sub').textContent =
+      `${title || 'IELTS Passage'} · ${data.total_sections} sections · ${data.total_questions} questions`;
+    document.getElementById('strategy-btn').style.display = '';
+
+    renderSection(data.current_section, data.guidance, data.total_sections);
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  } finally {
+    btn.disabled = false;
+    status.textContent = '';
+  }
+}
+
+// ── Render a section ───────────────────────────────────────────
+function renderSection(sec, guidance, totalSections) {
+  state.currentSection = sec;
+
+  document.getElementById('upload-panel').style.display  = 'none';
+  document.getElementById('session-wrap').style.display  = 'flex';
+
+  // Guidance
+  document.getElementById('passage-guidance').textContent = guidance || '';
+
+  // Heading + body
+  document.getElementById('section-heading').textContent = sec.heading || '';
+  document.getElementById('section-body').textContent    = sec.body    || '';
+
+  // Progress dots
+  const track = document.getElementById('progress-track');
+  track.innerHTML = '';
+  for (let i = 1; i <= totalSections; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' +
+      (i < sec.order ? ' done' : i === sec.order ? ' current' : '');
+    track.appendChild(dot);
+  }
+  const lbl = document.createElement('span');
+  lbl.className = 'progress-label';
+  lbl.textContent = `Section ${sec.order} / ${totalSections}`;
+  track.appendChild(lbl);
+
+  // Questions
+  renderQuestions(sec.questions, sec.body);
+
+  // Action bar
+  const info = document.getElementById('action-info');
+  const btn  = document.getElementById('next-btn');
+  if (sec.order >= totalSections) {
+    info.textContent = 'Last section — answer all questions then finish.';
+    btn.textContent  = 'Finish & Get Strategy →';
+  } else {
+    info.textContent = `Answer the questions, then continue.`;
+    btn.textContent  = 'Next Section →';
+  }
+
+  // Scroll back to top
+  document.getElementById('passage-panel').scrollTop = 0;
+}
+
+// ── Render questions ───────────────────────────────────────────
+function renderQuestions(questions, sectionBody) {
+  const panel = document.getElementById('questions-panel');
+  panel.innerHTML = '';
+
+  if (!questions || !questions.length) {
+    panel.innerHTML = '<p style="font-size:0.8rem;color:var(--muted);padding:16px;">No questions for this section.</p>';
+    return;
+  }
+
+  questions.forEach(q => {
+    const existing = state.answeredQs[q.id];
+    const card = document.createElement('div');
+    card.className = 'q-card';
+    card.id = `q-${q.id}`;
+
+    let html = `<div class="q-label">Question ${q.order}</div>`;
+    html += `<div class="q-text">${escHtml(q.text)}</div>`;
+
+    if (existing) {
+      const cls = existing.correct ? 'correct' : (existing.score >= 0.25 ? 'partial' : 'incorrect');
+      html += `<div class="q-answered ${cls}">${escHtml(existing.feedback)}</div>`;
+    } else {
+      html += `<textarea class="q-answer" id="ans-${q.id}" rows="3" placeholder="Write your answer here…"></textarea>`;
+      html += `<div class="q-actions">
+        <button class="hint-btn" onclick="getHint(${q.id})">💡 Hint</button>
+        <button class="submit-btn" onclick="submitAnswer(${q.id})">✓ Submit</button>
+      </div>`;
+    }
+
+    html += `<div class="hint-box" id="hint-${q.id}"></div>`;
+    card.innerHTML = html;
+    panel.appendChild(card);
+  });
+}
+
+// ── Submit answer ──────────────────────────────────────────────
+async function submitAnswer(qId) {
+  const ta = document.getElementById(`ans-${qId}`);
+  if (!ta) return;
+  const answer = ta.value.trim();
+  if (!answer) { showToast('⚠️ Please write an answer first.'); return; }
+
+  const resp = await fetch('/api/reading/answer/', {
+    method:  'POST',
+    headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+    body:    JSON.stringify({ attempt_id: state.attemptId, question_id: qId, answer }),
+  });
+  const data = await resp.json();
+
+  state.answeredQs[qId] = data;
+
+  // Re-render question card
+  const card = document.getElementById(`q-${qId}`);
+  const q = state.currentSection.questions.find(q => q.id === qId);
+  if (!card || !q) return;
+
+  const cls = data.correct ? 'correct' : (data.score >= 0.25 ? 'partial' : 'incorrect');
+  card.querySelector('.q-text').insertAdjacentHTML('afterend',
+    `<div class="q-answered ${cls}">${escHtml(data.feedback)}</div>`
+  );
+  ta.remove();
+  const actRow = card.querySelector('.q-actions');
+  if (actRow) actRow.remove();
+}
+
+// ── Hint ───────────────────────────────────────────────────────
+async function getHint(qId) {
+  const hintBox = document.getElementById(`hint-${qId}`);
+  hintBox.style.display = 'block';
+  hintBox.textContent   = '…';
+
+  const resp = await fetch('/api/reading/hint/', {
+    method:  'POST',
+    headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+    body:    JSON.stringify({ attempt_id: state.attemptId, question_id: qId }),
+  });
+  const data = await resp.json();
+  hintBox.textContent = data.hint || '(no hint available)';
+}
+
+// ── Next section ───────────────────────────────────────────────
+async function nextSection() {
+  const btn = document.getElementById('next-btn');
+  btn.disabled = true;
+
+  const resp = await fetch('/api/reading/next-section/', {
+    method:  'POST',
+    headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+    body:    JSON.stringify({ attempt_id: state.attemptId }),
+  });
+  const data = await resp.json();
+
+  if (data.done) {
+    showCompletionScreen(data.score, data.strategy);
+  } else {
+    renderSection(data.current_section, data.guidance, state.totalSections);
+    btn.disabled = false;
+  }
+}
+
+// ── Completion screen ──────────────────────────────────────────
+function showCompletionScreen(score, strategy) {
+  const panel = document.getElementById('passage-panel');
+  const scoreText = (score !== null && score !== undefined)
+    ? Math.round(score * 100) + '%'
+    : 'N/A';
+
+  panel.innerHTML = `
+    <div style="padding:24px 0;animation:fadeIn 0.4s ease;">
+      <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:800;color:var(--green);margin-bottom:8px;">
+        🎉 Passage Complete!
+      </div>
+      <div style="font-size:1rem;color:var(--muted);margin-bottom:24px;">
+        You have finished all sections of this passage.
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:480px;margin-bottom:24px;">
+        <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:4px;">Overall Score</div>
+        <div style="font-family:'Fraunces',serif;font-size:2.4rem;font-weight:800;color:var(--cyan);">${scoreText}</div>
+      </div>
+      <div style="font-size:0.85rem;line-height:1.8;white-space:pre-wrap;max-width:560px;margin-bottom:24px;">${escHtml(strategy || '')}</div>
+      <button class="btn-primary" onclick="resetPassage()">Start a New Passage →</button>
+    </div>`;
+
+  document.getElementById('questions-panel').innerHTML = '';
+  document.getElementById('action-bar') && (document.getElementById('action-bar').style.display = 'none');
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('strategy-btn').style.display = 'none';
+}
+
+// ── Strategy ───────────────────────────────────────────────────
+async function showStrategy() {
+  document.getElementById('strategy-modal').classList.add('open');
+  document.getElementById('strategy-content').textContent = 'Loading…';
+
+  const resp = await fetch('/api/reading/strategy/');
+  const data = await resp.json();
+  document.getElementById('strategy-content').textContent = data.strategy || 'No strategy yet.';
+}
+
+function closeStrategy() {
+  document.getElementById('strategy-modal').classList.remove('open');
+}
+
+// ── Reset ──────────────────────────────────────────────────────
+function resetPassage() {
+  state = { passageId:null, attemptId:null, totalSections:0, currentSection:null, answeredQs:{} };
+  document.getElementById('session-wrap').style.display  = 'none';
+  document.getElementById('upload-panel').style.display  = 'flex';
+  document.getElementById('strategy-btn').style.display  = 'none';
+  document.getElementById('passage-text').value  = '';
+  document.getElementById('passage-title').value = '';
+  document.getElementById('topbar-sub').textContent = 'Upload a passage to begin guided reading';
+}
+
+// ── Utility ────────────────────────────────────────────────────
+function getCsrf() {
+  return document.cookie.split(';')
+    .map(c => c.trim()).filter(c => c.startsWith('csrftoken='))
+    .map(c => c.slice('csrftoken='.length))[0] || '';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
