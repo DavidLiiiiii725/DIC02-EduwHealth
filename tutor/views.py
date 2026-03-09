@@ -652,7 +652,6 @@ def api_reading_strategy(request):
     return JsonResponse({'strategy': strategy})
 
 
-@csrf_exempt
 @require_POST
 def api_reading_assistant(request):
     """Return a proactive assistant tip for the current attempt state.

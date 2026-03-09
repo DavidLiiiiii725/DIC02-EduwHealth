@@ -621,9 +621,9 @@ def _build_assistant_tip(
         adhd_tips = [
             "⚡ Focus: trace each line with your finger as you read.",
             "⚡ Read the first sentence, pause, then continue.",
-            "⚡ If you lose focus, return to the paragraph letter.",
+            "⚡ If you lose focus, come back to the paragraph heading and start again.",
             "⚡ One sentence at a time — don't rush.",
-            "⚡ Look at the paragraph heading before you start reading.",
+            "⚡ Glance at the paragraph heading before you start reading the body text.",
         ]
         tip = adhd_tips[(para_order - 1) % len(adhd_tips)]
         lines.append(f"\n{tip}")
