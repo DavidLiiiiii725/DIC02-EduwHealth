@@ -103,7 +103,7 @@
   border:1px solid var(--border2);
   border-radius:var(--radius);
   color:var(--text);
-  font-family:'DM Mono',monospace;
+  font-family:'Lexend',sans-serif;
   font-size:0.85rem;
   padding:10px 14px;
   resize:none;
@@ -167,7 +167,7 @@
   text-align:center;
   transition:all 0.3s;
 }
-.risk-score { font-family:'Fraunces',serif; font-size:1.6rem; font-weight:600; }
+.risk-score { font-family:'Lexend',sans-serif; font-size:1.6rem; font-weight:600; }
 .risk-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); }
 
 /* agent avatar colors */
@@ -186,7 +186,7 @@
   <!-- Sidebar -->
   <div class="sidebar">
     <div style="padding:20px 16px 24px;border-bottom:1px solid var(--border);margin-bottom:12px;">
-      <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:800;">EduwHealth <span style="color:var(--cyan)">2.0</span></div>
+      <div style="font-family:'Lexend',sans-serif;font-size:1rem;font-weight:800;">EduwHealth <span style="color:var(--blue)">2.0</span></div>
       <div style="font-size:0.62rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.1em;">Cognition-Aware Tutor</div>
     </div>
     <nav style="padding:0 10px;flex:1;display:flex;flex-direction:column;gap:2px;">
@@ -228,7 +228,7 @@
     <div class="messages-wrap" id="messages-wrap">
       {% if not messages %}
       <div style="text-align:center;padding:60px 20px;color:var(--muted);">
-        <div style="font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:8px;">Hello, {{ learner.display_name }} 👋</div>
+        <div style="font-family:'Lexend',sans-serif;font-size:1.2rem;margin-bottom:8px;">Hello, {{ learner.display_name }} 👋</div>
         <div style="font-size:0.8rem;">Ask anything — I'll adapt to how you're learning today.</div>
       </div>
       {% endif %}

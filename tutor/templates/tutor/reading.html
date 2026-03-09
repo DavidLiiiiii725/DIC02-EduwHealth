@@ -22,7 +22,7 @@
   background:var(--surface);
   flex-shrink:0;
 }
-.reading-topbar-title { font-family:'Fraunces',serif; font-size:1.1rem; font-weight:600; }
+.reading-topbar-title { font-family:'Lexend',sans-serif; font-size:1.1rem; font-weight:600; }
 .reading-topbar-sub   { font-size:0.68rem; color:var(--muted); margin-top:2px; }
 
 .reading-body { flex:1; display:flex; overflow:hidden; }
@@ -37,8 +37,8 @@
   background:var(--surface); border:1px solid var(--border);
   border-radius:var(--radius); padding:32px; width:100%; margin-bottom:20px;
 }
-.upload-card h2 { font-family:'Fraunces',serif; font-size:1.3rem; margin-bottom:8px; }
-.upload-card p  { font-size:0.8rem; color:var(--muted); margin-bottom:20px; line-height:1.7; }
+.upload-card h2 { font-family:'Lexend',sans-serif; font-size:1.3rem; margin-bottom:8px; }
+.upload-card p  { font-size:0.9rem; color:var(--muted); margin-bottom:20px; line-height:1.8; }
 
 /* ── PDF drop zone ── */
 .pdf-drop-zone {
@@ -53,8 +53,8 @@
 }
 .pdf-drop-zone:hover,
 .pdf-drop-zone.drag-over {
-  border-color:var(--cyan);
-  background:rgba(0,212,200,0.04);
+  border-color:var(--blue);
+  background:rgba(26,95,204,0.04);
 }
 .pdf-drop-zone input[type=file] {
   position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
@@ -66,7 +66,7 @@
 /* ── File badge (shown after selection) ── */
 .pdf-badge {
   display:none; align-items:center; gap:12px;
-  background:rgba(0,212,200,0.08); border:1px solid rgba(0,212,200,0.25);
+  background:rgba(26,95,204,0.06); border:1px solid rgba(26,95,204,0.2);
   border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:16px;
 }
 .pdf-badge.visible { display:flex; }
@@ -83,29 +83,29 @@
 .form-group { margin-bottom:16px; }
 .form-label { font-size:0.72rem; color:var(--muted); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:0.1em; }
 .form-input {
-  width:100%; background:var(--surface2); border:1px solid var(--border2);
-  border-radius:var(--radius-sm); color:var(--text); font-family:'DM Mono',monospace;
-  font-size:0.83rem; padding:10px 14px; outline:none; transition:border-color 0.15s;
+  width:100%; background:var(--bg); border:1px solid var(--border2);
+  border-radius:var(--radius-sm); color:var(--text); font-family:'Lexend',sans-serif;
+  font-size:0.9rem; padding:10px 14px; outline:none; transition:border-color 0.15s;
 }
-.form-input:focus { border-color:var(--cyan); }
-textarea.form-input { min-height:220px; resize:vertical; line-height:1.6; }
+.form-input:focus { border-color:var(--blue); }
+textarea.form-input { min-height:220px; resize:vertical; line-height:1.75; }
 
 .btn-primary {
-  background:var(--cyan); color:#080C14;
+  background:var(--blue); color:#fff;
   border:none; border-radius:var(--radius-sm);
-  padding:10px 24px; font-family:'DM Mono',monospace; font-size:0.85rem;
+  padding:10px 24px; font-family:'Lexend',sans-serif; font-size:0.9rem;
   font-weight:500; cursor:pointer; transition:all 0.15s;
 }
-.btn-primary:hover { opacity:0.85; }
+.btn-primary:hover { background:#1650a8; }
 .btn-primary:disabled { opacity:0.4; cursor:default; }
 
 .btn-secondary {
   background:transparent; color:var(--muted);
   border:1px solid var(--border2); border-radius:var(--radius-sm);
-  padding:8px 18px; font-family:'DM Mono',monospace; font-size:0.8rem;
+  padding:8px 18px; font-family:'Lexend',sans-serif; font-size:0.85rem;
   cursor:pointer; transition:all 0.15s;
 }
-.btn-secondary:hover { border-color:var(--cyan); color:var(--cyan); }
+.btn-secondary:hover { border-color:var(--blue); color:var(--blue); }
 
 /* ── Reading session layout ── */
 .session-wrap { flex:1; display:flex; overflow:hidden; }
@@ -120,8 +120,8 @@ textarea.form-input { min-height:220px; resize:vertical; line-height:1.6; }
   font-size:0.82rem; line-height:1.7; white-space:pre-wrap;
 }
 .passage-heading {
-  font-family:'Fraunces',serif; font-size:1.2rem; font-weight:600;
-  margin-bottom:14px; color:var(--cyan);
+  font-family:'Lexend',sans-serif; font-size:1.2rem; font-weight:600;
+  margin-bottom:14px; color:var(--text);
 }
 .passage-body {
   font-size:0.86rem; line-height:1.85; white-space:pre-wrap; color:var(--text);
@@ -137,7 +137,7 @@ textarea.form-input { min-height:220px; resize:vertical; line-height:1.6; }
   flex-shrink:0;
 }
 .progress-dot.done    { background:var(--green); }
-.progress-dot.current { background:var(--cyan); box-shadow:0 0 8px rgba(0,212,200,0.5); }
+.progress-dot.current { background:var(--blue); box-shadow:0 0 8px rgba(26,95,204,0.4); }
 .progress-label { font-size:0.68rem; color:var(--muted); margin-left:6px; }
 
 /* ── Questions panel ── */
@@ -152,14 +152,14 @@ textarea.form-input { min-height:220px; resize:vertical; line-height:1.6; }
 .q-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:8px; }
 .q-text  { font-size:0.82rem; line-height:1.6; margin-bottom:12px; }
 .q-answered { font-size:0.75rem; padding:6px 10px; border-radius:4px; margin-bottom:8px; }
-.q-answered.correct   { background:rgba(0,229,160,0.1); color:var(--green); border:1px solid rgba(0,229,160,0.25); }
-.q-answered.incorrect { background:rgba(255,77,106,0.1); color:var(--red);   border:1px solid rgba(255,77,106,0.25); }
-.q-answered.partial   { background:rgba(255,179,64,0.1); color:var(--amber); border:1px solid rgba(255,179,64,0.25); }
+.q-answered.correct   { background:rgba(26,122,80,0.08); color:var(--green); border:1px solid rgba(26,122,80,0.2); }
+.q-answered.incorrect { background:rgba(192,0,46,0.08);  color:var(--red);   border:1px solid rgba(192,0,46,0.2); }
+.q-answered.partial   { background:rgba(160,92,0,0.08);  color:var(--amber); border:1px solid rgba(160,92,0,0.2); }
 textarea.q-answer {
-  width:100%; background:var(--surface2); border:1px solid var(--border2);
-  border-radius:var(--radius-sm); color:var(--text); font-family:'DM Mono',monospace;
-  font-size:0.8rem; padding:8px 12px; resize:vertical; min-height:70px;
-  outline:none; transition:border-color 0.15s; line-height:1.5;
+  width:100%; background:var(--bg); border:1px solid var(--border2);
+  border-radius:var(--radius-sm); color:var(--text); font-family:'Lexend',sans-serif;
+  font-size:0.9rem; padding:8px 12px; resize:vertical; min-height:70px;
+  outline:none; transition:border-color 0.15s; line-height:1.65;
 }
 textarea.q-answer:focus { border-color:var(--blue); }
 .q-actions { display:flex; gap:8px; }
@@ -177,8 +177,8 @@ textarea.q-answer:focus { border-color:var(--blue); }
 .submit-btn:hover { opacity:0.85; }
 .hint-box {
   margin-top:10px; padding:10px 12px;
-  background:rgba(255,179,64,0.07); border:1px solid rgba(255,179,64,0.2);
-  border-radius:var(--radius-sm); font-size:0.78rem; line-height:1.6;
+  background:rgba(160,92,0,0.06); border:1px solid rgba(160,92,0,0.2);
+  border-radius:var(--radius-sm); font-size:0.88rem; line-height:1.7;
   white-space:pre-wrap; display:none;
 }
 
@@ -192,31 +192,31 @@ textarea.q-answer:focus { border-color:var(--blue); }
 
 /* ── Strategy modal ── */
 .modal-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  position:fixed; inset:0; background:rgba(255,255,255,0.85);
   display:none; align-items:center; justify-content:center; z-index:100;
 }
 .modal-overlay.open { display:flex; }
 .modal-box {
-  background:var(--surface); border:1px solid var(--border);
+  background:var(--bg); border:1px solid var(--border);
   border-radius:var(--radius); padding:32px; max-width:560px; width:90%;
-  max-height:80vh; overflow-y:auto;
+  max-height:80vh; overflow-y:auto; box-shadow:0 4px 32px rgba(0,0,0,0.15);
 }
-.modal-box h2 { font-family:'Fraunces',serif; font-size:1.2rem; margin-bottom:16px; }
-.modal-content { font-size:0.82rem; line-height:1.75; white-space:pre-wrap; }
+.modal-box h2 { font-family:'Lexend',sans-serif; font-size:1.2rem; margin-bottom:16px; }
+.modal-content { font-size:0.88rem; line-height:1.85; white-space:pre-wrap; }
 .modal-close {
-  margin-top:20px; background:var(--faint); border:1px solid var(--border2);
+  margin-top:20px; background:var(--surface); border:1px solid var(--border2);
   border-radius:var(--radius-sm); color:var(--text); padding:8px 20px;
-  font-size:0.8rem; cursor:pointer;
+  font-size:0.85rem; cursor:pointer; font-family:'Lexend',sans-serif;
 }
 
 /* ── Toast ── */
 .toast {
   position:fixed; bottom:24px; right:24px;
-  background:var(--surface); border:1px solid var(--border);
+  background:var(--bg); border:1px solid var(--border);
   border-radius:var(--radius-sm); padding:12px 18px;
-  font-size:0.8rem; box-shadow:var(--shadow);
+  font-size:0.85rem; box-shadow:0 2px 16px rgba(0,0,0,0.15);
   transform:translateY(60px); opacity:0; transition:all 0.3s;
-  z-index:200;
+  z-index:200; color:var(--text);
 }
 .toast.show { transform:translateY(0); opacity:1; }
 
@@ -228,37 +228,37 @@ textarea.q-answer:focus { border-color:var(--blue); }
 ═══════════════════════════════════════════════════════ */
 .passage-panel {
   background: #ffffff;
-  color: #1a1a1a;
+  color: #111111;
 }
 .passage-guidance {
-  background: rgba(0,80,200,0.06);
-  border: 1px solid rgba(0,80,200,0.2);
+  background: rgba(26,95,204,0.06);
+  border: 1px solid rgba(26,95,204,0.18);
   border-radius: var(--radius-sm);
   padding: 14px 18px;
   margin-bottom: 20px;
   font-family: 'Lexend', sans-serif;
   font-size: 1rem;
-  line-height: 1.75;
-  color: #1a1a1a;
+  line-height: 1.8;
+  color: #111111;
   white-space: normal;
 }
 .passage-guidance p { margin: 0.4em 0; }
 .passage-guidance strong { font-weight: 600; }
 .passage-heading {
   font-family: 'Lexend', sans-serif;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 600;
   margin-bottom: 16px;
-  color: #0a0a0a;
-  border-bottom: 2px solid #1a1a1a;
+  color: #111111;
+  border-bottom: 2px solid #111111;
   padding-bottom: 8px;
 }
-/* Paragraph blocks shown one at a time */
+/* Paragraph image container */
 .para-block {
   font-family: 'Lexend', sans-serif;
-  font-size: 1.1rem;
-  line-height: 2.2;
-  color: #1a1a1a;
+  font-size: 1.05rem;
+  line-height: 2.0;
+  color: #111111;
   padding: 10px 14px 10px 16px;
   margin-bottom: 12px;
   border-left: 4px solid transparent;
@@ -267,12 +267,22 @@ textarea.q-answer:focus { border-color:var(--blue); }
   animation: fadeIn 0.35s ease;
 }
 .para-block.current {
-  border-left-color: #2D7FFF;
-  background: rgba(45,127,255,0.05);
+  border-left-color: #1A5FCC;
+  background: rgba(26,95,204,0.04);
 }
 .para-block.past {
-  border-left-color: #ccc;
+  border-left-color: #d0d0d0;
   color: #444;
+}
+/* Paragraph image */
+.para-img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 4px;
 }
 /* Paragraph navigation bar */
 .para-nav-bar {
@@ -285,11 +295,11 @@ textarea.q-answer:focus { border-color:var(--blue); }
 }
 .para-counter {
   font-family: 'Lexend', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #555;
 }
 .btn-para-next {
-  background: #2D7FFF;
+  background: #1A5FCC;
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
@@ -308,40 +318,40 @@ textarea.q-answer:focus { border-color:var(--blue); }
   border-radius: var(--radius-sm);
   padding: 7px 14px;
   font-family: 'Lexend', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
-.btn-show-all:hover { border-color: #2D7FFF; color: #2D7FFF; }
-/* Questions panel keep dark, override passage-panel's white */
-.questions-panel { background: var(--surface2); }
+.btn-show-all:hover { border-color: #1A5FCC; color: #1A5FCC; }
+/* Questions panel */
+.questions-panel { background: #f5f5f5; }
 .hint-box {
   font-family: 'Lexend', sans-serif;
-  font-size: 0.85rem;
-  line-height: 1.7;
+  font-size: 0.9rem;
+  line-height: 1.75;
 }
 .hint-box p { margin: 0.3em 0; }
 /* Progress dots on white panel */
-.progress-dot { border: 1px solid #ccc; background: #ddd; }
-.progress-dot.done    { background: #00C98A; border-color: #00C98A; }
-.progress-dot.current { background: #2D7FFF; border-color: #2D7FFF; box-shadow: 0 0 8px rgba(45,127,255,0.45); }
-.progress-label { color: #555; }
+.progress-dot { border: 1px solid #d0d0d0; background: #e0e0e0; }
+.progress-dot.done    { background: #1A7A50; border-color: #1A7A50; }
+.progress-dot.current { background: #1A5FCC; border-color: #1A5FCC; box-shadow: 0 0 8px rgba(26,95,204,0.35); }
+.progress-label { color: #555; font-family: 'Lexend', sans-serif; font-size: 0.75rem; }
 /* Questions locked overlay until all paragraphs read */
 .questions-locked-msg {
   padding: 24px 20px;
   font-family: 'Lexend', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--muted);
   text-align: center;
   line-height: 1.8;
 }
-.q-text { font-family: 'Lexend', sans-serif; font-size: 0.88rem; line-height: 1.65; }
-.q-answer { font-family: 'Lexend', sans-serif; font-size: 0.88rem; }
+.q-text { font-family: 'Lexend', sans-serif; font-size: 0.9rem; line-height: 1.7; }
+.q-answer { font-family: 'Lexend', sans-serif; font-size: 0.9rem; }
 /* Markdown-rendered content in modal / completion */
 .modal-content p { margin: 0.4em 0; }
-.modal-content h3 { margin: 0.8em 0 0.4em; font-size: 1rem; }
+.modal-content h3 { margin: 0.8em 0 0.4em; font-size: 1rem; font-family: 'Lexend', sans-serif; }
 .modal-content ul, .modal-content ol { padding-left: 1.4em; margin: 0.3em 0; }
-.modal-content li { margin: 0.2em 0; line-height: 1.6; }
+.modal-content li { margin: 0.2em 0; line-height: 1.7; }
 </style>
 </head>
 <body>
@@ -350,7 +360,7 @@ textarea.q-answer:focus { border-color:var(--blue); }
   <!-- Sidebar -->
   <div class="sidebar">
     <div style="padding:20px 16px 24px;border-bottom:1px solid var(--border);margin-bottom:12px;">
-      <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:800;">EduwHealth <span style="color:var(--cyan)">2.0</span></div>
+      <div style="font-family:'Lexend',sans-serif;font-size:1rem;font-weight:700;">EduwHealth <span style="color:var(--blue)">2.0</span></div>
       <div style="font-size:0.62rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.1em;">IELTS Learning</div>
     </div>
     <nav style="padding:0 10px;flex:1;display:flex;flex-direction:column;gap:2px;">
@@ -387,8 +397,9 @@ textarea.q-answer:focus { border-color:var(--blue); }
         <div class="upload-card">
           <h2>Upload an IELTS Reading PDF</h2>
           <p>
-            Select or drag-and-drop a PDF containing your IELTS reading passage and questions.<br>
-            The agent will extract the text, split it into sections, and guide you through it one part at a time.
+            Select or drag-and-drop a PDF containing your complete IELTS reading passage and questions.<br>
+            The agent will convert the passage into paragraph images (A, B, C…) for distraction-free reading,
+            and extract the comprehension questions for guided practice.
           </p>
 
           <!-- Drag-and-drop zone -->
@@ -414,30 +425,21 @@ textarea.q-answer:focus { border-color:var(--blue); }
             <label class="form-label" for="passage-title">Passage Title (optional — defaults to filename)</label>
             <input type="text" id="passage-title" class="form-input" placeholder="e.g. The History of the Internet">
           </div>
-          <div class="form-group">
-            <label class="form-label" for="num-sections">Number of Sections</label>
-            <select id="num-sections" class="form-input" style="height:40px;">
-              <option value="2">2 sections</option>
-              <option value="3" selected>3 sections (IELTS standard)</option>
-              <option value="4">4 sections</option>
-              <option value="5">5 sections</option>
-            </select>
-          </div>
           <div style="display:flex;gap:10px;align-items:center;">
             <button class="btn-primary" id="upload-btn" onclick="uploadPassage()" disabled>Start Reading →</button>
-            <span id="upload-status" style="font-size:0.75rem;color:var(--muted);"></span>
+            <span id="upload-status" style="font-size:0.8rem;color:var(--muted);"></span>
           </div>
         </div>
 
-        <!-- Sample passages hint -->
-        <div class="upload-card" style="opacity:0.7;">
-          <h2 style="font-size:1rem;">💡 Tips for ADHD & Learning Differences</h2>
-          <ul style="font-size:0.8rem;color:var(--muted);line-height:2;padding-left:18px;">
-            <li>The agent breaks the passage into bite-sized sections.</li>
-            <li>Read each section <strong>before</strong> answering its questions.</li>
-            <li>Use the <strong>💡 Hint</strong> button if you get stuck — no penalty!</li>
-            <li>Check your <strong>Strategy</strong> report after each session.</li>
-            <li>Take a short break between sections if you feel fatigued.</li>
+        <!-- ADHD tips -->
+        <div class="upload-card" style="opacity:0.85;">
+          <h2 style="font-size:1rem;">⚡ ADHD &amp; Accessibility Tips</h2>
+          <ul style="font-size:0.9rem;color:var(--muted);line-height:2.1;padding-left:18px;">
+            <li>Each <strong>paragraph</strong> (A, B, C…) is displayed as a crisp image — no reformatting.</li>
+            <li>Navigate <strong>one paragraph at a time</strong> to avoid overwhelm.</li>
+            <li>Use the <strong>💡 Hint</strong> button freely — it will never penalise you.</li>
+            <li>Your <strong>adaptive strategy</strong> updates automatically as you answer.</li>
+            <li>Take a 2-minute movement break after every 3 paragraphs.</li>
           </ul>
         </div>
       </div>
@@ -464,11 +466,11 @@ textarea.q-answer:focus { border-color:var(--blue); }
         </div>
 
         <!-- Questions + action bar wrapper -->
-        <div style="display:flex;flex-direction:column;width:340px;min-width:300px;border-left:1px solid var(--border);">
+        <div style="display:flex;flex-direction:column;width:360px;min-width:300px;border-left:1px solid var(--border);">
           <div class="questions-panel" id="questions-panel"></div>
           <div class="action-bar" id="action-bar">
             <span class="action-bar-info" id="action-info"></span>
-            <button class="btn-primary" id="next-btn" onclick="nextSection()">Next Section →</button>
+            <button class="btn-primary" id="next-btn" onclick="nextSection()">Next Paragraph →</button>
           </div>
         </div>
 
@@ -589,10 +591,10 @@ let state = {
   passageId:      null,
   attemptId:      null,
   totalSections:  0,
-  currentSection: null,   // { id, order, heading, body, questions:[{id,order,text}] }
+  currentSection: null,   // { id, order, heading, body, image_url, questions:[…] }
   answeredQs:     {},     // qId -> {correct, score, feedback}
-  paragraphs:     [],     // paragraphs of current section body
-  shownParaCount: 0,      // how many paragraphs are currently visible
+  paragraphs:     [],     // text paragraphs (fallback when no image_url)
+  shownParaCount: 0,      // how many paragraphs are currently visible (text mode)
 };
 
 // ── Init ───────────────────────────────────────────────────────
@@ -680,18 +682,16 @@ async function uploadPassage() {
   if (!_selectedFile) { showToast('⚠️ Please select a PDF first.'); return; }
 
   const title = document.getElementById('passage-title').value.trim();
-  const numSections = document.getElementById('num-sections').value;
 
   const btn    = document.getElementById('upload-btn');
   const status = document.getElementById('upload-status');
   btn.disabled = true;
-  status.textContent = 'Extracting text from PDF…';
+  status.textContent = 'Converting PDF to paragraph images…';
 
   try {
     const form = new FormData();
     form.append('pdf', _selectedFile);
     form.append('title', title);
-    form.append('num_sections', numSections);
 
     const resp = await fetch('/api/reading/upload/', {
       method:  'POST',
@@ -706,7 +706,7 @@ async function uploadPassage() {
     state.totalSections = data.total_sections;
 
     document.getElementById('topbar-sub').textContent =
-      `${data.title || _selectedFile.name} · ${data.total_sections} sections · ${data.total_questions} questions`;
+      `${data.title || _selectedFile.name} · ${data.total_sections} paragraphs · ${data.total_questions} questions`;
     document.getElementById('strategy-btn').style.display = '';
 
     renderSection(data.current_section, data.guidance, data.total_sections);
@@ -718,17 +718,20 @@ async function uploadPassage() {
   }
 }
 
-// ── Render a section ───────────────────────────────────────────
+// ── Render a section (paragraph image or text) ─────────────────
 function renderSection(sec, guidance, totalSections) {
   state.currentSection = sec;
 
-  // Split body into paragraphs (non-empty), handle both Unix and Windows line endings
-  state.paragraphs = (sec.body || '')
+  // Determine if this section has an image or text body
+  const hasImage = sec && sec.image_url;
+
+  // For text-fallback mode: split body into paragraphs
+  state.paragraphs = hasImage ? [] : (sec.body || '')
     .split(/(\r?\n){2,}/)
     .map(p => p.trim())
     .filter(p => p.length > 0 && !/^(\r?\n)+$/.test(p));
-  if (!state.paragraphs.length) state.paragraphs = [sec.body || ''];
-  state.shownParaCount = 1;
+  if (!hasImage && !state.paragraphs.length) state.paragraphs = [sec.body || ''];
+  state.shownParaCount = hasImage ? 0 : 1;
 
   document.getElementById('upload-panel').style.display  = 'none';
   document.getElementById('session-wrap').style.display  = 'flex';
@@ -759,25 +762,25 @@ function renderSection(sec, guidance, totalSections) {
     }
     const lbl = document.createElement('span');
     lbl.className = 'progress-label';
-    lbl.textContent = `Section ${sec.order} / ${totalSections}`;
+    lbl.textContent = `Paragraph ${sec.order} / ${totalSections}`;
     track.appendChild(lbl);
   }
 
-  // Render first paragraph
+  // Render passage content (image or text)
   _renderParagraphs();
 
-  // Questions (locked until all paragraphs shown)
+  // Questions panel
   _renderQuestionsPanel();
 
   // Action bar
   const info = document.getElementById('action-info');
   if (nextBtn && info) {
     if (sec.order >= totalSections) {
-      info.textContent = 'Last section — answer all questions then finish.';
+      info.textContent = 'Last paragraph — answer questions then finish.';
       nextBtn.textContent  = 'Finish & Get Strategy →';
     } else {
-      info.textContent = `Answer the questions, then continue.`;
-      nextBtn.textContent  = 'Next Section →';
+      info.textContent = 'Answer questions, then continue.';
+      nextBtn.textContent  = 'Next Paragraph →';
     }
   }
 
@@ -785,13 +788,35 @@ function renderSection(sec, guidance, totalSections) {
   document.getElementById('passage-panel').scrollTop = 0;
 }
 
-// ── Render visible paragraphs ──────────────────────────────────
+// ── Render visible paragraphs (image or text) ─────────────────
 function _renderParagraphs() {
   const wrap = document.getElementById('section-body-wrap');
   if (!wrap) return;
   wrap.innerHTML = '';
-  const total = state.paragraphs.length;
 
+  const sec = state.currentSection;
+  const hasImage = sec && sec.image_url;
+
+  if (hasImage) {
+    // Image mode: show the paragraph as a crisp image
+    const div = document.createElement('div');
+    div.className = 'para-block current';
+    const img = document.createElement('img');
+    img.src = sec.image_url;
+    img.className = 'para-img';
+    img.alt = sec.heading || 'Paragraph';
+    img.loading = 'eager';
+    div.appendChild(img);
+    wrap.appendChild(div);
+
+    // Hide paragraph nav bar (not needed in image mode; navigation = next section)
+    const navBar = document.getElementById('para-nav-bar');
+    if (navBar) navBar.style.display = 'none';
+    return;
+  }
+
+  // Text fallback mode
+  const total = state.paragraphs.length;
   for (let i = 0; i < state.shownParaCount; i++) {
     const div = document.createElement('div');
     const isCurrent = (i === state.shownParaCount - 1);
@@ -800,7 +825,7 @@ function _renderParagraphs() {
     wrap.appendChild(div);
   }
 
-  // Update paragraph nav bar
+  // Update paragraph nav bar (text mode only)
   const navBar = document.getElementById('para-nav-bar');
   const counter = document.getElementById('para-counter');
   if (navBar && counter) {
@@ -809,11 +834,15 @@ function _renderParagraphs() {
   }
 }
 
-// ── Render questions panel (locked until all paragraphs shown) ─
+// ── Render questions panel ─────────────────────────────────────
+// In image mode: questions are always shown immediately.
+// In text mode: questions are shown only after all paragraphs viewed.
 function _renderQuestionsPanel() {
   const panel = document.getElementById('questions-panel');
   if (!panel) return;
-  const allShown = state.shownParaCount >= state.paragraphs.length;
+  const sec = state.currentSection;
+  const hasImage = sec && sec.image_url;
+  const allShown = hasImage || state.shownParaCount >= state.paragraphs.length;
 
   if (!allShown) {
     panel.innerHTML = `<div class="questions-locked-msg">
@@ -961,18 +990,18 @@ function showCompletionScreen(score, strategy) {
   const strategyHtml = strategy ? marked.parse(strategy) : '';
 
   panel.innerHTML = `
-    <div style="padding:24px 0;animation:fadeIn 0.4s ease;font-family:'Lexend',sans-serif;color:#1a1a1a;">
-      <div style="font-family:'Lexend',sans-serif;font-size:2rem;font-weight:700;color:#00897B;margin-bottom:8px;">
+    <div style="padding:24px 0;animation:fadeIn 0.4s ease;font-family:'Lexend',sans-serif;color:#111111;">
+      <div style="font-family:'Lexend',sans-serif;font-size:2rem;font-weight:700;color:#1A7A50;margin-bottom:8px;">
         🎉 Passage Complete!
       </div>
       <div style="font-size:1rem;color:#555;margin-bottom:24px;">
-        You have finished all sections of this passage.
+        You have finished all paragraphs of this passage.
       </div>
-      <div style="background:#f5f5f5;border:1px solid #ddd;border-radius:var(--radius);padding:20px;max-width:480px;margin-bottom:24px;">
+      <div style="background:#f5f5f5;border:1px solid #d0d0d0;border-radius:var(--radius);padding:20px;max-width:480px;margin-bottom:24px;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;color:#777;margin-bottom:4px;">Overall Score</div>
-        <div style="font-family:'Lexend',sans-serif;font-size:2.4rem;font-weight:700;color:#2D7FFF;">${scoreText}</div>
+        <div style="font-family:'Lexend',sans-serif;font-size:2.4rem;font-weight:700;color:#1A5FCC;">${scoreText}</div>
       </div>
-      <div style="font-size:0.95rem;line-height:1.85;max-width:560px;margin-bottom:24px;">${strategyHtml}</div>
+      <div style="font-size:0.95rem;line-height:1.9;max-width:560px;margin-bottom:24px;">${strategyHtml}</div>
       <button class="btn-primary" onclick="resetPassage()">Start a New Passage →</button>
     </div>`;
 
@@ -1031,7 +1060,7 @@ function resetPassage() {
   const actionBar = document.getElementById('action-bar');
   if (actionBar) actionBar.style.display = '';
   const nextBtn = document.getElementById('next-btn');
-  if (nextBtn) { nextBtn.style.display = ''; nextBtn.disabled = false; nextBtn.textContent = 'Next Section →'; }
+  if (nextBtn) { nextBtn.style.display = ''; nextBtn.disabled = false; nextBtn.textContent = 'Next Paragraph →'; }
 
   // Clear questions panel
   const qPanel = document.getElementById('questions-panel');

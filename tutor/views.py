@@ -337,12 +337,14 @@ def reading(request):
 @csrf_exempt
 @require_POST
 def api_reading_upload(request):
-    """Parse and store a new IELTS reading passage from an uploaded PDF.
+    """Process an uploaded IELTS PDF: convert to paragraph images, extract questions.
 
     Request: multipart/form-data
-        pdf         (file, required) — PDF file containing the passage + questions
-        title       (str, optional)  — passage title; defaults to the filename stem
-        num_sections (str, optional) — number of sections (2–5, default 3)
+        pdf   (file, required) — PDF file containing the IELTS passage + questions
+        title (str, optional)  — passage title; defaults to the filename stem
+
+    The passage body is represented as PNG images (one per labelled paragraph A–I).
+    Questions are extracted from the PDF's native text structure (no OCR).
     """
     pdf_file = request.FILES.get('pdf')
     if not pdf_file:
@@ -351,33 +353,13 @@ def api_reading_upload(request):
     if not pdf_file.name.lower().endswith('.pdf'):
         return JsonResponse({'error': 'Only PDF files are supported.'}, status=400)
 
-    # ── Extract text from PDF ─────────────────────────────────────
-    try:
-        import io
-        from pypdf import PdfReader
-        reader = PdfReader(io.BytesIO(pdf_file.read()))
-        pages_text = []
-        for page in reader.pages:
-            text = page.extract_text() or ''
-            if text.strip():
-                pages_text.append(text)
-        raw_text = '\n\n'.join(pages_text).strip()
-    except Exception as e:
-        return JsonResponse({'error': f'Could not read PDF: {e}'}, status=400)
-
-    if not raw_text:
-        return JsonResponse({'error': 'The PDF appears to be empty or contains only images. Please upload a text-based PDF.'}, status=400)
+    pdf_bytes = pdf_file.read()
 
     # ── Title: prefer explicit param, then filename stem ──────────
     title = request.POST.get('title', '').strip()
     if not title:
         import os
         title = os.path.splitext(pdf_file.name)[0].replace('_', ' ').replace('-', ' ').strip() or 'IELTS Reading Passage'
-
-    try:
-        num_sections = max(2, min(5, int(request.POST.get('num_sections', 3))))
-    except (ValueError, TypeError):
-        num_sections = 3
 
     learner = _get_or_create_learner(request)
 
@@ -387,50 +369,65 @@ def api_reading_upload(request):
     # Cancel any open attempts
     ReadingAttempt.objects.filter(learner=learner, completed=False).update(completed=True)
 
-    from agents.reading_agent import parse_passage
-    parsed = parse_passage(raw_text, num_sections=num_sections)
-
+    # ── Create passage record first (need ID for image naming) ────
     passage = IELTSPassage.objects.create(
         learner=learner,
         title=title,
-        raw_text=raw_text,
+        raw_text='',  # passage text is in images; questions extracted separately
     )
 
-    # Persist sections and questions
+    # ── Convert PDF to paragraph images ──────────────────────────
+    from django.conf import settings
+    from agents.reading_agent import extract_paragraph_images, extract_questions_from_pdf
+
+    images_dir = str(settings.MEDIA_ROOT / 'passage_images')
+    try:
+        paragraphs = extract_paragraph_images(pdf_bytes, images_dir, passage.id)
+    except Exception as e:
+        passage.delete()
+        return JsonResponse({'error': f'Could not convert PDF to images: {e}'}, status=400)
+
+    if not paragraphs:
+        passage.delete()
+        return JsonResponse({'error': 'No paragraphs found in the PDF. Please upload a standard IELTS reading passage.'}, status=400)
+
+    # ── Extract questions from native PDF text (not OCR) ─────────
+    try:
+        questions = extract_questions_from_pdf(pdf_bytes)
+    except Exception:
+        questions = []
+
+    # ── Persist paragraph sections ────────────────────────────────
     section_objs = []
-    for i, sec in enumerate(parsed['sections'], start=1):
+    for para in paragraphs:
         s_obj = IELTSSection.objects.create(
             passage=passage,
-            order=i,
-            heading=sec['heading'],
-            body=sec['body'],
+            order=para['order'],
+            heading=para['heading'],
+            body=para['body'],
+            image_path=para['image_path'],
         )
         section_objs.append(s_obj)
 
+    # ── Persist questions (all linked to passage, no section split) ──
     q_objs = []
-    for q_i, q_text in enumerate(parsed['questions'], start=1):
-        # Find which section this question belongs to
-        section_obj = None
-        for s_i, s_obj in enumerate(section_objs):
-            if q_i - 1 in parsed['sections'][s_i].get('question_indices', []):
-                section_obj = s_obj
-                break
+    for q_i, q_text in enumerate(questions, start=1):
         q_obj = IELTSQuestion.objects.create(
             passage=passage,
-            section=section_obj,
+            section=None,   # questions are not section-specific in single-passage mode
             order=q_i,
             text=q_text,
         )
         q_objs.append(q_obj)
 
-    # Create attempt starting at section 1
+    # ── Create attempt starting at paragraph 1 ────────────────────
     attempt = ReadingAttempt.objects.create(
         learner=learner,
         passage=passage,
         current_section_order=1,
     )
 
-    # Build first section response
+    # ── Build first paragraph guidance ────────────────────────────
     first_section = section_objs[0] if section_objs else None
     from agents.reading_agent import reading_agent_guide_section
     ld_profile = {
@@ -448,13 +445,14 @@ def api_reading_upload(request):
 
     section_data = None
     if first_section:
-        questions_for_section = list(first_section.questions.values('id', 'order', 'text'))
+        all_questions = list(passage.questions.values('id', 'order', 'text'))
         section_data = {
             'id': first_section.id,
             'order': first_section.order,
             'heading': first_section.heading,
             'body': first_section.body,
-            'questions': questions_for_section,
+            'image_url': request.build_absolute_uri(settings.MEDIA_URL + first_section.image_path) if first_section.image_path else '',
+            'questions': all_questions,
         }
 
     return JsonResponse({
@@ -466,7 +464,6 @@ def api_reading_upload(request):
         'current_section': section_data,
         'guidance': guidance,
         'title': title,
-        'pages': len(reader.pages),
     })
 
 
@@ -513,9 +510,11 @@ def api_reading_next_section(request):
     attempt.save()
 
     section = get_object_or_404(IELTSSection, passage=attempt.passage, order=next_order)
-    questions_for_section = list(section.questions.values('id', 'order', 'text'))
+    # In single-passage mode, all questions are shown together
+    all_questions = list(attempt.passage.questions.values('id', 'order', 'text'))
 
     from agents.reading_agent import reading_agent_guide_section
+    from django.conf import settings
     ld_profile = {'confirmed': learner.ld_confirmed, 'suspected': learner.ld_suspected}
 
     # Compute recent score to pass to guidance
@@ -533,6 +532,10 @@ def api_reading_next_section(request):
         attempt_score=recent_score,
     )
 
+    image_url = ''
+    if section.image_path:
+        image_url = request.build_absolute_uri(settings.MEDIA_URL + section.image_path)
+
     return JsonResponse({
         'done': False,
         'current_section': {
@@ -540,7 +543,8 @@ def api_reading_next_section(request):
             'order': section.order,
             'heading': section.heading,
             'body': section.body,
-            'questions': questions_for_section,
+            'image_url': image_url,
+            'questions': all_questions,
         },
         'guidance': guidance,
     })
@@ -563,7 +567,8 @@ def api_reading_answer(request):
     question = get_object_or_404(IELTSQuestion, id=data.get('question_id'), passage=attempt.passage)
     user_answer = data.get('answer', '').strip()
 
-    section_body = question.section.body if question.section else ''
+    # Use raw_text from passage for evaluation context (body may be empty in image mode)
+    section_body = question.section.body if (question.section and question.section.body) else attempt.passage.raw_text
 
     from agents.reading_agent import reading_agent_evaluate
     result = reading_agent_evaluate(user_answer, question.text, section_body)
@@ -601,7 +606,8 @@ def api_reading_hint(request):
     learner = _get_or_create_learner(request)
     attempt = get_object_or_404(ReadingAttempt, id=data.get('attempt_id'), learner=learner)
     question = get_object_or_404(IELTSQuestion, id=data.get('question_id'), passage=attempt.passage)
-    section_body = question.section.body if question.section else ''
+    # Use raw_text for hint context (body may be empty in image-only mode)
+    section_body = question.section.body if (question.section and question.section.body) else attempt.passage.raw_text
 
     ld_profile = {'confirmed': learner.ld_confirmed, 'suspected': learner.ld_suspected}
 
