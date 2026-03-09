@@ -27,24 +27,38 @@ def _split_passage_and_questions(raw: str):
       starts with "1." or "1 " followed by a question pattern.
     • Everything before that marker is the passage; everything after
       is the questions block.
+    • Also handles cases where questions appear BEFORE the main passage
+      (e.g. some IELTS PDFs place comprehension questions on the first page).
     """
     # Common IELTS markers that signal the start of the question section
     q_marker = re.search(
         r'(?m)^(Questions?\s+\d|Question\s+\d|\*\*Questions|'
-        r'QUESTIONS|Questions and answers|Reading comprehension questions)',
+        r'QUESTIONS|Questions and answers|Reading comprehension questions'
+        r'|READING COMPREHENSION|Comprehension Questions)',
         raw,
+        re.IGNORECASE,
     )
     if q_marker:
-        passage_text = raw[: q_marker.start()].strip()
-        questions_raw = raw[q_marker.start() :].strip()
-        return passage_text, questions_raw
+        before = raw[: q_marker.start()].strip()
+        after  = raw[q_marker.start():].strip()
+
+        # Heuristic: if 'before' is very short (< 20% of total), questions
+        # likely precede the passage — swap them.
+        if before and len(before) < len(raw) * 0.20:
+            # Questions appear at the beginning; passage comes after
+            return after, before
+        return before, after
 
     # Fallback: find the first standalone "1." line
     first_q = re.search(r'(?m)^\s*1[\.\)]\s+\S', raw)
     if first_q:
-        passage_text = raw[: first_q.start()].strip()
-        questions_raw = raw[first_q.start() :].strip()
-        return passage_text, questions_raw
+        before = raw[: first_q.start()].strip()
+        after  = raw[first_q.start():].strip()
+
+        # Same swap heuristic: if 'before' is tiny, questions are first
+        if before and len(before) < len(raw) * 0.20:
+            return after, before
+        return before, after
 
     # No questions found – treat everything as passage
     return raw.strip(), ''

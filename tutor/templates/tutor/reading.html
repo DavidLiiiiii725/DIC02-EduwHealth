@@ -6,6 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EduwHealth 2.0 — IELTS Reading</title>
 <link rel="stylesheet" href="{% static 'tutor/css/global.css' %}">
+<!-- Lexend font – designed for reading accessibility & ADHD -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ── Layout ── */
 .reading-shell { display:flex; height:100vh; overflow:hidden; }
@@ -217,6 +221,127 @@ textarea.q-answer:focus { border-color:var(--blue); }
 .toast.show { transform:translateY(0); opacity:1; }
 
 @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+/* ═══════════════════════════════════════════════════════
+   ADHD-FRIENDLY READING MODE
+   White/black high-contrast passage panel with Lexend font
+═══════════════════════════════════════════════════════ */
+.passage-panel {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+.passage-guidance {
+  background: rgba(0,80,200,0.06);
+  border: 1px solid rgba(0,80,200,0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #1a1a1a;
+  white-space: normal;
+}
+.passage-guidance p { margin: 0.4em 0; }
+.passage-guidance strong { font-weight: 600; }
+.passage-heading {
+  font-family: 'Lexend', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #0a0a0a;
+  border-bottom: 2px solid #1a1a1a;
+  padding-bottom: 8px;
+}
+/* Paragraph blocks shown one at a time */
+.para-block {
+  font-family: 'Lexend', sans-serif;
+  font-size: 1.1rem;
+  line-height: 2.2;
+  color: #1a1a1a;
+  padding: 10px 14px 10px 16px;
+  margin-bottom: 12px;
+  border-left: 4px solid transparent;
+  border-radius: 4px;
+  transition: border-color 0.3s, background 0.3s;
+  animation: fadeIn 0.35s ease;
+}
+.para-block.current {
+  border-left-color: #2D7FFF;
+  background: rgba(45,127,255,0.05);
+}
+.para-block.past {
+  border-left-color: #ccc;
+  color: #444;
+}
+/* Paragraph navigation bar */
+.para-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+.para-counter {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.8rem;
+  color: #555;
+}
+.btn-para-next {
+  background: #2D7FFF;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 20px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-para-next:hover { opacity: 0.85; }
+.btn-show-all {
+  background: transparent;
+  color: #555;
+  border: 1px solid #ccc;
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-show-all:hover { border-color: #2D7FFF; color: #2D7FFF; }
+/* Questions panel keep dark, override passage-panel's white */
+.questions-panel { background: var(--surface2); }
+.hint-box {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.hint-box p { margin: 0.3em 0; }
+/* Progress dots on white panel */
+.progress-dot { border: 1px solid #ccc; background: #ddd; }
+.progress-dot.done    { background: #00C98A; border-color: #00C98A; }
+.progress-dot.current { background: #2D7FFF; border-color: #2D7FFF; box-shadow: 0 0 8px rgba(45,127,255,0.45); }
+.progress-label { color: #555; }
+/* Questions locked overlay until all paragraphs read */
+.questions-locked-msg {
+  padding: 24px 20px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.8;
+}
+.q-text { font-family: 'Lexend', sans-serif; font-size: 0.88rem; line-height: 1.65; }
+.q-answer { font-family: 'Lexend', sans-serif; font-size: 0.88rem; }
+/* Markdown-rendered content in modal / completion */
+.modal-content p { margin: 0.4em 0; }
+.modal-content h3 { margin: 0.8em 0 0.4em; font-size: 1rem; }
+.modal-content ul, .modal-content ol { padding-left: 1.4em; margin: 0.3em 0; }
+.modal-content li { margin: 0.2em 0; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -324,11 +449,18 @@ textarea.q-answer:focus { border-color:var(--blue); }
         <div class="passage-panel" id="passage-panel">
           <!-- Progress dots injected by JS -->
           <div class="progress-track" id="progress-track"></div>
-          <!-- Guidance message -->
+          <!-- Guidance message (markdown rendered) -->
           <div class="passage-guidance" id="passage-guidance"></div>
-          <!-- Section body -->
+          <!-- Section heading -->
           <div class="passage-heading" id="section-heading"></div>
-          <div class="passage-body"   id="section-body"></div>
+          <!-- Paragraph-by-paragraph body -->
+          <div id="section-body-wrap"></div>
+          <!-- Paragraph navigation bar -->
+          <div class="para-nav-bar" id="para-nav-bar" style="display:none;">
+            <button class="btn-para-next" id="para-next-btn" onclick="showNextParagraph()">Next Paragraph →</button>
+            <button class="btn-show-all" onclick="showAllParagraphs()">Show All</button>
+            <span class="para-counter" id="para-counter"></span>
+          </div>
         </div>
 
         <!-- Questions + action bar wrapper -->
@@ -359,6 +491,99 @@ textarea.q-answer:focus { border-color:var(--blue); }
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Minimal Markdown renderer (no external dependency) ─────────
+// Handles the subset used by reading_agent.py: headings, bold,
+// italic, blockquotes, unordered / ordered lists, and paragraphs.
+// All user-supplied text is HTML-escaped before insertion.
+const marked = {
+  parse(src) {
+    if (!src) return '';
+    // Escape HTML entities first (prevent XSS)
+    const esc = s => String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    const lines = src.split(/\r?\n/);
+    let html = '';
+    let inUl = false, inOl = false;
+
+    const closeLists = () => {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (inOl) { html += '</ol>'; inOl = false; }
+    };
+
+    // Inline formatting applied AFTER escaping
+    const inline = raw => {
+      const e = esc(raw);
+      return e
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+        .replace(/_(.+?)_/g,       '<em>$1</em>')
+        .replace(/`(.+?)`/g,       '<code>$1</code>');
+    };
+
+    let pendingPara = [];
+    const flushPara = () => {
+      if (pendingPara.length) {
+        html += '<p>' + pendingPara.map(inline).join(' ') + '</p>';
+        pendingPara = [];
+      }
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Blank line
+      if (!line.trim()) { flushPara(); closeLists(); continue; }
+
+      // Headings
+      const hm = line.match(/^(#{1,4})\s+(.*)/);
+      if (hm) {
+        flushPara(); closeLists();
+        const level = Math.min(hm[1].length + 1, 6); // bump by 1 for hierarchy
+        html += `<h${level}>${inline(hm[2])}</h${level}>`;
+        continue;
+      }
+
+      // Blockquote
+      const bq = line.match(/^>\s*(.*)/);
+      if (bq) {
+        flushPara(); closeLists();
+        html += `<blockquote>${inline(bq[1])}</blockquote>`;
+        continue;
+      }
+
+      // Unordered list
+      const ul = line.match(/^\s*[-*]\s+(.*)/);
+      if (ul) {
+        flushPara();
+        if (inOl) { html += '</ol>'; inOl = false; }
+        if (!inUl) { html += '<ul>'; inUl = true; }
+        html += `<li>${inline(ul[1])}</li>`;
+        continue;
+      }
+
+      // Ordered list
+      const ol = line.match(/^\s*\d+[.)]\s+(.*)/);
+      if (ol) {
+        flushPara();
+        if (inUl) { html += '</ul>'; inUl = false; }
+        if (!inOl) { html += '<ol>'; inOl = true; }
+        html += `<li>${inline(ol[1])}</li>`;
+        continue;
+      }
+
+      // Plain text — accumulate into paragraph
+      closeLists();
+      pendingPara.push(line.trim());
+    }
+
+    flushPara();
+    closeLists();
+    return html;
+  }
+};
+
 // ── State ──────────────────────────────────────────────────────
 let state = {
   passageId:      null,
@@ -366,6 +591,8 @@ let state = {
   totalSections:  0,
   currentSection: null,   // { id, order, heading, body, questions:[{id,order,text}] }
   answeredQs:     {},     // qId -> {correct, score, feedback}
+  paragraphs:     [],     // paragraphs of current section body
+  shownParaCount: 0,      // how many paragraphs are currently visible
 };
 
 // ── Init ───────────────────────────────────────────────────────
@@ -495,46 +722,130 @@ async function uploadPassage() {
 function renderSection(sec, guidance, totalSections) {
   state.currentSection = sec;
 
+  // Split body into paragraphs (non-empty), handle both Unix and Windows line endings
+  state.paragraphs = (sec.body || '')
+    .split(/(\r?\n){2,}/)
+    .map(p => p.trim())
+    .filter(p => p.length > 0 && !/^(\r?\n)+$/.test(p));
+  if (!state.paragraphs.length) state.paragraphs = [sec.body || ''];
+  state.shownParaCount = 1;
+
   document.getElementById('upload-panel').style.display  = 'none';
   document.getElementById('session-wrap').style.display  = 'flex';
 
-  // Guidance
-  document.getElementById('passage-guidance').textContent = guidance || '';
+  // Restore action bar visibility
+  const actionBar = document.getElementById('action-bar');
+  if (actionBar) actionBar.style.display = '';
+  const nextBtn = document.getElementById('next-btn');
+  if (nextBtn) { nextBtn.style.display = ''; nextBtn.disabled = false; }
 
-  // Heading + body
-  document.getElementById('section-heading').textContent = sec.heading || '';
-  document.getElementById('section-body').textContent    = sec.body    || '';
+  // Guidance (render markdown)
+  const guidanceEl = document.getElementById('passage-guidance');
+  if (guidanceEl) guidanceEl.innerHTML = guidance ? marked.parse(guidance) : '';
+
+  // Heading
+  const headingEl = document.getElementById('section-heading');
+  if (headingEl) headingEl.textContent = sec.heading || '';
 
   // Progress dots
   const track = document.getElementById('progress-track');
-  track.innerHTML = '';
-  for (let i = 1; i <= totalSections; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'progress-dot' +
-      (i < sec.order ? ' done' : i === sec.order ? ' current' : '');
-    track.appendChild(dot);
+  if (track) {
+    track.innerHTML = '';
+    for (let i = 1; i <= totalSections; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'progress-dot' +
+        (i < sec.order ? ' done' : i === sec.order ? ' current' : '');
+      track.appendChild(dot);
+    }
+    const lbl = document.createElement('span');
+    lbl.className = 'progress-label';
+    lbl.textContent = `Section ${sec.order} / ${totalSections}`;
+    track.appendChild(lbl);
   }
-  const lbl = document.createElement('span');
-  lbl.className = 'progress-label';
-  lbl.textContent = `Section ${sec.order} / ${totalSections}`;
-  track.appendChild(lbl);
 
-  // Questions
-  renderQuestions(sec.questions, sec.body);
+  // Render first paragraph
+  _renderParagraphs();
+
+  // Questions (locked until all paragraphs shown)
+  _renderQuestionsPanel();
 
   // Action bar
   const info = document.getElementById('action-info');
-  const btn  = document.getElementById('next-btn');
-  if (sec.order >= totalSections) {
-    info.textContent = 'Last section — answer all questions then finish.';
-    btn.textContent  = 'Finish & Get Strategy →';
-  } else {
-    info.textContent = `Answer the questions, then continue.`;
-    btn.textContent  = 'Next Section →';
+  if (nextBtn && info) {
+    if (sec.order >= totalSections) {
+      info.textContent = 'Last section — answer all questions then finish.';
+      nextBtn.textContent  = 'Finish & Get Strategy →';
+    } else {
+      info.textContent = `Answer the questions, then continue.`;
+      nextBtn.textContent  = 'Next Section →';
+    }
   }
 
   // Scroll back to top
   document.getElementById('passage-panel').scrollTop = 0;
+}
+
+// ── Render visible paragraphs ──────────────────────────────────
+function _renderParagraphs() {
+  const wrap = document.getElementById('section-body-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const total = state.paragraphs.length;
+
+  for (let i = 0; i < state.shownParaCount; i++) {
+    const div = document.createElement('div');
+    const isCurrent = (i === state.shownParaCount - 1);
+    div.className = 'para-block ' + (isCurrent ? 'current' : 'past');
+    div.textContent = state.paragraphs[i];
+    wrap.appendChild(div);
+  }
+
+  // Update paragraph nav bar
+  const navBar = document.getElementById('para-nav-bar');
+  const counter = document.getElementById('para-counter');
+  if (navBar && counter) {
+    counter.textContent = `Paragraph ${state.shownParaCount} / ${total}`;
+    navBar.style.display = (state.shownParaCount < total) ? 'flex' : 'none';
+  }
+}
+
+// ── Render questions panel (locked until all paragraphs shown) ─
+function _renderQuestionsPanel() {
+  const panel = document.getElementById('questions-panel');
+  if (!panel) return;
+  const allShown = state.shownParaCount >= state.paragraphs.length;
+
+  if (!allShown) {
+    panel.innerHTML = `<div class="questions-locked-msg">
+      📖 Finish reading all paragraphs first,<br>then the questions will appear here.
+    </div>`;
+    return;
+  }
+  renderQuestions(state.currentSection.questions, state.currentSection.body);
+}
+
+// ── Show next paragraph ────────────────────────────────────────
+function showNextParagraph() {
+  if (state.shownParaCount < state.paragraphs.length) {
+    state.shownParaCount++;
+    _renderParagraphs();
+    // If all paragraphs now shown, reveal questions
+    if (state.shownParaCount >= state.paragraphs.length) {
+      _renderQuestionsPanel();
+    }
+    // Scroll to bottom of passage panel to show new paragraph
+    const panel = document.getElementById('passage-panel');
+    if (panel) panel.scrollTop = panel.scrollHeight;
+  }
+}
+
+// ── Show all paragraphs at once ────────────────────────────────
+function showAllParagraphs() {
+  state.shownParaCount = state.paragraphs.length;
+  _renderParagraphs();
+  _renderQuestionsPanel();
+  const panel = document.getElementById('passage-panel');
+  if (panel) panel.scrollTop = 0;
 }
 
 // ── Render questions ───────────────────────────────────────────
@@ -607,7 +918,7 @@ async function submitAnswer(qId) {
 async function getHint(qId) {
   const hintBox = document.getElementById(`hint-${qId}`);
   hintBox.style.display = 'block';
-  hintBox.textContent   = '…';
+  hintBox.innerHTML   = '<em>Loading hint…</em>';
 
   const resp = await fetch('/api/reading/hint/', {
     method:  'POST',
@@ -615,7 +926,7 @@ async function getHint(qId) {
     body:    JSON.stringify({ attempt_id: state.attemptId, question_id: qId }),
   });
   const data = await resp.json();
-  hintBox.textContent = data.hint || '(no hint available)';
+  hintBox.innerHTML = data.hint ? marked.parse(data.hint) : '(no hint available)';
 }
 
 // ── Next section ───────────────────────────────────────────────
@@ -633,6 +944,9 @@ async function nextSection() {
   if (data.done) {
     showCompletionScreen(data.score, data.strategy);
   } else {
+    // Reset paragraph navigation for the new section
+    state.paragraphs     = [];
+    state.shownParaCount = 0;
     renderSection(data.current_section, data.guidance, state.totalSections);
     btn.disabled = false;
   }
@@ -644,37 +958,41 @@ function showCompletionScreen(score, strategy) {
   const scoreText = (score !== null && score !== undefined)
     ? Math.round(score * 100) + '%'
     : 'N/A';
+  const strategyHtml = strategy ? marked.parse(strategy) : '';
 
   panel.innerHTML = `
-    <div style="padding:24px 0;animation:fadeIn 0.4s ease;">
-      <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:800;color:var(--green);margin-bottom:8px;">
+    <div style="padding:24px 0;animation:fadeIn 0.4s ease;font-family:'Lexend',sans-serif;color:#1a1a1a;">
+      <div style="font-family:'Lexend',sans-serif;font-size:2rem;font-weight:700;color:#00897B;margin-bottom:8px;">
         🎉 Passage Complete!
       </div>
-      <div style="font-size:1rem;color:var(--muted);margin-bottom:24px;">
+      <div style="font-size:1rem;color:#555;margin-bottom:24px;">
         You have finished all sections of this passage.
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:480px;margin-bottom:24px;">
-        <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:4px;">Overall Score</div>
-        <div style="font-family:'Fraunces',serif;font-size:2.4rem;font-weight:800;color:var(--cyan);">${scoreText}</div>
+      <div style="background:#f5f5f5;border:1px solid #ddd;border-radius:var(--radius);padding:20px;max-width:480px;margin-bottom:24px;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;color:#777;margin-bottom:4px;">Overall Score</div>
+        <div style="font-family:'Lexend',sans-serif;font-size:2.4rem;font-weight:700;color:#2D7FFF;">${scoreText}</div>
       </div>
-      <div style="font-size:0.85rem;line-height:1.8;white-space:pre-wrap;max-width:560px;margin-bottom:24px;">${escHtml(strategy || '')}</div>
+      <div style="font-size:0.95rem;line-height:1.85;max-width:560px;margin-bottom:24px;">${strategyHtml}</div>
       <button class="btn-primary" onclick="resetPassage()">Start a New Passage →</button>
     </div>`;
 
   document.getElementById('questions-panel').innerHTML = '';
-  document.getElementById('action-bar') && (document.getElementById('action-bar').style.display = 'none');
-  document.getElementById('next-btn').style.display = 'none';
+  const actionBar = document.getElementById('action-bar');
+  if (actionBar) actionBar.style.display = 'none';
+  const nextBtn = document.getElementById('next-btn');
+  if (nextBtn) nextBtn.style.display = 'none';
   document.getElementById('strategy-btn').style.display = 'none';
 }
 
 // ── Strategy ───────────────────────────────────────────────────
 async function showStrategy() {
   document.getElementById('strategy-modal').classList.add('open');
-  document.getElementById('strategy-content').textContent = 'Loading…';
+  document.getElementById('strategy-content').innerHTML = '<em>Loading…</em>';
 
   const resp = await fetch('/api/reading/strategy/');
   const data = await resp.json();
-  document.getElementById('strategy-content').textContent = data.strategy || 'No strategy yet.';
+  const content = data.strategy || 'No strategy yet.';
+  document.getElementById('strategy-content').innerHTML = marked.parse(content);
 }
 
 function closeStrategy() {
@@ -683,12 +1001,42 @@ function closeStrategy() {
 
 // ── Reset ──────────────────────────────────────────────────────
 function resetPassage() {
-  state = { passageId:null, attemptId:null, totalSections:0, currentSection:null, answeredQs:{} };
+  state = {
+    passageId: null, attemptId: null, totalSections: 0,
+    currentSection: null, answeredQs: {},
+    paragraphs: [], shownParaCount: 0,
+  };
   _selectedFile = null;
   document.getElementById('pdf-input').value = '';
   document.getElementById('pdf-badge').classList.remove('visible');
   document.getElementById('drop-zone').style.display = '';
   document.getElementById('upload-btn').disabled = true;
+
+  // Restore passage panel structure (may have been replaced by showCompletionScreen)
+  const passagePanel = document.getElementById('passage-panel');
+  if (passagePanel) {
+    passagePanel.innerHTML = `
+      <div class="progress-track" id="progress-track"></div>
+      <div class="passage-guidance" id="passage-guidance"></div>
+      <div class="passage-heading" id="section-heading"></div>
+      <div id="section-body-wrap"></div>
+      <div class="para-nav-bar" id="para-nav-bar" style="display:none;">
+        <button class="btn-para-next" id="para-next-btn" onclick="showNextParagraph()">Next Paragraph →</button>
+        <button class="btn-show-all" onclick="showAllParagraphs()">Show All</button>
+        <span class="para-counter" id="para-counter"></span>
+      </div>`;
+  }
+
+  // Restore action bar and next button
+  const actionBar = document.getElementById('action-bar');
+  if (actionBar) actionBar.style.display = '';
+  const nextBtn = document.getElementById('next-btn');
+  if (nextBtn) { nextBtn.style.display = ''; nextBtn.disabled = false; nextBtn.textContent = 'Next Section →'; }
+
+  // Clear questions panel
+  const qPanel = document.getElementById('questions-panel');
+  if (qPanel) qPanel.innerHTML = '';
+
   document.getElementById('session-wrap').style.display  = 'none';
   document.getElementById('upload-panel').style.display  = 'flex';
   document.getElementById('strategy-btn').style.display  = 'none';
