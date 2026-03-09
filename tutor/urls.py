@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/reading/answer/',       views.api_reading_answer,       name='api_reading_answer'),
     path('api/reading/hint/',         views.api_reading_hint,         name='api_reading_hint'),
     path('api/reading/strategy/',     views.api_reading_strategy,     name='api_reading_strategy'),
+    path('api/reading/assistant/',    views.api_reading_assistant,    name='api_reading_assistant'),
 ]

@@ -650,3 +650,54 @@ def api_reading_strategy(request):
         ld_profile,
     )
     return JsonResponse({'strategy': strategy})
+
+
+@csrf_exempt
+@require_POST
+def api_reading_assistant(request):
+    """Return a proactive assistant tip for the current attempt state.
+
+    Body: { "attempt_id": int }
+
+    The assistant analyses current progress (paragraph position, answer scores,
+    hint usage, LD profile) and returns adaptive guidance including keywords
+    extracted from the current paragraph.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    learner = _get_or_create_learner(request)
+    attempt_id = data.get('attempt_id')
+    attempt = get_object_or_404(ReadingAttempt, id=attempt_id, learner=learner)
+
+    current_order = attempt.current_section_order
+    total_sections = attempt.passage.sections.count()
+
+    heading = ''
+    section_body = ''
+    try:
+        current_section = IELTSSection.objects.get(
+            passage=attempt.passage, order=current_order
+        )
+        heading = current_section.heading or ''
+        # Prefer section body; fall back to raw passage text for image-only mode
+        section_body = current_section.body or attempt.passage.raw_text or ''
+    except IELTSSection.DoesNotExist:
+        section_body = attempt.passage.raw_text or ''
+
+    ld_profile = {'confirmed': learner.ld_confirmed, 'suspected': learner.ld_suspected}
+
+    from agents.reading_agent import reading_agent_assistant_tip
+    tip = reading_agent_assistant_tip(
+        para_order=current_order,
+        total_sections=total_sections,
+        answers=attempt.answers or {},
+        hints_used=attempt.hints_used,
+        ld_profile=ld_profile,
+        current_section_heading=heading,
+        section_body=section_body,
+    )
+
+    return JsonResponse({'tip': tip})
