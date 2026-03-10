@@ -112,7 +112,6 @@ textarea.form-input { min-height:220px; resize:vertical; line-height:1.75; }
 
 .passage-panel {
   flex:1; overflow-y:auto; padding:28px 32px;
-  border-right:1px solid var(--border);
 }
 .passage-guidance {
   background:rgba(0,212,200,0.07); border:1px solid rgba(0,212,200,0.2);
@@ -354,106 +353,77 @@ textarea.q-answer:focus { border-color:var(--blue); }
 .modal-content li { margin: 0.2em 0; line-height: 1.7; }
 
 /* ══════════════════════════════════════════════════════════════
-   FLOATING LLM ASSISTANT WIDGET
-   Always visible in the bottom-right corner of the viewport.
+   TOP-RIGHT AI HUB — floating menu (model selection + assistant)
 ══════════════════════════════════════════════════════════════ */
-.assistant-widget {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 300;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-}
-
-/* Floating toggle button */
-.assistant-toggle {
+.ai-hub {
   position: relative;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1A5FCC 0%, #0d3a7a 100%);
-  border: none;
-  cursor: pointer;
+}
+.ai-hub-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  box-shadow: 0 4px 16px rgba(26,95,204,0.45);
-  transition: transform 0.2s, box-shadow 0.2s;
-  flex-shrink: 0;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #d0d8e8;
+  border-radius: 8px;
+  padding: 7px 13px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #111;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
 }
-.assistant-toggle:hover {
-  transform: scale(1.08);
-  box-shadow: 0 6px 22px rgba(26,95,204,0.55);
+.ai-hub-btn:hover {
+  border-color: #1A5FCC;
+  box-shadow: 0 2px 10px rgba(26,95,204,0.12);
 }
-.assistant-toggle.has-update {
-  animation: assistant-pulse 1.8s ease-in-out infinite;
-}
-@keyframes assistant-pulse {
-  0%, 100% { box-shadow: 0 4px 16px rgba(26,95,204,0.45); }
-  50%       { box-shadow: 0 4px 28px rgba(26,95,204,0.85); }
-}
-
-/* Unread badge */
-.assistant-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
+.ai-hub-btn .ai-hub-badge {
   background: #e8472a;
   color: #fff;
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 700;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #fff;
+  padding: 0 3px;
 }
-
-/* Chat panel */
-.assistant-panel {
+/* Dropdown panel */
+.ai-hub-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
   width: 320px;
-  max-height: 460px;
   background: #fff;
   border: 1px solid #d0d8e8;
   border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+  z-index: 400;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: assistant-slide-in 0.25s ease;
+  animation: ai-hub-slide 0.2s ease;
 }
-@keyframes assistant-slide-in {
-  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+@keyframes ai-hub-slide {
+  from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: none; }
 }
-
-.assistant-header {
+.ai-hub-dropdown-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 11px 16px;
   background: linear-gradient(135deg, #1A5FCC 0%, #0d3a7a 100%);
   color: #fff;
   font-family: 'Lexend', sans-serif;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 600;
   flex-shrink: 0;
 }
-.assistant-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.assistant-avatar-sm {
-  font-size: 1.1rem;
-}
-.assistant-close {
+.ai-hub-dropdown-header button {
   background: none;
   border: none;
   color: rgba(255,255,255,0.8);
@@ -461,78 +431,223 @@ textarea.q-answer:focus { border-color:var(--blue); }
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
-  line-height: 1;
   transition: color 0.15s;
 }
-.assistant-close:hover { color: #fff; }
-
-.assistant-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 14px 14px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  scroll-behavior: smooth;
+.ai-hub-dropdown-header button:hover { color: #fff; }
+.ai-hub-section {
+  padding: 10px 14px;
+  border-bottom: 1px solid #eef1f8;
 }
-
-.assistant-msg {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  animation: fadeIn 0.3s ease;
+.ai-hub-section-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #888;
+  margin-bottom: 6px;
+  font-family: 'Lexend', sans-serif;
 }
-.assistant-msg-bubble {
-  background: #f0f4ff;
-  border: 1px solid #d0d8f0;
-  border-radius: 10px 10px 10px 2px;
-  padding: 10px 13px;
+.ai-hub-model-select {
+  width: 100%;
+  background: #f7f9ff;
+  border: 1px solid #d0d8e8;
+  border-radius: 6px;
+  color: #111;
   font-family: 'Lexend', sans-serif;
   font-size: 0.82rem;
-  line-height: 1.65;
-  color: #111;
+  padding: 6px 10px;
+  outline: none;
+  cursor: pointer;
 }
-.assistant-msg-bubble p  { margin: 0.25em 0; }
-.assistant-msg-bubble strong { color: #1A5FCC; }
-.assistant-msg-bubble em { color: #555; font-style: italic; }
-.assistant-msg-time {
+.ai-hub-model-select:focus { border-color: #1A5FCC; }
+.ai-hub-actions {
+  padding: 8px 14px;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #eef1f8;
+}
+.ai-hub-action-btn {
+  flex: 1;
+  background: #f7f9ff;
+  border: 1px solid #d0d8e8;
+  border-radius: 6px;
+  color: #333;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.75rem;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: center;
+}
+.ai-hub-action-btn:hover { background: #eef2ff; border-color: #1A5FCC; color: #1A5FCC; }
+.ai-hub-divider {
   font-size: 0.62rem;
-  color: #999;
-  padding-left: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #888;
+  font-family: 'Lexend', sans-serif;
+  padding: 8px 14px 4px;
 }
-
-/* Typing indicator */
-.assistant-typing {
+/* Chat messages area inside hub */
+.ai-hub-messages {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scroll-behavior: smooth;
+}
+.ai-hub-msg-bubble {
+  background: #f0f4ff;
+  border: 1px solid #d0d8f0;
+  border-radius: 8px 8px 8px 2px;
+  padding: 8px 12px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: #111;
+  animation: fadeIn 0.3s ease;
+}
+.ai-hub-msg-bubble p { margin: 0.2em 0; }
+.ai-hub-msg-bubble strong { color: #1A5FCC; }
+.ai-hub-msg-bubble em { color: #555; }
+.ai-hub-msg-time {
+  font-size: 0.6rem;
+  color: #aaa;
+  padding: 2px 2px 0;
+}
+.ai-hub-typing {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   background: #f0f4ff;
   border: 1px solid #d0d8f0;
-  border-radius: 10px 10px 10px 2px;
+  border-radius: 8px 8px 8px 2px;
   width: fit-content;
 }
-.assistant-typing span {
-  width: 7px; height: 7px;
+.ai-hub-typing span {
+  width: 6px; height: 6px;
   background: #1A5FCC;
   border-radius: 50%;
   animation: typing-dot 1.2s ease-in-out infinite;
 }
-.assistant-typing span:nth-child(2) { animation-delay: 0.2s; }
-.assistant-typing span:nth-child(3) { animation-delay: 0.4s; }
+.ai-hub-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ai-hub-typing span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes typing-dot {
   0%, 80%, 100% { opacity: 0.3; transform: scale(0.9); }
   40%           { opacity: 1;   transform: scale(1.1); }
 }
-
-.assistant-footer {
-  padding: 8px 14px;
-  border-top: 1px solid #e8eef8;
-  font-size: 0.65rem;
+.ai-hub-footer {
+  padding: 6px 14px;
+  font-size: 0.62rem;
   color: #aaa;
   font-family: 'Lexend', sans-serif;
   text-align: center;
+  border-top: 1px solid #eef1f8;
   flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INLINE PARAGRAPH STRATEGY AGENT CARD
+   Appears above each paragraph in the passage panel.
+══════════════════════════════════════════════════════════════ */
+.para-strategy-card {
+  margin-bottom: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(26,95,204,0.20);
+  animation: fadeIn 0.35s ease;
+}
+.psc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(26,95,204,0.07);
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #1A5FCC;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid rgba(26,95,204,0.12);
+}
+.psc-body {
+  padding: 10px 14px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: #222;
+  background: #fff;
+}
+.psc-body p  { margin: 0.25em 0; }
+.psc-body strong { color: #1A5FCC; }
+.psc-body em { color: #555; }
+.psc-body ul, .psc-body ol { padding-left: 1.2em; margin: 0.2em 0; }
+.psc-q-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 6px 14px 10px;
+  background: #fff;
+  border-top: 1px solid #eef1f8;
+}
+.psc-q-tag {
+  background: #eef2ff;
+  border: 1px solid #c5d0f5;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #1A5FCC;
+}
+.psc-loading {
+  padding: 10px 14px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.8rem;
+  color: #888;
+  background: #f7f9ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.psc-loading::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #c5d0f5;
+  border-top-color: #1A5FCC;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Panel section labels (Article / Questions) ── */
+.panel-section-label {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #888;
+  padding: 10px 32px 6px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 0;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+.panel-section-label.questions-label {
+  padding: 10px 20px 6px;
+}
+/* Highlight question card when it is associated with the current paragraph */
+.q-card.highlighted {
+  border-color: #1A5FCC;
+  box-shadow: 0 0 0 2px rgba(26,95,204,0.12);
 }
 </style>
 </head>
@@ -566,8 +681,38 @@ textarea.q-answer:focus { border-color:var(--blue); }
         <div class="reading-topbar-sub" id="topbar-sub">Upload a passage to begin guided reading</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
-        <button class="btn-secondary" id="strategy-btn" onclick="showStrategy()" style="display:none">💡 Strategy</button>
-        <button class="btn-secondary" onclick="resetPassage()">↩ New Passage</button>
+        <!-- AI Hub: model selector + chat assistant + strategy (top-right floating menu) -->
+        <div class="ai-hub" id="ai-hub">
+          <button class="ai-hub-btn" id="ai-hub-btn" onclick="toggleAIHub()" title="AI Reading Hub">
+            🤖 AI Hub
+            <span class="ai-hub-badge" id="ai-hub-badge" style="display:none;"></span>
+            <span style="font-size:0.65rem;margin-left:2px;opacity:0.6;">▾</span>
+          </button>
+          <div class="ai-hub-dropdown" id="ai-hub-dropdown" style="display:none;">
+            <div class="ai-hub-dropdown-header">
+              <span>🤖 AI Reading Hub</span>
+              <button onclick="toggleAIHub()" title="Close">✕</button>
+            </div>
+            <!-- Model selector -->
+            <div class="ai-hub-section">
+              <div class="ai-hub-section-label">⚙️ LLM Model</div>
+              <select class="ai-hub-model-select" id="ai-model-select" onchange="saveModelChoice(this.value)">
+                <option value="ollama">🔵 Ollama (local)</option>
+                <option value="gemini">🟢 Google Gemini</option>
+                <option value="deepseek">🟣 DeepSeek</option>
+              </select>
+            </div>
+            <!-- Quick actions -->
+            <div class="ai-hub-actions">
+              <button class="ai-hub-action-btn" id="strategy-btn" onclick="showStrategy(); toggleAIHub();" style="display:none;">💡 Strategy</button>
+              <button class="ai-hub-action-btn" onclick="resetPassage(); toggleAIHub();">↩ New Passage</button>
+            </div>
+            <!-- Reading assistant chat -->
+            <div class="ai-hub-divider">Reading Assistant</div>
+            <div class="ai-hub-messages" id="assistant-messages"></div>
+            <div class="ai-hub-footer">Auto-updates as you read &amp; answer</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -629,26 +774,32 @@ textarea.q-answer:focus { border-color:var(--blue); }
       <!-- ── READING SESSION ── -->
       <div id="session-wrap" class="session-wrap" style="display:none;">
 
-        <!-- Passage panel -->
-        <div class="passage-panel" id="passage-panel">
-          <!-- Progress dots injected by JS -->
-          <div class="progress-track" id="progress-track"></div>
-          <!-- Guidance message (markdown rendered) -->
-          <div class="passage-guidance" id="passage-guidance"></div>
-          <!-- Section heading -->
-          <div class="passage-heading" id="section-heading"></div>
-          <!-- Paragraph-by-paragraph body -->
-          <div id="section-body-wrap"></div>
-          <!-- Paragraph navigation bar -->
-          <div class="para-nav-bar" id="para-nav-bar" style="display:none;">
-            <button class="btn-para-next" id="para-next-btn" onclick="showNextParagraph()">Next Paragraph →</button>
-            <button class="btn-show-all" onclick="showAllParagraphs()">Show All</button>
-            <span class="para-counter" id="para-counter"></span>
+        <!-- Passage panel: Article -->
+        <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+          <div class="panel-section-label">📄 Article</div>
+          <div class="passage-panel" id="passage-panel">
+            <!-- Progress dots injected by JS -->
+            <div class="progress-track" id="progress-track"></div>
+            <!-- Guidance message (markdown rendered) -->
+            <div class="passage-guidance" id="passage-guidance"></div>
+            <!-- Section heading -->
+            <div class="passage-heading" id="section-heading"></div>
+            <!-- Inline paragraph strategy agent card (injected by JS) -->
+            <div class="para-strategy-card" id="para-strategy-card" style="display:none;"></div>
+            <!-- Paragraph-by-paragraph body -->
+            <div id="section-body-wrap"></div>
+            <!-- Paragraph navigation bar -->
+            <div class="para-nav-bar" id="para-nav-bar" style="display:none;">
+              <button class="btn-para-next" id="para-next-btn" onclick="showNextParagraph()">Next Paragraph →</button>
+              <button class="btn-show-all" onclick="showAllParagraphs()">Show All</button>
+              <span class="para-counter" id="para-counter"></span>
+            </div>
           </div>
         </div>
 
         <!-- Questions + action bar wrapper -->
         <div style="display:flex;flex-direction:column;width:360px;min-width:300px;border-left:1px solid var(--border);">
+          <div class="panel-section-label questions-label">📝 Questions</div>
           <div class="questions-panel" id="questions-panel"></div>
           <div class="action-bar" id="action-bar">
             <span class="action-bar-info" id="action-info"></span>
@@ -674,32 +825,6 @@ textarea.q-answer:focus { border-color:var(--blue); }
 <!-- Toast notification -->
 <div class="toast" id="toast"></div>
 
-<!-- ── FLOATING AI READING ASSISTANT ─────────────────────────── -->
-<div class="assistant-widget" id="assistant-widget">
-
-  <!-- Expandable chat panel (hidden by default) -->
-  <div class="assistant-panel" id="assistant-panel" style="display:none;">
-    <div class="assistant-header">
-      <div class="assistant-header-left">
-        <span class="assistant-avatar-sm">🤖</span>
-        <span>Reading Assistant</span>
-      </div>
-      <button class="assistant-close" title="Minimise" onclick="toggleAssistant()">✕</button>
-    </div>
-    <div class="assistant-messages" id="assistant-messages">
-      <!-- Messages injected by JS -->
-    </div>
-    <div class="assistant-footer">Updates automatically as you read &amp; answer</div>
-  </div>
-
-  <!-- Floating toggle button (always visible) -->
-  <button class="assistant-toggle" id="assistant-toggle" title="Reading Assistant"
-          onclick="toggleAssistant()" aria-label="Toggle Reading Assistant">
-    🤖
-    <span class="assistant-badge" id="assistant-badge" style="display:none;">1</span>
-  </button>
-
-</div>
 
 <script>
 // ── Minimal Markdown renderer (no external dependency) ─────────
@@ -1006,10 +1131,13 @@ function renderSection(sec, guidance, totalSections) {
   // Scroll back to top
   document.getElementById('passage-panel').scrollTop = 0;
 
-  // ── Trigger assistant tip for this section ────────────────────
+  // ── Trigger assistant tip + paragraph strategy for this section ──
   if (state.attemptId) {
-    // Small delay so the section renders before the assistant appears
-    setTimeout(() => refreshAssistantTip(state.attemptId), 600);
+    const sectionOrder = sec.order;
+    // Paragraph strategy agent: inject inline card above the paragraph
+    setTimeout(() => fetchParagraphStrategy(state.attemptId, sectionOrder), 300);
+    // AI Hub assistant tip: update the hub's chat feed
+    setTimeout(() => refreshAssistantTip(state.attemptId), 800);
   }
 }
 
@@ -1278,6 +1406,7 @@ function resetPassage() {
       <div class="progress-track" id="progress-track"></div>
       <div class="passage-guidance" id="passage-guidance"></div>
       <div class="passage-heading" id="section-heading"></div>
+      <div class="para-strategy-card" id="para-strategy-card" style="display:none;"></div>
       <div id="section-body-wrap"></div>
       <div class="para-nav-bar" id="para-nav-bar" style="display:none;">
         <button class="btn-para-next" id="para-next-btn" onclick="showNextParagraph()">Next Paragraph →</button>
@@ -1296,14 +1425,16 @@ function resetPassage() {
   const qPanel = document.getElementById('questions-panel');
   if (qPanel) qPanel.innerHTML = '';
 
-  // Clear assistant widget
+  // Clear AI Hub assistant messages and unread badge
   const assistantMsgs = document.getElementById('assistant-messages');
   if (assistantMsgs) assistantMsgs.innerHTML = '';
-  _assistantUnread = 0;
-  const badge  = document.getElementById('assistant-badge');
-  const toggle = document.getElementById('assistant-toggle');
-  if (badge)  badge.style.display = 'none';
-  if (toggle) toggle.classList.remove('has-update');
+  _aiHubUnread = 0;
+  const badge = document.getElementById('ai-hub-badge');
+  if (badge) badge.style.display = 'none';
+
+  // Clear paragraph strategy card
+  const stratCard = document.getElementById('para-strategy-card');
+  if (stratCard) { stratCard.innerHTML = ''; stratCard.style.display = 'none'; }
 
   document.getElementById('session-wrap').style.display  = 'none';
   document.getElementById('upload-panel').style.display  = 'flex';
@@ -1332,38 +1463,59 @@ function escHtml(str) {
     .replace(/"/g,'&quot;');
 }
 
-// ── Floating Assistant ─────────────────────────────────────────
-// State: is the panel open, and how many unread messages
-let _assistantOpen    = false;
-let _assistantUnread  = 0;
+// ── AI Hub (top-right floating menu) ──────────────────────────
+// Replaces the old bottom-right floating assistant widget.
+let _aiHubOpen   = false;
+let _aiHubUnread = 0;
 
-function toggleAssistant() {
-  _assistantOpen = !_assistantOpen;
-  const panel  = document.getElementById('assistant-panel');
-  const badge  = document.getElementById('assistant-badge');
-  const toggle = document.getElementById('assistant-toggle');
+function toggleAIHub() {
+  _aiHubOpen = !_aiHubOpen;
+  const dropdown = document.getElementById('ai-hub-dropdown');
+  const badge    = document.getElementById('ai-hub-badge');
 
-  if (_assistantOpen) {
-    panel.style.display = 'flex';
-    // Clear unread badge
-    _assistantUnread = 0;
-    badge.style.display = 'none';
-    toggle.classList.remove('has-update');
-    // Scroll messages to bottom
+  if (_aiHubOpen) {
+    dropdown.style.display = 'flex';
+    _aiHubUnread = 0;
+    if (badge) badge.style.display = 'none';
     const msgs = document.getElementById('assistant-messages');
     if (msgs) msgs.scrollTop = msgs.scrollHeight;
   } else {
-    panel.style.display = 'none';
+    dropdown.style.display = 'none';
   }
 }
 
-// Add a message bubble to the assistant panel
+// Close AI Hub when clicking outside
+document.addEventListener('click', function(e) {
+  const hub = document.getElementById('ai-hub');
+  if (hub && !hub.contains(e.target)) {
+    const dropdown = document.getElementById('ai-hub-dropdown');
+    if (dropdown) dropdown.style.display = 'none';
+    _aiHubOpen = false;
+  }
+});
+
+// Persist model choice in localStorage
+function saveModelChoice(value) {
+  try { localStorage.setItem('eduwhealth_model', value); } catch(_) {}
+}
+function loadModelChoice() {
+  try {
+    const v = localStorage.getItem('eduwhealth_model');
+    if (v) {
+      const sel = document.getElementById('ai-model-select');
+      if (sel) sel.value = v;
+    }
+  } catch(_) {}
+}
+document.addEventListener('DOMContentLoaded', loadModelChoice);
+
+// Add a message bubble to the AI Hub assistant panel
 function _assistantAddMessage(html) {
   const container = document.getElementById('assistant-messages');
   if (!container) return;
 
   // Remove typing indicator if present
-  const typing = container.querySelector('.assistant-typing');
+  const typing = container.querySelector('.ai-hub-typing');
   if (typing) typing.remove();
 
   const now = new Date();
@@ -1371,37 +1523,34 @@ function _assistantAddMessage(html) {
                   now.getMinutes().toString().padStart(2,'0');
 
   const msgEl = document.createElement('div');
-  msgEl.className = 'assistant-msg';
   msgEl.innerHTML = `
-    <div class="assistant-msg-bubble">${html}</div>
-    <div class="assistant-msg-time">${timeStr}</div>
+    <div class="ai-hub-msg-bubble">${html}</div>
+    <div class="ai-hub-msg-time">${timeStr}</div>
   `;
   container.appendChild(msgEl);
   container.scrollTop = container.scrollHeight;
 }
 
-// Show a typing indicator, then replace with the actual tip
+// Show typing indicator in the AI Hub messages area
 function _assistantShowTyping() {
   const container = document.getElementById('assistant-messages');
   if (!container) return;
   const el = document.createElement('div');
-  el.className = 'assistant-typing';
+  el.className = 'ai-hub-typing';
   el.innerHTML = '<span></span><span></span><span></span>';
   container.appendChild(el);
   container.scrollTop = container.scrollHeight;
 }
 
-// Notify user of a new message (badge + pulse) without auto-opening
+// Notify user of a new AI Hub message via badge (without auto-opening)
 function _assistantNotify() {
-  if (_assistantOpen) return;  // panel is already open — no badge needed
-  _assistantUnread++;
-  const badge  = document.getElementById('assistant-badge');
-  const toggle = document.getElementById('assistant-toggle');
-  if (badge)  { badge.textContent = _assistantUnread; badge.style.display = 'flex'; }
-  if (toggle) toggle.classList.add('has-update');
+  if (_aiHubOpen) return;
+  _aiHubUnread++;
+  const badge = document.getElementById('ai-hub-badge');
+  if (badge) { badge.textContent = _aiHubUnread; badge.style.display = 'inline-flex'; }
 }
 
-// Fetch a tip from the backend and display it
+// Fetch adaptive tip from backend and display in AI Hub
 async function refreshAssistantTip(attemptId) {
   if (!attemptId) return;
 
@@ -1419,13 +1568,73 @@ async function refreshAssistantTip(attemptId) {
       _assistantNotify();
     }
   } catch (_) {
-    // Silently ignore network errors for the assistant
     const container = document.getElementById('assistant-messages');
     if (container) {
-      const typing = container.querySelector('.assistant-typing');
+      const typing = container.querySelector('.ai-hub-typing');
       if (typing) typing.remove();
     }
   }
+}
+
+// ── Paragraph-Level Strategy Agent ────────────────────────────
+// Fetches an inline reading strategy for the current paragraph
+// and renders it as a card ABOVE the paragraph content.
+
+async function fetchParagraphStrategy(attemptId, sectionOrder) {
+  if (!attemptId) return;
+
+  const card = document.getElementById('para-strategy-card');
+  if (!card) return;
+
+  card.style.display = '';
+  card.innerHTML = '<div class="psc-loading">Analyzing paragraph strategy…</div>';
+
+  try {
+    const resp = await fetch('/api/reading/paragraph-strategy/', {
+      method:  'POST',
+      headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+      body:    JSON.stringify({ attempt_id: attemptId, section_order: sectionOrder }),
+    });
+    const data = await resp.json();
+
+    if (data.strategy && data.related_question_orders && data.related_question_orders.length > 0) {
+      const qTags = data.related_question_orders
+        .map(n => `<span class="psc-q-tag">Q${n}</span>`)
+        .join('');
+      // Store related IDs for highlight lookup
+      card.dataset.relatedIds = (data.related_question_ids || []).join(',');
+      card.innerHTML = `
+        <div class="psc-header">📌 Reading Strategy Agent</div>
+        <div class="psc-body">${marked.parse(data.strategy)}</div>
+        <div class="psc-q-tags">${qTags}</div>
+      `;
+      // Highlight the related question cards in the right panel
+      _highlightRelatedQuestions(data.related_question_orders);
+    } else {
+      // No strategy for this paragraph — hide the card cleanly
+      card.style.display = 'none';
+    }
+  } catch (_) {
+    card.style.display = 'none';
+  }
+}
+
+// Highlight question cards in the right panel that belong to this paragraph
+function _highlightRelatedQuestions(qOrders) {
+  // Clear all existing highlights first
+  document.querySelectorAll('.q-card.highlighted').forEach(el => {
+    el.classList.remove('highlighted');
+  });
+  if (!qOrders || !qOrders.length) return;
+  // Each q-card has id="q-{id}" — we don't have order→id mapping here,
+  // so we store related_question_ids in the card's data attribute for lookup.
+  const card = document.getElementById('para-strategy-card');
+  if (!card) return;
+  const ids = (card.dataset.relatedIds || '').split(',').filter(Boolean);
+  ids.forEach(id => {
+    const qCard = document.getElementById(`q-${id}`);
+    if (qCard) qCard.classList.add('highlighted');
+  });
 }
 </script>
 </body>

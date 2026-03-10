@@ -700,3 +700,60 @@ def api_reading_assistant(request):
     )
 
     return JsonResponse({'tip': tip})
+
+
+@csrf_exempt
+@require_POST
+def api_reading_paragraph_strategy(request):
+    """Return an inline reading strategy for a specific passage section.
+
+    Body: { "attempt_id": int, "section_order": int }
+
+    Returns:
+        strategy:               Markdown-formatted inline strategy (may be empty
+                                string if no questions map to this paragraph).
+        related_question_orders: List of question order numbers for this paragraph.
+        related_question_ids:   List of question IDs for this paragraph.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    learner = _get_or_create_learner(request)
+    attempt_id = data.get('attempt_id')
+    section_order = int(data.get('section_order', 1))
+
+    attempt = get_object_or_404(
+        ReadingAttempt.objects.select_related('passage'),
+        id=attempt_id,
+        learner=learner,
+    )
+    section = get_object_or_404(IELTSSection, passage=attempt.passage, order=section_order)
+
+    all_questions = list(attempt.passage.questions.values('id', 'order', 'text').order_by('order'))
+    all_sections = list(attempt.passage.sections.values('id', 'order', 'heading', 'body').order_by('order'))
+
+    from agents.reading_agent import map_questions_to_paragraphs, reading_agent_paragraph_strategy
+
+    mapping = map_questions_to_paragraphs(all_sections, all_questions)
+    related_q_ids = mapping.get(section.id, [])
+    related_questions = [q for q in all_questions if q['id'] in related_q_ids]
+
+    ld_profile = {'confirmed': learner.ld_confirmed, 'suspected': learner.ld_suspected}
+
+    section_dict = {
+        'id': section.id,
+        'order': section.order,
+        'heading': section.heading or '',
+        'body': section.body or attempt.passage.raw_text or '',
+    }
+
+    strategy = reading_agent_paragraph_strategy(section_dict, related_questions, ld_profile)
+    related_q_orders = sorted(q['order'] for q in related_questions)
+
+    return JsonResponse({
+        'strategy': strategy,
+        'related_question_orders': related_q_orders,
+        'related_question_ids': related_q_ids,
+    })
