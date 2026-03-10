@@ -268,11 +268,11 @@ def extract_question_groups_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
 def _split_passage_and_questions(raw: str) -> Tuple[str, str]:
     """Return (passage_text, questions_raw) by heuristic splitting."""
     q_marker = re.search(
-        r'(?m)^(Questions?\s+\d|Question\s+\d|\*\*Questions|'
+        r'^(Questions?\s+\d|Question\s+\d|\*\*Questions|'
         r'QUESTIONS|Questions and answers|Reading comprehension questions'
         r'|READING COMPREHENSION|Comprehension Questions)',
         raw,
-        re.IGNORECASE,
+        re.IGNORECASE | re.MULTILINE,
     )
     if q_marker:
         before = raw[: q_marker.start()].strip()
@@ -281,7 +281,7 @@ def _split_passage_and_questions(raw: str) -> Tuple[str, str]:
             return after, before
         return before, after
 
-    first_q = re.search(r'(?m)^\s*1[\.\)]\s+\S', raw)
+    first_q = re.search(r'^\s*1[\.\)]\s+\S', raw, re.MULTILINE)
     if first_q:
         before = raw[: first_q.start()].strip()
         after  = raw[first_q.start():].strip()
@@ -297,7 +297,7 @@ def _extract_questions(questions_raw: str) -> List[str]:
     if not questions_raw:
         return []
 
-    parts = re.split(r'(?m)(?=^\s*\d+[\.\)]\s)', questions_raw)
+    parts = re.split(r'(?=^\s*\d+[\.\)]\s)', questions_raw, flags=re.MULTILINE)
     questions = []
     for part in parts:
         cleaned = re.sub(r'^\s*\d+[\.\)]\s*', '', part.strip())
