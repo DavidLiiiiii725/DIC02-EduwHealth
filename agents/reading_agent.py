@@ -16,7 +16,7 @@ from __future__ import annotations
 import io
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 # ── PDF paragraph image extraction ───────────────────────────────
@@ -89,10 +89,26 @@ def extract_paragraph_images(
     # ── Step 2: find IELTS paragraph labels (A–Z at line/block start) ──
     # Typical IELTS paragraph: block starts with single capital letter followed
     # by a space/tab and then alphabetic content (not a question number).
+
+    # 【Fix】First, detect which pages are "question pages" so we can skip them entirely.
+    # This prevents question items that start with a capital letter from being
+    # misidentified as passage paragraph labels.
+    _Q_PAGE_MARKER_RE = re.compile(
+        r'(?m)^(questions?\s+\d|reading comprehension|comprehension questions)',
+        re.IGNORECASE,
+    )
+    question_page_indices: Set[int] = set()
+    for page_num, page in enumerate(doc):
+        if _Q_PAGE_MARKER_RE.search(page.get_text()):
+            question_page_indices.add(page_num)
+
     para_blocks: List[Dict] = []
     para_label_re = re.compile(r'^([A-Z])\s+[A-Z\u2018\u201C"\'(]')
 
     for blk in all_blocks:
+        # 【Fix】Skip all blocks on question pages entirely
+        if blk['page'] in question_page_indices:
+            continue
         # Skip blocks that look like question markers (e.g. "Questions 1-5")
         if re.match(r'^Questions?\s+\d', blk['text'], re.IGNORECASE):
             continue
