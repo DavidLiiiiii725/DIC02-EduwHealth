@@ -480,8 +480,11 @@ def api_reading_upload(request):
 
     section_data = None
     if first_section:
+        # Re-fetch questions from DB after mapping update to ensure section FK is committed
         first_section_qs = list(
-            first_section.questions.values('id', 'order', 'text', 'group_label').order_by('order')
+            IELTSQuestion.objects.filter(
+                passage=passage, section=first_section
+            ).values('id', 'order', 'text', 'group_label').order_by('order')
         )
         section_data = {
             'id': first_section.id,
