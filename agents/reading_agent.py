@@ -16,7 +16,7 @@ from __future__ import annotations
 import io
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 # ── PDF paragraph image extraction ───────────────────────────────
@@ -94,11 +94,10 @@ def extract_paragraph_images(
     # This prevents question items that start with a capital letter from being
     # misidentified as passage paragraph labels.
     _Q_PAGE_MARKER_RE = re.compile(
-        r'(?m)^(Questions?\s+\d|Question\s+\d|QUESTIONS|'
-        r'Reading Comprehension|Comprehension Questions)',
+        r'(?m)^(questions?\s+\d|reading comprehension|comprehension questions)',
         re.IGNORECASE,
     )
-    question_page_indices: set = set()
+    question_page_indices: Set[int] = set()
     for page_num, page in enumerate(doc):
         if _Q_PAGE_MARKER_RE.search(page.get_text()):
             question_page_indices.add(page_num)
