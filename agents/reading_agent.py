@@ -266,29 +266,41 @@ def extract_question_groups_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
 # ── Text helpers (for question extraction only) ───────────────────
 
 def _split_passage_and_questions(raw: str) -> Tuple[str, str]:
-    """Return (passage_text, questions_raw) by heuristic splitting."""
-    q_marker = re.search(
+    """Return (passage_text, questions_raw) by heuristic splitting.
+
+    Strategy: find the LAST occurrence of a question-block header so that
+    any accidental match inside the passage body is skipped.  The content
+    before the header is always treated as the passage; the content from the
+    header onward is always treated as the questions block.
+
+    The old '< 20 % swap' heuristic is intentionally removed: it caused the
+    passage and questions to be silently transposed when a question-like
+    phrase appeared early in the passage text.
+    """
+    # Try to find a question-block header. Use finditer and take the LAST match
+    # so that any accidental occurrence inside the passage body is ignored.
+    q_marker_re = re.compile(
         r'^(Questions?\s+\d|Question\s+\d|\*\*Questions|'
         r'QUESTIONS|Questions and answers|Reading comprehension questions'
         r'|READING COMPREHENSION|Comprehension Questions)',
-        raw,
         re.IGNORECASE | re.MULTILINE,
     )
-    if q_marker:
+    matches = list(q_marker_re.finditer(raw))
+    if matches:
+        # Use the LAST match – question headers appear near the end of the PDF
+        q_marker = matches[-1]
         before = raw[: q_marker.start()].strip()
         after  = raw[q_marker.start():].strip()
-        if before and len(before) < len(raw) * 0.20:
-            return after, before
         return before, after
 
+    # Fallback: look for the first numbered item "1. " or "1) "
     first_q = re.search(r'^\s*1[\.\)]\s+\S', raw, re.MULTILINE)
     if first_q:
         before = raw[: first_q.start()].strip()
         after  = raw[first_q.start():].strip()
-        if before and len(before) < len(raw) * 0.20:
-            return after, before
         return before, after
 
+    # No question section found at all
     return raw.strip(), ''
 
 
