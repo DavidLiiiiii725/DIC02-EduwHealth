@@ -19,6 +19,68 @@ import re
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 
+# ── Question page detection ───────────────────────────────────────
+#
+# IELTS reading PDFs contain two types of pages:
+#   - Passage pages: contain the reading text (paragraphs A, B, C, …)
+#   - Question pages: contain comprehension questions, always headed by a
+#     marker such as "Questions 1–3", "Questions 10 and 11", etc.
+#
+# Robust detection is non-trivial because PDF text extraction can:
+#   - Split "Questions" from "25–26" across lines/blocks
+#   - Render en-dashes (–, U+2013) or em-dashes (—, U+2014) instead of hyphens
+#   - Introduce unexpected whitespace or letter-case variation
+#
+# We therefore use a multi-signal approach rather than a single regex.
+
+# Signal 1: explicit question-group header in any dash / "and" / "to" form.
+# Supports: "Questions 1-3", "Questions 4–9", "Questions 10 and 11",
+#           "Questions 1 to 3", "Question 1" (singular, no range).
+_Q_HEADER_RE = re.compile(
+    r'\bquestions?\s+\d+\s*(?:[-\u2013\u2014]\s*\d+|\band\b\s*\d+|\bto\b\s*\d+)?',
+    re.IGNORECASE,
+)
+
+# Signal 2 (fallback): lines that start with a bare question number, e.g.:
+#   "25 The track was originally built …"
+#   "4   What does the author suggest …"
+# We count how many such lines exist on the page.
+_Q_NUMBERED_LINE_RE = re.compile(r'(?m)^\s*\d{1,3}\s+\S')
+
+# Minimum number of numbered lines required for the fallback heuristic.
+_Q_NUMBERED_LINE_THRESHOLD = 3
+
+
+def detect_question_pages(doc) -> Set[int]:
+    """Return the set of 0-based page indices that are IELTS question pages.
+
+    Detection uses two signals:
+      1. The page contains a "Questions m–n" / "Questions m and n" / "Question m"
+         header in any dash variant (-, –, —).  This is the primary, high-precision
+         signal and immediately classifies the page as a question page.
+      2. The page contains at least ``_Q_NUMBERED_LINE_THRESHOLD`` lines that begin
+         with a bare question number (e.g. "25 The track …").  This fallback catches
+         question pages whose header was not extracted cleanly by PyMuPDF.
+
+    Args:
+        doc: An open ``fitz.Document`` (PyMuPDF).
+
+    Returns:
+        Set of page numbers (0-based) that are classified as question pages.
+    """
+    question_page_indices: Set[int] = set()
+    for page_num, page in enumerate(doc):
+        text = page.get_text()
+        # Primary signal: explicit "Questions m…" header.
+        if _Q_HEADER_RE.search(text):
+            question_page_indices.add(page_num)
+            continue
+        # Fallback signal: multiple numbered question lines.
+        if len(_Q_NUMBERED_LINE_RE.findall(text)) >= _Q_NUMBERED_LINE_THRESHOLD:
+            question_page_indices.add(page_num)
+    return question_page_indices
+
+
 # ── PDF paragraph image extraction ───────────────────────────────
 
 def extract_paragraph_images(
@@ -90,23 +152,15 @@ def extract_paragraph_images(
     # Typical IELTS paragraph: block starts with single capital letter followed
     # by a space/tab and then alphabetic content (not a question number).
 
-    # 【Fix】First, detect which pages are "question pages" so we can skip them entirely.
-    # This prevents question items that start with a capital letter from being
-    # misidentified as passage paragraph labels.
-    _Q_PAGE_MARKER_RE = re.compile(
-        r'(?m)^(questions?\s+\d|reading comprehension|comprehension questions)',
-        re.IGNORECASE,
-    )
-    question_page_indices: Set[int] = set()
-    for page_num, page in enumerate(doc):
-        if _Q_PAGE_MARKER_RE.search(page.get_text()):
-            question_page_indices.add(page_num)
+    # Detect question pages using the robust multi-signal detector so we can
+    # skip them entirely and avoid misidentifying question items as paragraph labels.
+    question_page_indices = detect_question_pages(doc)
 
     para_blocks: List[Dict] = []
     para_label_re = re.compile(r'^([A-Z])\s+[A-Z\u2018\u201C"\'(]')
 
     for blk in all_blocks:
-        # 【Fix】Skip all blocks on question pages entirely
+        # Skip all blocks on question pages entirely
         if blk['page'] in question_page_indices:
             continue
         # Skip blocks that look like question markers (e.g. "Questions 1-5")
@@ -169,10 +223,12 @@ def extract_paragraph_images(
 
     doc.close()
 
-    # Fallback: if no labeled paragraphs found, convert each page to an image
+    # Fallback: if no labeled paragraphs found, convert each passage page to an image.
+    # Question pages are excluded to avoid rendering question content as passage images.
     if not paragraphs:
         paragraphs = _fallback_page_images(
-            pdf_bytes, output_dir, passage_id, zoom
+            pdf_bytes, output_dir, passage_id, zoom,
+            question_page_indices=question_page_indices,
         )
 
     return paragraphs
@@ -183,26 +239,43 @@ def _fallback_page_images(
     output_dir: str,
     passage_id: int,
     zoom: float = 2.0,
+    question_page_indices: Optional[Set[int]] = None,
 ) -> List[Dict[str, Any]]:
-    """Fallback: one image per page when no paragraph labels are found."""
+    """Fallback: one image per passage page when no paragraph labels are found.
+
+    Question pages are excluded from the output so that comprehension-question
+    content is not accidentally rendered as passage images.
+
+    Args:
+        pdf_bytes:             Raw bytes of the uploaded PDF.
+        output_dir:            Absolute path to save PNG images.
+        passage_id:            Used to namespace output filenames.
+        zoom:                  Render scale factor.
+        question_page_indices: Set of 0-based page indices to skip.  If *None*
+                               the function falls back to detecting them itself.
+    """
     try:
         import fitz
     except ImportError:
         return []
 
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    if question_page_indices is None:
+        question_page_indices = detect_question_pages(doc)
     mat = fitz.Matrix(zoom, zoom)
     pages = []
-    for page_num, page in enumerate(doc, start=1):
+    passage_page_nums = [i for i in range(len(doc)) if i not in question_page_indices]
+    for order, page_num in enumerate(passage_page_nums, start=1):
+        page = doc[page_num]
         pix = page.get_pixmap(matrix=mat)
-        rel_path = f"passage_images/{passage_id}_page_{page_num}.png"
-        abs_path = os.path.join(output_dir, f"{passage_id}_page_{page_num}.png")
+        rel_path = f"passage_images/{passage_id}_page_{order}.png"
+        abs_path = os.path.join(output_dir, f"{passage_id}_page_{order}.png")
         pix.save(abs_path)
         pages.append({
-            'label':      str(page_num),
-            'order':      page_num,
+            'label':      str(order),
+            'order':      order,
             'image_path': rel_path,
-            'heading':    f"Page {page_num}",
+            'heading':    f"Page {order}",
             'body':       '',
         })
     doc.close()
@@ -214,6 +287,7 @@ def extract_questions_from_pdf(pdf_bytes: bytes) -> List[str]:
 
     This reads the native PDF text structure (not OCR) and looks for
     numbered question items (1., 2., …) in the questions section.
+    Only question pages are scanned; passage pages are ignored.
     """
     try:
         import fitz
@@ -221,21 +295,30 @@ def extract_questions_from_pdf(pdf_bytes: bytes) -> List[str]:
         return []
 
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    full_text_parts = []
-    for page in doc:
-        full_text_parts.append(page.get_text())
+    question_page_indices = detect_question_pages(doc)
+    if question_page_indices:
+        questions_raw = '\n'.join(doc[i].get_text() for i in sorted(question_page_indices))
+    else:
+        # No question pages detected; fall back to global split heuristic.
+        raw = '\n'.join(page.get_text() for page in doc)
+        _, questions_raw = _split_passage_and_questions(raw)
     doc.close()
-
-    raw = '\n'.join(full_text_parts)
-    _, questions_raw = _split_passage_and_questions(raw)
     return _extract_questions(questions_raw)
 
 
 def extract_question_groups_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
     """Extract questions with their group labels from the PDF.
 
-    Recognises IELTS-style group headers such as:
-      "Questions 1-3", "Questions 4–9", "Questions 10-14"
+    Only question pages (detected via ``detect_question_pages``) contribute
+    to the extracted text, preventing passage content from contaminating the
+    question block.  Group headers of the form:
+
+      "Questions 1-3"    (hyphen)
+      "Questions 4–9"    (en-dash, U+2013)
+      "Questions 10 and 11"
+      "Questions 1 to 3"
+
+    are all recognised and preserved as ``group_label`` on each question item.
 
     Returns a list of dicts:
         [
@@ -253,13 +336,15 @@ def extract_question_groups_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
         return []
 
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    full_text_parts = []
-    for page in doc:
-        full_text_parts.append(page.get_text())
+    question_page_indices = detect_question_pages(doc)
+    if question_page_indices:
+        # Use only the text from detected question pages for maximum precision.
+        questions_raw = '\n'.join(doc[i].get_text() for i in sorted(question_page_indices))
+    else:
+        # No question pages detected; fall back to global split heuristic.
+        raw = '\n'.join(page.get_text() for page in doc)
+        _, questions_raw = _split_passage_and_questions(raw)
     doc.close()
-
-    raw = '\n'.join(full_text_parts)
-    _, questions_raw = _split_passage_and_questions(raw)
     return _extract_question_groups(questions_raw)
 
 
@@ -320,9 +405,15 @@ def _extract_questions(questions_raw: str) -> List[str]:
     return questions
 
 
-# Regex matching IELTS question group headers: "Questions 1-3", "Questions 4–9", etc.
+# Regex matching IELTS question group headers.  Supports all real-world forms:
+#   "Questions 1-3"        (ASCII hyphen)
+#   "Questions 4–9"        (en-dash U+2013)
+#   "Questions 25—26"      (em-dash U+2014)
+#   "Questions 10 and 11"
+#   "Questions 1 to 3"
+#   "Question 1"           (singular, no range)
 _GROUP_HEADER_RE = re.compile(
-    r'^(Questions?\s+\d+\s*[-–—]\s*\d+[^\n]*)',
+    r'^(Questions?\s+\d+(?:\s*[-\u2013\u2014]\s*\d+|\s+and\s+\d+|\s+to\s+\d+)?[^\n]*)',
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -338,9 +429,14 @@ def _extract_question_groups(questions_raw: str) -> List[Dict[str, Any]]:
     results: List[Dict[str, Any]] = []
     current_group = ''
 
-    # Split the block on either a group header OR a numbered question start
+    # Split the block on either a group header OR a numbered question start.
+    # The group-header pattern is kept in sync with _GROUP_HEADER_RE above and
+    # also matches bare numbered question lines (e.g. "25 The track …") used on
+    # IELTS question pages that omit the trailing "." or ")".
     token_re = re.compile(
-        r'(?=^Questions?\s+\d+\s*[-–—]\s*\d+)|(?=^\s*\d+[\.\)]\s)',
+        r'(?=^Questions?\s+\d+(?:\s*[-\u2013\u2014]\s*\d+|\s+and\s+\d+|\s+to\s+\d+)?)'
+        r'|(?=^\s*\d+[\.\)]\s)'
+        r'|(?=^\s*\d+\s+\S)',
         re.IGNORECASE | re.MULTILINE,
     )
     segments = token_re.split(questions_raw)
@@ -356,8 +452,11 @@ def _extract_question_groups(questions_raw: str) -> List[Dict[str, Any]]:
             current_group = seg.split('\n')[0].strip()
             continue
 
-        # Check if this segment is a numbered question item
-        q_match = re.match(r'^\s*(\d+)[\.\)]\s*([\s\S]+)', seg)
+        # Check if this segment is a numbered question item (with "." / ")")
+        q_match = re.match(r'^\s*(\d+)[\.\)]\s*(\S.*)', seg, re.DOTALL)
+        if not q_match:
+            # Also accept bare numbered lines: "25 The track was originally …"
+            q_match = re.match(r'^\s*(\d+)\s+(\S.*)', seg, re.DOTALL)
         if q_match:
             q_num  = int(q_match.group(1))
             q_text = re.sub(r'\s+', ' ', q_match.group(2)).strip()
