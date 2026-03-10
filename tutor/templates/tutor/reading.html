@@ -966,12 +966,11 @@ textarea.q-answer:focus { border-color:var(--blue); }
           <div class="panel-section-label questions-label">📝 Questions</div>
           <!-- 右栏可独立滚动 -->
           <div class="questions-panel" id="questions-panel" style="flex:1;overflow-y:auto;"></div>
-          <!-- RIGHT FOOTER: 右栏底部进度信息 + Next Section 按钮（与左栏联动） -->
+          <!-- RIGHT FOOTER: 右栏独立题目分组翻页按钮 -->
           <div class="questions-footer" id="questions-footer">
+            <button class="btn-secondary" id="q-prev-btn" onclick="prevQuestionGroup()" style="padding:6px 14px;font-size:0.8rem;" disabled>← Prev</button>
             <span class="q-section-info" id="q-section-info"></span>
-            <button class="btn-primary" id="next-btn" onclick="nextSection()" style="padding:7px 16px;font-size:0.8rem;">
-              Next Section →
-            </button>
+            <button class="btn-primary" id="q-next-btn" onclick="nextQuestionGroup()" style="padding:7px 14px;font-size:0.8rem;">Next →</button>
           </div>
         </div>
 
@@ -1097,6 +1096,9 @@ let state = {
   answeredQs:     {},     // qId -> {correct, score, feedback}
   paragraphs:     [],     // text paragraphs (fallback when no image_url)
   shownParaCount: 0,      // how many paragraphs are currently visible (text mode)
+  allQuestions:   [],     // all questions for the passage
+  qGroups:        [],     // questions grouped by group_label
+  qGroupIndex:    0,      // current question group page index
 };
 
 // ── Init ───────────────────────────────────────────────────────
@@ -1124,6 +1126,11 @@ let state = {
     if (data.done) {
       showCompletionScreen(data.score, data.strategy);
     } else {
+      if (data.all_questions) {
+        state.allQuestions = data.all_questions;
+        state.qGroups = _groupQuestions(data.all_questions);
+        state.qGroupIndex = 0;
+      }
       renderSection(data.current_section, data.guidance, totalSecs);
     }
   }
@@ -1207,6 +1214,12 @@ async function uploadPassage() {
     state.attemptId     = data.attempt_id;
     state.totalSections = data.total_sections;
 
+    if (data.all_questions) {
+      state.allQuestions = data.all_questions;
+      state.qGroups = _groupQuestions(data.all_questions);
+      state.qGroupIndex = 0;
+    }
+
     document.getElementById('topbar-sub').textContent =
       `${data.title || _selectedFile.name} · ${data.total_sections} paragraphs · ${data.total_questions} questions`;
     document.getElementById('strategy-btn').style.display = '';
@@ -1247,25 +1260,20 @@ function renderTipsCard(tips) {
 }
 
 // ── Update left and right footers ───────────────────────────────
+// ── Update left footer only (right footer managed by _renderQuestionsFromAllQuestions) ──
 function updateFooters(sectionOrder, totalSections) {
   const passageFooter = document.getElementById('passage-footer');
   const passageFooterInfo = document.getElementById('passage-footer-info');
   const passageNextBtn = document.getElementById('passage-next-section-btn');
-  const qSectionInfo = document.getElementById('q-section-info');
-  const nextBtn = document.getElementById('next-btn');
 
   if (passageFooter) passageFooter.style.display = 'flex';
   if (passageFooterInfo) {
     passageFooterInfo.textContent = `Section ${sectionOrder} of ${totalSections}`;
   }
-  if (qSectionInfo) {
-    qSectionInfo.textContent = `Section ${sectionOrder} / ${totalSections}`;
-  }
 
   const isLast = sectionOrder >= totalSections;
   const btnLabel = isLast ? 'Finish & Get Strategy →' : 'Next Section →';
   if (passageNextBtn) passageNextBtn.textContent = btnLabel;
-  if (nextBtn) nextBtn.textContent = btnLabel;
 }
 
 // ── Render a section (paragraph image or text) ─────────────────
@@ -1285,10 +1293,6 @@ function renderSection(sec, guidance, totalSections) {
 
   document.getElementById('upload-panel').style.display  = 'none';
   document.getElementById('session-wrap').style.display  = 'flex';
-
-  // Restore footer visibility
-  const nextBtn = document.getElementById('next-btn');
-  if (nextBtn) { nextBtn.style.display = ''; nextBtn.disabled = false; }
 
   // Guidance (render markdown)
   const guidanceEl = document.getElementById('passage-guidance');
@@ -1401,7 +1405,7 @@ function _renderQuestionsPanel() {
     </div>`;
     return;
   }
-  renderQuestions(state.currentSection.questions, state.currentSection.body);
+  _renderQuestionsFromAllQuestions();
 }
 
 // ── Show next paragraph ────────────────────────────────────────
@@ -1477,6 +1481,118 @@ function renderQuestions(questions, sectionBody) {
   });
 }
 
+// ── Group all questions by group_label (preserving insertion order) ─
+function _groupQuestions(questions) {
+  const groupMap = new Map(); // label -> { label, questions[] }
+  questions.forEach(q => {
+    const label = q.group_label || '';
+    if (!groupMap.has(label)) {
+      groupMap.set(label, { label, questions: [] });
+    }
+    groupMap.get(label).questions.push(q);
+  });
+  return Array.from(groupMap.values());
+}
+
+// ── Get all available questions (allQuestions or current section fallback) ─
+function _getAllQuestions() {
+  if (state.allQuestions && state.allQuestions.length) return state.allQuestions;
+  if (state.currentSection && state.currentSection.questions) return state.currentSection.questions;
+  return [];
+}
+
+// ── Render questions from all questions (independent of section) ─
+function _renderQuestionsFromAllQuestions() {
+  const panel = document.getElementById('questions-panel');
+  if (!panel) return;
+
+  if (!state.qGroups || !state.qGroups.length) {
+    // Fallback: show current section questions if no allQuestions loaded yet
+    const fallbackQs = _getAllQuestions();
+    if (fallbackQs.length) {
+      renderQuestions(fallbackQs, state.currentSection ? state.currentSection.body : '');
+    } else {
+      panel.innerHTML = '<p style="font-size:0.8rem;color:var(--muted);padding:16px;">No questions extracted.</p>';
+    }
+    _updateQuestionsFooter();
+    return;
+  }
+
+  const group = state.qGroups[state.qGroupIndex];
+  panel.innerHTML = '';
+
+  if (group.label) {
+    const header = document.createElement('div');
+    header.className = 'q-group-header';
+    header.textContent = group.label;
+    panel.appendChild(header);
+  }
+
+  group.questions.forEach(q => {
+    const existing = state.answeredQs[q.id];
+    const card = document.createElement('div');
+    card.className = 'q-card';
+    card.id = `q-${q.id}`;
+
+    let html = `<div class="q-label">Question ${q.order}</div>`;
+    html += `<div class="q-text">${escHtml(q.text)}</div>`;
+
+    if (existing) {
+      const cls = existing.correct ? 'correct' : (existing.score >= 0.25 ? 'partial' : 'incorrect');
+      html += `<div class="q-answered ${cls}">${escHtml(existing.feedback)}</div>`;
+    } else {
+      html += `<textarea class="q-answer" id="ans-${q.id}" rows="3" placeholder="Write your answer here…"></textarea>`;
+      html += `<div class="q-actions">
+        <button class="hint-btn" onclick="getHint(${q.id})">💡 Hint</button>
+        <button class="submit-btn" onclick="submitAnswer(${q.id})">✓ Submit</button>
+      </div>`;
+    }
+    html += `<div class="hint-box" id="hint-${q.id}"></div>`;
+    card.innerHTML = html;
+    panel.appendChild(card);
+  });
+
+  _updateQuestionsFooter();
+}
+
+// ── Update right footer prev/next buttons and group info ────────
+function _updateQuestionsFooter() {
+  const qSectionInfo = document.getElementById('q-section-info');
+  const prevBtn = document.getElementById('q-prev-btn');
+  const nextBtn = document.getElementById('q-next-btn');
+  const total = state.qGroups ? state.qGroups.length : 0;
+
+  if (qSectionInfo) {
+    if (total > 0) {
+      qSectionInfo.textContent = `Group ${state.qGroupIndex + 1} / ${total}`;
+    } else {
+      qSectionInfo.textContent = '';
+    }
+  }
+  if (prevBtn) prevBtn.disabled = state.qGroupIndex === 0;
+  if (nextBtn) nextBtn.disabled = !total || state.qGroupIndex >= total - 1;
+}
+
+// ── Previous question group ─────────────────────────────────────
+function prevQuestionGroup() {
+  if (state.qGroupIndex > 0) {
+    state.qGroupIndex--;
+    _renderQuestionsFromAllQuestions();
+    const panel = document.getElementById('questions-panel');
+    if (panel) panel.scrollTop = 0;
+  }
+}
+
+// ── Next question group ─────────────────────────────────────────
+function nextQuestionGroup() {
+  if (state.qGroups && state.qGroupIndex < state.qGroups.length - 1) {
+    state.qGroupIndex++;
+    _renderQuestionsFromAllQuestions();
+    const panel = document.getElementById('questions-panel');
+    if (panel) panel.scrollTop = 0;
+  }
+}
+
 // ── Submit answer ──────────────────────────────────────────────
 async function submitAnswer(qId) {
   const ta = document.getElementById(`ans-${qId}`);
@@ -1495,7 +1611,7 @@ async function submitAnswer(qId) {
 
   // Re-render question card
   const card = document.getElementById(`q-${qId}`);
-  const q = state.currentSection.questions.find(q => q.id === qId);
+  const q = _getAllQuestions().find(q => q.id === qId);
   if (!card || !q) return;
 
   const cls = data.correct ? 'correct' : (data.score >= 0.25 ? 'partial' : 'incorrect');
@@ -1529,8 +1645,8 @@ async function getHint(qId) {
 
 // ── Next section ───────────────────────────────────────────────
 async function nextSection() {
-  const btn = document.getElementById('next-btn');
-  btn.disabled = true;
+  const btn = document.getElementById('passage-next-section-btn');
+  if (btn) btn.disabled = true;
 
   const resp = await fetch('/api/reading/next-section/', {
     method:  'POST',
@@ -1545,8 +1661,13 @@ async function nextSection() {
     // Reset paragraph navigation for the new section
     state.paragraphs     = [];
     state.shownParaCount = 0;
+    if (data.all_questions) {
+      state.allQuestions = data.all_questions;
+      state.qGroups = _groupQuestions(data.all_questions);
+      // Keep qGroupIndex as-is so user stays on the same group page
+    }
     renderSection(data.current_section, data.guidance, state.totalSections);
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -1579,8 +1700,6 @@ function showCompletionScreen(score, strategy) {
   if (passageFooter) passageFooter.style.display = 'none';
   const questionsFooter = document.getElementById('questions-footer');
   if (questionsFooter) questionsFooter.style.display = 'none';
-  const nextBtn = document.getElementById('next-btn');
-  if (nextBtn) nextBtn.style.display = 'none';
   document.getElementById('strategy-btn').style.display = 'none';
 }
 
@@ -1605,6 +1724,7 @@ function resetPassage() {
     passageId: null, attemptId: null, totalSections: 0,
     currentSection: null, answeredQs: {},
     paragraphs: [], shownParaCount: 0,
+    allQuestions: [], qGroups: [], qGroupIndex: 0,
   };
   _selectedFile = null;
   document.getElementById('pdf-input').value = '';
@@ -1629,13 +1749,15 @@ function resetPassage() {
       </div>`;
   }
 
-  // Restore footers and next button
+  // Restore footers
   const passageFooter = document.getElementById('passage-footer');
   if (passageFooter) passageFooter.style.display = 'none';
   const questionsFooter = document.getElementById('questions-footer');
   if (questionsFooter) questionsFooter.style.display = '';
-  const nextBtn = document.getElementById('next-btn');
-  if (nextBtn) { nextBtn.style.display = ''; nextBtn.disabled = false; nextBtn.textContent = 'Next Section →'; }
+  const qPrevBtn = document.getElementById('q-prev-btn');
+  if (qPrevBtn) { qPrevBtn.disabled = true; }
+  const qNextBtn = document.getElementById('q-next-btn');
+  if (qNextBtn) { qNextBtn.disabled = false; }
 
   // Clear questions panel
   const qPanel = document.getElementById('questions-panel');

@@ -519,6 +519,12 @@ def api_reading_upload(request):
             'tips': first_section.reading_tips or [],
         }
 
+    all_questions = list(
+        IELTSQuestion.objects.filter(passage=passage)
+        .values('id', 'order', 'text', 'group_label', 'section_id')
+        .order_by('order')
+    )
+
     return JsonResponse({
         'ok': True,
         'passage_id': passage.id,
@@ -528,6 +534,7 @@ def api_reading_upload(request):
         'current_section': section_data,
         'guidance': guidance,
         'title': title,
+        'all_questions': all_questions,
     })
 
 
@@ -600,6 +607,12 @@ def api_reading_next_section(request):
     if section.image_path:
         image_url = request.build_absolute_uri(settings.MEDIA_URL + section.image_path)
 
+    all_questions = list(
+        IELTSQuestion.objects.filter(passage=attempt.passage)
+        .values('id', 'order', 'text', 'group_label', 'section_id')
+        .order_by('order')
+    )
+
     return JsonResponse({
         'done': False,
         'current_section': {
@@ -612,6 +625,7 @@ def api_reading_next_section(request):
             'tips': list(section.reading_tips or []),
         },
         'guidance': guidance,
+        'all_questions': all_questions,
     })
 
 
