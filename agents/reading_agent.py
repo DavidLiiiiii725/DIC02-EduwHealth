@@ -291,19 +291,14 @@ def _split_passage_and_questions(raw: str) -> Tuple[str, str]:
         q_marker = matches[-1]
         before = raw[: q_marker.start()].strip()
         after  = raw[q_marker.start():].strip()
-        if before:
-            return before, after
-        # Edge case: header was at the very start – treat whole thing as questions
-        return '', after
+        return before, after
 
     # Fallback: look for the first numbered item "1. " or "1) "
     first_q = re.search(r'^\s*1[\.\)]\s+\S', raw, re.MULTILINE)
     if first_q:
         before = raw[: first_q.start()].strip()
         after  = raw[first_q.start():].strip()
-        if before:
-            return before, after
-        return '', after
+        return before, after
 
     # No question section found at all
     return raw.strip(), ''
