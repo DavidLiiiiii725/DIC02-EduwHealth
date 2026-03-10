@@ -722,6 +722,30 @@ textarea.q-answer:focus { border-color:var(--blue); }
   margin: 4px 0 8px;
 }
 
+/* Question group overview card — shown once per group above individual q-cards */
+.q-group-overview {
+  background: rgba(26,95,204,0.07);
+  border: 1.5px solid rgba(26,95,204,0.22);
+  border-radius: 8px;
+  padding: 14px 16px 12px;
+  margin-bottom: 4px;
+}
+.q-group-overview-label {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #1A5FCC;
+  margin-bottom: 6px;
+}
+.q-group-overview-instruction {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.83rem;
+  line-height: 1.65;
+  color: #222;
+}
+
 /* ══════════════════════════════════════════════════════════════
    PREFLIGHT READING TIPS CARD
    Amber/yellow theme, displayed above each paragraph image
@@ -1273,7 +1297,10 @@ function updateFooters(sectionOrder, totalSections) {
 
   const isLast = sectionOrder >= totalSections;
   const btnLabel = isLast ? 'Finish & Get Strategy →' : 'Next Section →';
-  if (passageNextBtn) passageNextBtn.textContent = btnLabel;
+  if (passageNextBtn) {
+    passageNextBtn.textContent = btnLabel;
+    passageNextBtn.disabled = false;   // always re-enable after section loads
+  }
 }
 
 // ── Render a section (paragraph image or text) ─────────────────
@@ -1483,11 +1510,11 @@ function renderQuestions(questions, sectionBody) {
 
 // ── Group all questions by group_label (preserving insertion order) ─
 function _groupQuestions(questions) {
-  const groupMap = new Map(); // label -> { label, questions[] }
+  const groupMap = new Map(); // label -> { label, instruction, questions[] }
   questions.forEach(q => {
     const label = q.group_label || '';
     if (!groupMap.has(label)) {
-      groupMap.set(label, { label, questions: [] });
+      groupMap.set(label, { label, instruction: q.group_instruction || '', questions: [] });
     }
     groupMap.get(label).questions.push(q);
   });
@@ -1522,10 +1549,14 @@ function _renderQuestionsFromAllQuestions() {
   panel.innerHTML = '';
 
   if (group.label) {
-    const header = document.createElement('div');
-    header.className = 'q-group-header';
-    header.textContent = group.label;
-    panel.appendChild(header);
+    const overview = document.createElement('div');
+    overview.className = 'q-group-overview';
+    let overviewHtml = `<div class="q-group-overview-label">${escHtml(group.label)}</div>`;
+    if (group.instruction) {
+      overviewHtml += `<div class="q-group-overview-instruction">${escHtml(group.instruction)}</div>`;
+    }
+    overview.innerHTML = overviewHtml;
+    panel.appendChild(overview);
   }
 
   group.questions.forEach(q => {
@@ -1648,25 +1679,39 @@ async function nextSection() {
   const btn = document.getElementById('passage-next-section-btn');
   if (btn) btn.disabled = true;
 
-  const resp = await fetch('/api/reading/next-section/', {
-    method:  'POST',
-    headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
-    body:    JSON.stringify({ attempt_id: state.attemptId }),
-  });
-  const data = await resp.json();
+  try {
+    const resp = await fetch('/api/reading/next-section/', {
+      method:  'POST',
+      headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+      body:    JSON.stringify({ attempt_id: state.attemptId }),
+    });
 
-  if (data.done) {
-    showCompletionScreen(data.score, data.strategy);
-  } else {
-    // Reset paragraph navigation for the new section
-    state.paragraphs     = [];
-    state.shownParaCount = 0;
-    if (data.all_questions) {
-      state.allQuestions = data.all_questions;
-      state.qGroups = _groupQuestions(data.all_questions);
-      // Keep qGroupIndex as-is so user stays on the same group page
+    if (!resp.ok) {
+      let errMsg = 'Failed to load next section.';
+      try { const errData = await resp.json(); errMsg = errData.error || errMsg; } catch(_) {}
+      showToast('❌ ' + errMsg);
+      if (btn) btn.disabled = false;
+      return;
     }
-    renderSection(data.current_section, data.guidance, state.totalSections);
+
+    const data = await resp.json();
+
+    if (data.done) {
+      showCompletionScreen(data.score, data.strategy);
+    } else {
+      // Reset paragraph navigation for the new section
+      state.paragraphs     = [];
+      state.shownParaCount = 0;
+      if (data.all_questions) {
+        state.allQuestions = data.all_questions;
+        state.qGroups = _groupQuestions(data.all_questions);
+        // Keep qGroupIndex as-is so user stays on the same group page
+      }
+      renderSection(data.current_section, data.guidance, state.totalSections);
+      // Button re-enabled inside renderSection → updateFooters
+    }
+  } catch(e) {
+    showToast('❌ Error: ' + e.message);
     if (btn) btn.disabled = false;
   }
 }

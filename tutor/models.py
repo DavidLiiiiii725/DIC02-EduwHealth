@@ -80,6 +80,7 @@ class IELTSQuestion(models.Model):
     order        = models.PositiveSmallIntegerField()
     text         = models.TextField()
     group_label  = models.CharField(max_length=200, blank=True, default='')
+    group_instruction = models.TextField(blank=True, default='')
 
     class Meta:
         ordering = ['order']

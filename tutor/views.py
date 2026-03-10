@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 import threading
 from django.shortcuts import render, redirect, get_object_or_404
@@ -9,6 +10,8 @@ from django.utils import timezone
 from django.db.models import Avg, Sum
 
 from .models import LearnerProfile, ChatSession, ChatMessage, IELTSPassage, IELTSSection, IELTSQuestion, ReadingAttempt
+
+logger = logging.getLogger(__name__)
 
 # ── LD option definitions ─────────────────────────────────────────
 LD_OPTIONS = {
@@ -416,6 +419,19 @@ def api_reading_upload(request):
     except Exception:
         question_groups = []
 
+    # Fallback: if group extraction returned nothing, try the simpler extractor
+    if not question_groups:
+        logger.warning('[WARN] extract_question_groups_from_pdf returned 0 results; trying extract_questions_from_pdf fallback')
+        try:
+            from agents.reading_agent import extract_questions_from_pdf
+            plain_questions = extract_questions_from_pdf(pdf_bytes)
+            question_groups = [
+                {'order': i + 1, 'text': t, 'group_label': '', 'group_instruction': ''}
+                for i, t in enumerate(plain_questions)
+            ]
+        except Exception:
+            question_groups = []
+
     # ── Persist paragraph sections ────────────────────────────────
     section_objs = []
     for para in paragraphs:
@@ -437,6 +453,7 @@ def api_reading_upload(request):
             order=qg['order'],
             text=qg['text'],
             group_label=qg.get('group_label', ''),
+            group_instruction=qg.get('group_instruction', ''),
         )
         q_objs.append(q_obj)
 
@@ -507,7 +524,7 @@ def api_reading_upload(request):
         first_section_qs = list(
             IELTSQuestion.objects.filter(
                 passage=passage, section=first_section
-            ).values('id', 'order', 'text', 'group_label').order_by('order')
+            ).values('id', 'order', 'text', 'group_label', 'group_instruction').order_by('order')
         )
         section_data = {
             'id': first_section.id,
@@ -521,7 +538,7 @@ def api_reading_upload(request):
 
     all_questions = list(
         IELTSQuestion.objects.filter(passage=passage)
-        .values('id', 'order', 'text', 'group_label', 'section_id')
+        .values('id', 'order', 'text', 'group_label', 'group_instruction', 'section_id')
         .order_by('order')
     )
 
@@ -582,7 +599,7 @@ def api_reading_next_section(request):
 
     section = get_object_or_404(IELTSSection, passage=attempt.passage, order=next_order)
     # Return only the questions assigned to this section
-    section_questions = list(section.questions.values('id', 'order', 'text', 'group_label').order_by('order'))
+    section_questions = list(section.questions.values('id', 'order', 'text', 'group_label', 'group_instruction').order_by('order'))
 
     from agents.reading_agent import reading_agent_guide_section
     from django.conf import settings
@@ -609,7 +626,7 @@ def api_reading_next_section(request):
 
     all_questions = list(
         IELTSQuestion.objects.filter(passage=attempt.passage)
-        .values('id', 'order', 'text', 'group_label', 'section_id')
+        .values('id', 'order', 'text', 'group_label', 'group_instruction', 'section_id')
         .order_by('order')
     )
 
@@ -795,7 +812,7 @@ def api_reading_paragraph_strategy(request):
     )
     section = get_object_or_404(IELTSSection, passage=attempt.passage, order=section_order)
 
-    all_questions = list(attempt.passage.questions.values('id', 'order', 'text', 'group_label').order_by('order'))
+    all_questions = list(attempt.passage.questions.values('id', 'order', 'text', 'group_label', 'group_instruction').order_by('order'))
     all_sections = list(attempt.passage.sections.values('id', 'order', 'heading', 'body').order_by('order'))
 
     from agents.reading_agent import map_questions_to_paragraphs, reading_agent_paragraph_strategy
