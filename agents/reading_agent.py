@@ -177,7 +177,8 @@ def extract_paragraph_images(
         if pb['label'] not in seen_labels:
             seen_labels.add(pb['label'])
             unique_para_blocks.append(pb)
-    unique_para_blocks.sort(key=lambda b: (b['page'], b['y0']))
+    # Sort alphabetically by label so paragraphs always appear A, B, C, D…
+    unique_para_blocks.sort(key=lambda b: b['label'])
 
     # ── Step 4: crop one image per paragraph ──
     paragraphs: List[Dict] = []
@@ -215,7 +216,7 @@ def extract_paragraph_images(
 
         paragraphs.append({
             'label':      para['label'],
-            'order':      i + 1,
+            'order':      ord(para['label']) - ord('A') + 1,
             'image_path': rel_path,
             'heading':    f"Paragraph {para['label']}",
             'body':       '',           # body is image-only
@@ -323,9 +324,10 @@ def extract_question_groups_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
     Returns a list of dicts:
         [
           {
-            'order':       1,           # question number (1-based)
-            'text':        'Choose…',   # question body text
-            'group_label': 'Questions 1-3',  # enclosing group header (may be '')
+            'order':             1,           # question number (1-based)
+            'text':              'Choose…',   # question body text
+            'group_label':       'Questions 1-3',  # enclosing group header (may be '')
+            'group_instruction': 'Do the following…',  # full group instruction (may be '')
           },
           …
         ]
@@ -337,15 +339,32 @@ def extract_question_groups_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
 
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     question_page_indices = detect_question_pages(doc)
+    # Extract full-document text upfront for fallback use
+    full_doc_text = '\n'.join(page.get_text() for page in doc)
     if question_page_indices:
         # Use only the text from detected question pages for maximum precision.
         questions_raw = '\n'.join(doc[i].get_text() for i in sorted(question_page_indices))
     else:
         # No question pages detected; fall back to global split heuristic.
-        raw = '\n'.join(page.get_text() for page in doc)
-        _, questions_raw = _split_passage_and_questions(raw)
+        _, questions_raw = _split_passage_and_questions(full_doc_text)
     doc.close()
-    return _extract_question_groups(questions_raw)
+
+    results = _extract_question_groups(questions_raw)
+
+    # Fallback 1: if primary extraction returned nothing and we had question pages,
+    # try scanning the full document text (question pages detection may have missed some).
+    if not results and full_doc_text and full_doc_text != questions_raw:
+        results = _extract_question_groups(full_doc_text)
+
+    # Fallback 2: universal extractor on the questions section text
+    if not results:
+        results = _universal_question_extractor(questions_raw)
+
+    # Fallback 3: universal extractor on the entire document text
+    if not results and full_doc_text:
+        results = _universal_question_extractor(full_doc_text)
+
+    return results
 
 
 # ── Text helpers (for question extraction only) ───────────────────
@@ -421,13 +440,15 @@ _GROUP_HEADER_RE = re.compile(
 def _extract_question_groups(questions_raw: str) -> List[Dict[str, Any]]:
     """Parse questions from the questions block, preserving their group labels.
 
-    Returns a list of dicts: [{'order': int, 'text': str, 'group_label': str}, …]
+    Returns a list of dicts:
+        [{'order': int, 'text': str, 'group_label': str, 'group_instruction': str}, …]
     """
     if not questions_raw:
         return []
 
     results: List[Dict[str, Any]] = []
     current_group = ''
+    current_group_instruction = ''
 
     # Split the block on either a group header OR a numbered question start.
     # The group-header pattern is kept in sync with _GROUP_HEADER_RE above and
@@ -448,8 +469,20 @@ def _extract_question_groups(questions_raw: str) -> List[Dict[str, Any]]:
 
         # Check if this segment is a group header
         if _GROUP_HEADER_RE.match(seg):
-            # Take only the first line as the group label
-            current_group = seg.split('\n')[0].strip()
+            lines = seg.split('\n')
+            # First line is the group label
+            current_group = lines[0].strip()
+            # Lines after the header (before any numbered question) are the instruction
+            instr_lines = []
+            for line in lines[1:]:
+                line = line.strip()
+                if not line:
+                    continue
+                # Stop if we hit a numbered question line
+                if re.match(r'^\d+[\.\)]\s', line) or re.match(r'^\d+\s+\S', line):
+                    break
+                instr_lines.append(line)
+            current_group_instruction = ' '.join(instr_lines).strip()
             continue
 
         # Check if this segment is a numbered question item (with "." / ")")
@@ -462,16 +495,74 @@ def _extract_question_groups(questions_raw: str) -> List[Dict[str, Any]]:
             q_text = re.sub(r'\s+', ' ', q_match.group(2)).strip()
             if q_text:
                 results.append({
-                    'order':       q_num,
-                    'text':        q_text,
-                    'group_label': current_group,
+                    'order':             q_num,
+                    'text':              q_text,
+                    'group_label':       current_group,
+                    'group_instruction': current_group_instruction,
                 })
 
     # If no grouped questions were found, fall back to the simple extractor
     if not results:
         for i, text in enumerate(_extract_questions(questions_raw), start=1):
-            results.append({'order': i, 'text': text, 'group_label': ''})
+            results.append({
+                'order':             i,
+                'text':              text,
+                'group_label':       '',
+                'group_instruction': '',
+            })
 
+    return results
+
+
+def _universal_question_extractor(text: str) -> List[Dict[str, Any]]:
+    """Universal fallback question extractor — tries multiple pattern strategies.
+
+    Used as a last resort when both primary extraction and the standard fallback
+    return 0 results.  Scans line-by-line for bare numbered items.
+
+    Returns a list of dicts compatible with _extract_question_groups output.
+    """
+    if not text:
+        return []
+
+    results: List[Dict[str, Any]] = []
+    lines = text.split('\n')
+    current_q_num: Optional[int] = None
+    current_q_lines: List[str] = []
+
+    def _flush_question() -> None:
+        if current_q_num is not None and current_q_lines:
+            q_text = re.sub(r'\s+', ' ', ' '.join(current_q_lines)).strip()
+            if q_text:
+                results.append({
+                    'order':             current_q_num,
+                    'text':              q_text,
+                    'group_label':       '',
+                    'group_instruction': '',
+                })
+
+    for line in lines:
+        line_stripped = line.strip()
+
+        # Match: "1. Text…", "1) Text…", "1 Text starting with any character"
+        m = re.match(r'^(\d{1,3})[\.\)]\s+(.+)', line_stripped)
+        if not m:
+            m = re.match(r'^(\d{1,3})\s+([^\d\s].+)', line_stripped)
+
+        if m:
+            _flush_question()
+            current_q_num = int(m.group(1))
+            current_q_lines = [m.group(2).strip()]
+        elif current_q_num is not None and line_stripped:
+            # Stop accumulating at a new section header or blank-then-capital pattern
+            if re.match(r'^Questions?\s+\d', line_stripped, re.IGNORECASE):
+                _flush_question()
+                current_q_num = None
+                current_q_lines = []
+            else:
+                current_q_lines.append(line_stripped)
+
+    _flush_question()
     return results
 
 
