@@ -65,6 +65,7 @@ class IELTSSection(models.Model):
     heading      = models.CharField(max_length=300, blank=True, default='')
     body         = models.TextField()
     image_path   = models.CharField(max_length=500, blank=True, default='')
+    reading_tips = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ['order']

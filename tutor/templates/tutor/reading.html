@@ -721,6 +721,83 @@ textarea.q-answer:focus { border-color:var(--blue); }
   padding: 6px 12px;
   margin: 4px 0 8px;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   PREFLIGHT READING TIPS CARD
+   Amber/yellow theme, displayed above each paragraph image
+   BEFORE the strategy card — shown immediately when section loads
+══════════════════════════════════════════════════════════════ */
+.para-tips-card {
+  margin-bottom: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  animation: fadeIn 0.35s ease;
+}
+.ptc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: rgba(251, 191, 36, 0.12);
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  border-bottom: 1px solid rgba(217, 119, 6, 0.15);
+}
+.ptc-body {
+  padding: 10px 14px;
+  background: #fffbeb;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ptc-tip {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: #292524;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(217, 119, 6, 0.08);
+}
+.ptc-tip:last-child { border-bottom: none; }
+
+/* ── Left panel independent pagination footer ── */
+.passage-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 32px;
+  border-top: 1px solid #e0e0e0;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+.passage-footer-info {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.78rem;
+  color: #666;
+}
+
+/* ── Right panel independent pagination footer ── */
+.questions-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-top: 1px solid #e0e0e0;
+  background: #fafafa;
+  flex-shrink: 0;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.75rem;
+  color: #888;
+}
+.questions-footer .q-section-info {
+  font-size: 0.72rem;
+  color: #888;
+}
 </style>
 </head>
 <body>
@@ -851,36 +928,50 @@ textarea.q-answer:focus { border-color:var(--blue); }
       <!-- ── READING SESSION ── -->
       <div id="session-wrap" class="session-wrap" style="display:none;">
 
-        <!-- Passage panel: Article -->
+        <!-- LEFT: Passage panel (独立滚动 + 独立翻段) -->
         <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
           <div class="panel-section-label">📄 Article</div>
-          <div class="passage-panel" id="passage-panel">
+          <!-- 左栏可独立滚动 -->
+          <div class="passage-panel" id="passage-panel" style="flex:1;overflow-y:auto;">
             <!-- Progress dots injected by JS -->
             <div class="progress-track" id="progress-track"></div>
             <!-- Guidance message (markdown rendered) -->
             <div class="passage-guidance" id="passage-guidance"></div>
             <!-- Section heading -->
             <div class="passage-heading" id="section-heading"></div>
+            <!-- Preflight Tips card (injected by JS, shown BEFORE strategy) -->
+            <div id="para-tips-card-wrap"></div>
             <!-- Inline paragraph strategy agent card (injected by JS) -->
             <div class="para-strategy-card" id="para-strategy-card" style="display:none;"></div>
             <!-- Paragraph-by-paragraph body -->
             <div id="section-body-wrap"></div>
-            <!-- Paragraph navigation bar -->
+            <!-- Paragraph navigation bar (inside left panel) -->
             <div class="para-nav-bar" id="para-nav-bar" style="display:none;">
               <button class="btn-para-next" id="para-next-btn" onclick="showNextParagraph()">Next Paragraph →</button>
               <button class="btn-show-all" onclick="showAllParagraphs()">Show All</button>
               <span class="para-counter" id="para-counter"></span>
             </div>
           </div>
+          <!-- LEFT FOOTER: 左栏独立 section 翻页按钮 -->
+          <div class="passage-footer" id="passage-footer" style="display:none;">
+            <span class="passage-footer-info" id="passage-footer-info"></span>
+            <button class="btn-primary" id="passage-next-section-btn" onclick="nextSection()" style="padding:8px 20px;font-size:0.85rem;">
+              Next Section →
+            </button>
+          </div>
         </div>
 
-        <!-- Questions + action bar wrapper -->
+        <!-- RIGHT: Questions panel (独立滚动 + 独立显示对应题目) -->
         <div style="display:flex;flex-direction:column;width:360px;min-width:300px;border-left:1px solid var(--border);">
           <div class="panel-section-label questions-label">📝 Questions</div>
-          <div class="questions-panel" id="questions-panel"></div>
-          <div class="action-bar" id="action-bar">
-            <span class="action-bar-info" id="action-info"></span>
-            <button class="btn-primary" id="next-btn" onclick="nextSection()">Next Paragraph →</button>
+          <!-- 右栏可独立滚动 -->
+          <div class="questions-panel" id="questions-panel" style="flex:1;overflow-y:auto;"></div>
+          <!-- RIGHT FOOTER: 右栏底部进度信息 + Next Section 按钮（与左栏联动） -->
+          <div class="questions-footer" id="questions-footer">
+            <span class="q-section-info" id="q-section-info"></span>
+            <button class="btn-primary" id="next-btn" onclick="nextSection()" style="padding:7px 16px;font-size:0.8rem;">
+              Next Section →
+            </button>
           </div>
         </div>
 
@@ -1139,6 +1230,44 @@ async function uploadPassage() {
   }
 }
 
+// ── Render preflight tips card ──────────────────────────────────
+function renderTipsCard(tips) {
+  const wrap = document.getElementById('para-tips-card-wrap');
+  if (!wrap) return;
+  if (!tips || tips.length === 0) {
+    wrap.innerHTML = '';
+    return;
+  }
+  const tipsHtml = tips.map(t => `<div class="ptc-tip">${escHtml(t)}</div>`).join('');
+  wrap.innerHTML = `
+    <div class="para-tips-card">
+      <div class="ptc-header">✨ Pre-Reading Tips — Read Before You Start</div>
+      <div class="ptc-body">${tipsHtml}</div>
+    </div>`;
+}
+
+// ── Update left and right footers ───────────────────────────────
+function updateFooters(sectionOrder, totalSections) {
+  const passageFooter = document.getElementById('passage-footer');
+  const passageFooterInfo = document.getElementById('passage-footer-info');
+  const passageNextBtn = document.getElementById('passage-next-section-btn');
+  const qSectionInfo = document.getElementById('q-section-info');
+  const nextBtn = document.getElementById('next-btn');
+
+  if (passageFooter) passageFooter.style.display = 'flex';
+  if (passageFooterInfo) {
+    passageFooterInfo.textContent = `Section ${sectionOrder} of ${totalSections}`;
+  }
+  if (qSectionInfo) {
+    qSectionInfo.textContent = `Section ${sectionOrder} / ${totalSections}`;
+  }
+
+  const isLast = sectionOrder >= totalSections;
+  const btnLabel = isLast ? 'Finish & Get Strategy →' : 'Next Section →';
+  if (passageNextBtn) passageNextBtn.textContent = btnLabel;
+  if (nextBtn) nextBtn.textContent = btnLabel;
+}
+
 // ── Render a section (paragraph image or text) ─────────────────
 function renderSection(sec, guidance, totalSections) {
   state.currentSection = sec;
@@ -1157,9 +1286,7 @@ function renderSection(sec, guidance, totalSections) {
   document.getElementById('upload-panel').style.display  = 'none';
   document.getElementById('session-wrap').style.display  = 'flex';
 
-  // Restore action bar visibility
-  const actionBar = document.getElementById('action-bar');
-  if (actionBar) actionBar.style.display = '';
+  // Restore footer visibility
   const nextBtn = document.getElementById('next-btn');
   if (nextBtn) { nextBtn.style.display = ''; nextBtn.disabled = false; }
 
@@ -1170,6 +1297,9 @@ function renderSection(sec, guidance, totalSections) {
   // Heading
   const headingEl = document.getElementById('section-heading');
   if (headingEl) headingEl.textContent = sec.heading || '';
+
+  // Render preflight tips card
+  renderTipsCard(sec.tips || []);
 
   // Progress dots
   const track = document.getElementById('progress-track');
@@ -1193,17 +1323,8 @@ function renderSection(sec, guidance, totalSections) {
   // Questions panel
   _renderQuestionsPanel();
 
-  // Action bar
-  const info = document.getElementById('action-info');
-  if (nextBtn && info) {
-    if (sec.order >= totalSections) {
-      info.textContent = 'Last paragraph — answer questions then finish.';
-      nextBtn.textContent  = 'Finish & Get Strategy →';
-    } else {
-      info.textContent = 'Answer questions, then continue.';
-      nextBtn.textContent  = 'Next Paragraph →';
-    }
-  }
+  // Update footers
+  updateFooters(sec.order, totalSections);
 
   // Scroll back to top
   document.getElementById('passage-panel').scrollTop = 0;
@@ -1454,8 +1575,10 @@ function showCompletionScreen(score, strategy) {
     </div>`;
 
   document.getElementById('questions-panel').innerHTML = '';
-  const actionBar = document.getElementById('action-bar');
-  if (actionBar) actionBar.style.display = 'none';
+  const passageFooter = document.getElementById('passage-footer');
+  if (passageFooter) passageFooter.style.display = 'none';
+  const questionsFooter = document.getElementById('questions-footer');
+  if (questionsFooter) questionsFooter.style.display = 'none';
   const nextBtn = document.getElementById('next-btn');
   if (nextBtn) nextBtn.style.display = 'none';
   document.getElementById('strategy-btn').style.display = 'none';
@@ -1496,6 +1619,7 @@ function resetPassage() {
       <div class="progress-track" id="progress-track"></div>
       <div class="passage-guidance" id="passage-guidance"></div>
       <div class="passage-heading" id="section-heading"></div>
+      <div id="para-tips-card-wrap"></div>
       <div class="para-strategy-card" id="para-strategy-card" style="display:none;"></div>
       <div id="section-body-wrap"></div>
       <div class="para-nav-bar" id="para-nav-bar" style="display:none;">
@@ -1505,11 +1629,13 @@ function resetPassage() {
       </div>`;
   }
 
-  // Restore action bar and next button
-  const actionBar = document.getElementById('action-bar');
-  if (actionBar) actionBar.style.display = '';
+  // Restore footers and next button
+  const passageFooter = document.getElementById('passage-footer');
+  if (passageFooter) passageFooter.style.display = 'none';
+  const questionsFooter = document.getElementById('questions-footer');
+  if (questionsFooter) questionsFooter.style.display = '';
   const nextBtn = document.getElementById('next-btn');
-  if (nextBtn) { nextBtn.style.display = ''; nextBtn.disabled = false; nextBtn.textContent = 'Next Paragraph →'; }
+  if (nextBtn) { nextBtn.style.display = ''; nextBtn.disabled = false; nextBtn.textContent = 'Next Section →'; }
 
   // Clear questions panel
   const qPanel = document.getElementById('questions-panel');

@@ -462,13 +462,36 @@ def api_reading_upload(request):
         current_section_order=1,
     )
 
-    # ── Build first paragraph guidance ────────────────────────────
-    first_section = section_objs[0] if section_objs else None
-    from agents.reading_agent import reading_agent_guide_section
+    # ── Build LD profile (used by tips and guidance) ──────────────
     ld_profile = {
         'confirmed': learner.ld_confirmed,
         'suspected': learner.ld_suspected,
     }
+
+    # ── Generate preflight reading tips (AI pre-solves questions) ────
+    try:
+        from agents.reading_agent import reading_agent_preflight_tips
+        sections_for_tips = [
+            {'id': s.id, 'order': s.order, 'heading': s.heading, 'body': s.body}
+            for s in section_objs
+        ]
+        questions_for_tips = [
+            {'id': q.id, 'order': q.order, 'text': q.text, 'group_label': q.group_label}
+            for q in q_objs
+        ]
+        tips_map = reading_agent_preflight_tips(sections_for_tips, questions_for_tips, ld_profile)
+        # Persist tips into each section
+        for sec_obj in section_objs:
+            sec_tips = tips_map.get(sec_obj.id, [])
+            if sec_tips:
+                sec_obj.reading_tips = sec_tips
+                sec_obj.save(update_fields=['reading_tips'])
+    except Exception as e:
+        print(f"[WARN] Preflight tips generation failed: {e}")
+
+    # ── Build first paragraph guidance ────────────────────────────
+    first_section = section_objs[0] if section_objs else None
+    from agents.reading_agent import reading_agent_guide_section
     guidance = ''
     if first_section:
         guidance = reading_agent_guide_section(
@@ -493,6 +516,7 @@ def api_reading_upload(request):
             'body': first_section.body,
             'image_url': request.build_absolute_uri(settings.MEDIA_URL + first_section.image_path) if first_section.image_path else '',
             'questions': first_section_qs,
+            'tips': first_section.reading_tips or [],
         }
 
     return JsonResponse({
@@ -585,6 +609,7 @@ def api_reading_next_section(request):
             'body': section.body,
             'image_url': image_url,
             'questions': section_questions,
+            'tips': list(section.reading_tips or []),
         },
         'guidance': guidance,
     })
@@ -789,3 +814,25 @@ def api_reading_paragraph_strategy(request):
         'related_question_orders': related_q_orders,
         'related_question_ids': related_q_ids,
     })
+
+
+@require_GET
+def api_reading_section_tips(request):
+    """Return the pre-generated reading tips for a specific section.
+
+    Query params: attempt_id=<int>, section_order=<int>
+
+    Returns:
+        tips: list of tip strings for this section
+    """
+    learner = _get_or_create_learner(request)
+    attempt_id = request.GET.get('attempt_id')
+    section_order = int(request.GET.get('section_order', 1))
+
+    attempt = get_object_or_404(
+        ReadingAttempt.objects.select_related('passage'),
+        id=attempt_id,
+        learner=learner,
+    )
+    section = get_object_or_404(IELTSSection, passage=attempt.passage, order=section_order)
+    return JsonResponse({'tips': list(section.reading_tips or [])})
