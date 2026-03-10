@@ -1016,3 +1016,126 @@ def reading_agent_paragraph_strategy(
         Markdown-formatted strategy string, or '' if no questions apply.
     """
     return _build_paragraph_strategy(section, related_questions, ld_profile)
+
+
+# ── Preflight Tips: AI pre-solves questions → reading tips ────────
+
+def _infer_tips_for_section(
+    section_order: int,
+    related_questions: List[Dict],
+    ld_profile: dict,
+) -> List[str]:
+    """Generate pre-reading tips for a section based on its questions.
+
+    Simulates what an expert reader would notice when pre-reading the
+    questions before reading the passage.  Returns a list of tip strings
+    (plain text, no Markdown).
+    """
+    if not related_questions:
+        return []
+
+    all_ld = set(
+        ld_profile.get('confirmed', []) + ld_profile.get('suspected', [])
+    )
+    tips: List[str] = []
+    q_texts_combined = ' '.join(q.get('text', '') for q in related_questions).lower()
+    q_nums = ', '.join(
+        f'Q{q["order"]}' for q in sorted(related_questions, key=lambda x: x['order'])
+    )
+
+    # ── Tip 1: Question-type tip ──────────────────────────────────
+    if any(w in q_texts_combined for w in ['true', 'false', 'not given', 'yes', 'no']):
+        tips.append(
+            f"💡 {q_nums} ask True/False/Not Given — as you read, "
+            "actively check whether each claim is confirmed, contradicted, "
+            "or simply not mentioned in this paragraph."
+        )
+    elif any(w in q_texts_combined for w in ['heading', 'title', 'main idea', 'best describes', 'which paragraph']):
+        tips.append(
+            f"💡 {q_nums} test the main idea — focus on the first and last "
+            "sentence of this paragraph; they usually hold the central claim."
+        )
+    elif any(w in q_texts_combined for w in ['according', 'what', 'when', 'where', 'how many', 'how much', 'who', 'which']):
+        # Extract proper-noun keywords from questions
+        key_terms: List[str] = []
+        for q in related_questions:
+            words = re.findall(r'\b[A-Z][a-z]{3,}\b', q.get('text', ''))
+            key_terms.extend(words[:2])
+        key_terms = list(dict.fromkeys(key_terms))[:4]
+        focus = f" Watch for: {', '.join(key_terms)}." if key_terms else ''
+        tips.append(
+            f"💡 {q_nums} test specific facts.{focus} "
+            "Scan for exact numbers, dates, names, and technical terms."
+        )
+    elif any(w in q_texts_combined for w in ['infer', 'suggest', 'imply', 'purpose', 'attitude', 'tone']):
+        tips.append(
+            f"💡 {q_nums} test inference — don't just look for literal wording; "
+            "think about what the author is implying or their underlying purpose."
+        )
+    elif any(w in q_texts_combined for w in ['complete', 'fill', 'blank', 'gap']):
+        tips.append(
+            f"💡 {q_nums} are gap-fill questions — read the surrounding "
+            "sentences to predict the missing word before scanning the passage."
+        )
+    else:
+        tips.append(
+            f"💡 Read this section carefully to answer {q_nums}. "
+            "Look for keywords from the questions that appear in the text."
+        )
+
+    # ── Tip 2: Signal-word tip (always added) ─────────────────────
+    signal_words = ['however', 'therefore', 'in contrast', 'although',
+                    'despite', 'whereas', 'furthermore', 'consequently',
+                    'nevertheless', 'on the other hand']
+    tips.append(
+        "🔍 Watch for signal words like "
+        + ', '.join(f'"{w}"' for w in signal_words[:4])
+        + " — they often mark the location of answers."
+    )
+
+    # ── Tip 3: ADHD-specific attention tip ───────────────────────
+    if 'adhd' in all_ld:
+        tips.append(
+            "⚡ ADHD tip: glance at the question numbers above before "
+            "reading — prime your brain on what to hunt for."
+        )
+
+    # ── Tip 4: Anxiety calming tip (first section only) ──────────
+    if 'anxiety' in all_ld and section_order == 1:
+        tips.append(
+            "🌀 All answers are in the passage — you don't need prior knowledge. "
+            "Take a slow breath before you start reading."
+        )
+
+    return tips
+
+
+def reading_agent_preflight_tips(
+    sections: List[Dict],
+    questions: List[Dict],
+    ld_profile: dict,
+) -> Dict[int, List[str]]:
+    """Pre-solve all questions and convert insights into per-section reading tips.
+
+    Args:
+        sections:   List of section dicts (id, order, heading, body).
+        questions:  List of question dicts (id, order, text, group_label).
+        ld_profile: Learner LD profile dict.
+
+    Returns:
+        Dict mapping section_id -> list of tip strings.
+    """
+    # Re-use the existing mapper to assign questions to sections
+    q_mapping = map_questions_to_paragraphs(sections, questions)
+
+    tips_by_section: Dict[int, List[str]] = {}
+    q_by_id = {q['id']: q for q in questions}
+
+    for section in sections:
+        sec_id = section['id']
+        sec_order = section.get('order', 1)
+        related_q_ids = q_mapping.get(sec_id, [])
+        related_qs = [q_by_id[qid] for qid in related_q_ids if qid in q_by_id]
+        tips_by_section[sec_id] = _infer_tips_for_section(sec_order, related_qs, ld_profile)
+
+    return tips_by_section
