@@ -649,6 +649,20 @@ textarea.q-answer:focus { border-color:var(--blue); }
   border-color: #1A5FCC;
   box-shadow: 0 0 0 2px rgba(26,95,204,0.12);
 }
+/* Question group header (e.g. "Questions 1-3") */
+.q-group-header {
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #1A5FCC;
+  background: rgba(26,95,204,0.06);
+  border: 1px solid rgba(26,95,204,0.15);
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin: 4px 0 8px;
+}
 </style>
 </head>
 <body>
@@ -1240,7 +1254,20 @@ function renderQuestions(questions, sectionBody) {
     return;
   }
 
+  // Group questions by their group_label so we can render a section header
+  let lastGroupLabel = null;
+
   questions.forEach(q => {
+    // Render a group header when the label changes
+    const grpLabel = q.group_label || '';
+    if (grpLabel && grpLabel !== lastGroupLabel) {
+      const header = document.createElement('div');
+      header.className = 'q-group-header';
+      header.textContent = grpLabel;
+      panel.appendChild(header);
+      lastGroupLabel = grpLabel;
+    }
+
     const existing = state.answeredQs[q.id];
     const card = document.createElement('div');
     card.className = 'q-card';

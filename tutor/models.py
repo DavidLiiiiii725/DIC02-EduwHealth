@@ -78,6 +78,7 @@ class IELTSQuestion(models.Model):
     section      = models.ForeignKey(IELTSSection, on_delete=models.SET_NULL, null=True, blank=True, related_name='questions')
     order        = models.PositiveSmallIntegerField()
     text         = models.TextField()
+    group_label  = models.CharField(max_length=200, blank=True, default='')
 
     class Meta:
         ordering = ['order']

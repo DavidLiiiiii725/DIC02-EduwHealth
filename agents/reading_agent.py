@@ -215,6 +215,38 @@ def extract_questions_from_pdf(pdf_bytes: bytes) -> List[str]:
     return _extract_questions(questions_raw)
 
 
+def extract_question_groups_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
+    """Extract questions with their group labels from the PDF.
+
+    Recognises IELTS-style group headers such as:
+      "Questions 1-3", "Questions 4–9", "Questions 10-14"
+
+    Returns a list of dicts:
+        [
+          {
+            'order':       1,           # question number (1-based)
+            'text':        'Choose…',   # question body text
+            'group_label': 'Questions 1-3',  # enclosing group header (may be '')
+          },
+          …
+        ]
+    """
+    try:
+        import fitz
+    except ImportError:
+        return []
+
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    full_text_parts = []
+    for page in doc:
+        full_text_parts.append(page.get_text())
+    doc.close()
+
+    raw = '\n'.join(full_text_parts)
+    _, questions_raw = _split_passage_and_questions(raw)
+    return _extract_question_groups(questions_raw)
+
+
 # ── Text helpers (for question extraction only) ───────────────────
 
 def _split_passage_and_questions(raw: str) -> Tuple[str, str]:
@@ -258,6 +290,62 @@ def _extract_questions(questions_raw: str) -> List[str]:
         if cleaned:
             questions.append(cleaned.strip())
     return questions
+
+
+# Regex matching IELTS question group headers: "Questions 1-3", "Questions 4–9", etc.
+_GROUP_HEADER_RE = re.compile(
+    r'^(Questions?\s+\d+\s*[-–—]\s*\d+[^\n]*)',
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def _extract_question_groups(questions_raw: str) -> List[Dict[str, Any]]:
+    """Parse questions from the questions block, preserving their group labels.
+
+    Returns a list of dicts: [{'order': int, 'text': str, 'group_label': str}, …]
+    """
+    if not questions_raw:
+        return []
+
+    results: List[Dict[str, Any]] = []
+    current_group = ''
+
+    # Split the block on either a group header OR a numbered question start
+    token_re = re.compile(
+        r'(?=^Questions?\s+\d+\s*[-–—]\s*\d+)|(?=^\s*\d+[\.\)]\s)',
+        re.IGNORECASE | re.MULTILINE,
+    )
+    segments = token_re.split(questions_raw)
+
+    for seg in segments:
+        seg = seg.strip()
+        if not seg:
+            continue
+
+        # Check if this segment is a group header
+        if _GROUP_HEADER_RE.match(seg):
+            # Take only the first line as the group label
+            current_group = seg.split('\n')[0].strip()
+            continue
+
+        # Check if this segment is a numbered question item
+        q_match = re.match(r'^\s*(\d+)[\.\)]\s*([\s\S]+)', seg)
+        if q_match:
+            q_num  = int(q_match.group(1))
+            q_text = re.sub(r'\s+', ' ', q_match.group(2)).strip()
+            if q_text:
+                results.append({
+                    'order':       q_num,
+                    'text':        q_text,
+                    'group_label': current_group,
+                })
+
+    # If no grouped questions were found, fall back to the simple extractor
+    if not results:
+        for i, text in enumerate(_extract_questions(questions_raw), start=1):
+            results.append({'order': i, 'text': text, 'group_label': ''})
+
+    return results
 
 
 # ── Guidance generation (LLM-free fallback) ──────────────────────
@@ -739,18 +827,51 @@ def _score_question_paragraph_overlap(question_text: str, para_body: str) -> flo
     return overlap / len(q_words)
 
 
+def _distribute_evenly(
+    qs: List[Dict],
+    sections: List[Dict],
+    mapping: Dict[int, List[int]],
+) -> None:
+    """Append question IDs to *mapping* using round-robin even distribution.
+
+    Modifies *mapping* in-place; never replaces existing entries.
+
+    The last section receives any surplus questions when
+    ``len(qs) % len(sections) != 0``.
+    """
+    n = len(sections)
+    if not n or not qs:
+        return
+    q_per_section = max(1, len(qs) // n)
+    for i, q in enumerate(qs):
+        idx = min(i // q_per_section, n - 1)
+        mapping[sections[idx]['id']].append(q['id'])
+
+
 def map_questions_to_paragraphs(
     sections: List[Dict],
     questions: List[Dict],
 ) -> Dict[int, List[int]]:
-    """Map question IDs to section IDs based on content overlap.
+    """Map question IDs to section IDs based on content overlap or group labels.
 
-    Uses keyword overlap scoring when paragraph body text is available.
-    Falls back to even distribution for image-only passages.
+    Strategy priority for **image-only** passages (no body text):
+    1. **Group-label distribution** — questions that carry a non-empty
+       ``group_label`` (e.g. "Questions 1-3") are kept together as a group and
+       groups are distributed proportionally across sections.  Questions without
+       a group label fall through to Strategy 3.
+    2. (skipped — no body text available)
+    3. **Even distribution** — remaining questions spread evenly.
+
+    Strategy priority for **text** passages (sections have body text):
+    2. **Keyword-overlap scoring** — each question is matched to the section
+       whose body text shares the most keywords with the question.
+    3. **Even distribution** — questions with no keyword overlap are spread
+       evenly across sections.
 
     Args:
         sections:  List of dicts with keys: id, order, heading, body
-        questions: List of dicts with keys: id, order, text
+        questions: List of dicts with keys: id, order, text,
+                   and optionally group_label
 
     Returns:
         Dict mapping section_id -> list of associated question IDs.
@@ -763,6 +884,37 @@ def map_questions_to_paragraphs(
 
     has_body_text = any(s.get('body', '').strip() for s in sections)
 
+    # ── Strategy 1: group-label–based distribution (image-only passages) ─
+    has_groups = any(q.get('group_label', '') for q in questions)
+
+    if has_groups and not has_body_text:
+        grouped_qs: List[Dict] = []
+        ungrouped_qs: List[Dict] = []
+        for q in sorted(questions, key=lambda x: x.get('order', 0)):
+            if q.get('group_label', ''):
+                grouped_qs.append(q)
+            else:
+                ungrouped_qs.append(q)
+
+        # Collect unique groups in the order they first appear
+        seen_groups: Dict[str, List[Dict]] = {}
+        for q in grouped_qs:
+            seen_groups.setdefault(q['group_label'], []).append(q)
+
+        groups = list(seen_groups.values())
+        n_groups = len(groups)
+
+        if n_groups:
+            for g_idx, group_qs in enumerate(groups):
+                sec_idx = min(int(g_idx * n_sections / n_groups), n_sections - 1)
+                for q in group_qs:
+                    mapping[sections[sec_idx]['id']].append(q['id'])
+
+        # Ungrouped questions distributed evenly (Strategy 3)
+        _distribute_evenly(ungrouped_qs, sections, mapping)
+        return mapping
+
+    # ── Strategy 2: keyword-overlap scoring (text passages) ──────
     unmapped: List[Dict] = []
 
     if has_body_text:
@@ -779,15 +931,8 @@ def map_questions_to_paragraphs(
     else:
         unmapped = list(questions)
 
-    if unmapped:
-        # Distribute evenly; when len(unmapped) % n_sections != 0 the last
-        # section receives the remaining surplus questions (intentional: the
-        # final section of an IELTS passage typically tests the most content).
-        q_per_section = max(1, len(unmapped) // n_sections)
-        for i, q in enumerate(unmapped):
-            idx = min(i // q_per_section, n_sections - 1)
-            mapping[sections[idx]['id']].append(q['id'])
-
+    # ── Strategy 3: even distribution fallback ────────────────────
+    _distribute_evenly(unmapped, sections, mapping)
     return mapping
 
 

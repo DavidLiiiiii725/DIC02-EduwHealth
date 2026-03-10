@@ -378,7 +378,11 @@ def api_reading_upload(request):
 
     # ── Convert PDF to paragraph images ──────────────────────────
     from django.conf import settings
-    from agents.reading_agent import extract_paragraph_images, extract_questions_from_pdf
+    from agents.reading_agent import (
+        extract_paragraph_images,
+        extract_question_groups_from_pdf,
+        map_questions_to_paragraphs,
+    )
 
     images_dir = str(settings.MEDIA_ROOT / 'passage_images')
     try:
@@ -406,11 +410,11 @@ def api_reading_upload(request):
     passage.raw_text = raw_text
     passage.save()
 
-    # ── Extract questions from native PDF text (not OCR) ─────────
+    # ── Extract questions with group labels from native PDF text ─────────
     try:
-        questions = extract_questions_from_pdf(pdf_bytes)
+        question_groups = extract_question_groups_from_pdf(pdf_bytes)
     except Exception:
-        questions = []
+        question_groups = []
 
     # ── Persist paragraph sections ────────────────────────────────
     section_objs = []
@@ -424,16 +428,32 @@ def api_reading_upload(request):
         )
         section_objs.append(s_obj)
 
-    # ── Persist questions (all linked to passage, no section split) ──
+    # ── Persist questions (section assignment done after mapping) ─
     q_objs = []
-    for q_i, q_text in enumerate(questions, start=1):
+    for qg in question_groups:
         q_obj = IELTSQuestion.objects.create(
             passage=passage,
-            section=None,   # questions are not section-specific in single-passage mode
-            order=q_i,
-            text=q_text,
+            section=None,       # assigned below after mapping
+            order=qg['order'],
+            text=qg['text'],
+            group_label=qg.get('group_label', ''),
         )
         q_objs.append(q_obj)
+
+    # ── Map questions to sections and update section FK ───────────
+    if q_objs and section_objs:
+        sections_for_map = [
+            {'id': s.id, 'order': s.order, 'heading': s.heading, 'body': s.body}
+            for s in section_objs
+        ]
+        questions_for_map = [
+            {'id': q.id, 'order': q.order, 'text': q.text, 'group_label': q.group_label}
+            for q in q_objs
+        ]
+        q_mapping = map_questions_to_paragraphs(sections_for_map, questions_for_map)
+        # q_mapping: {section_id: [question_id, …]}
+        for sec_id, q_ids in q_mapping.items():
+            IELTSQuestion.objects.filter(id__in=q_ids).update(section_id=sec_id)
 
     # ── Create attempt starting at paragraph 1 ────────────────────
     attempt = ReadingAttempt.objects.create(
@@ -460,14 +480,16 @@ def api_reading_upload(request):
 
     section_data = None
     if first_section:
-        all_questions = list(passage.questions.values('id', 'order', 'text'))
+        first_section_qs = list(
+            first_section.questions.values('id', 'order', 'text', 'group_label').order_by('order')
+        )
         section_data = {
             'id': first_section.id,
             'order': first_section.order,
             'heading': first_section.heading,
             'body': first_section.body,
             'image_url': request.build_absolute_uri(settings.MEDIA_URL + first_section.image_path) if first_section.image_path else '',
-            'questions': all_questions,
+            'questions': first_section_qs,
         }
 
     return JsonResponse({
@@ -525,8 +547,8 @@ def api_reading_next_section(request):
     attempt.save()
 
     section = get_object_or_404(IELTSSection, passage=attempt.passage, order=next_order)
-    # In single-passage mode, all questions are shown together
-    all_questions = list(attempt.passage.questions.values('id', 'order', 'text'))
+    # Return only the questions assigned to this section
+    section_questions = list(section.questions.values('id', 'order', 'text', 'group_label').order_by('order'))
 
     from agents.reading_agent import reading_agent_guide_section
     from django.conf import settings
@@ -559,7 +581,7 @@ def api_reading_next_section(request):
             'heading': section.heading,
             'body': section.body,
             'image_url': image_url,
-            'questions': all_questions,
+            'questions': section_questions,
         },
         'guidance': guidance,
     })
@@ -731,14 +753,21 @@ def api_reading_paragraph_strategy(request):
     )
     section = get_object_or_404(IELTSSection, passage=attempt.passage, order=section_order)
 
-    all_questions = list(attempt.passage.questions.values('id', 'order', 'text').order_by('order'))
+    all_questions = list(attempt.passage.questions.values('id', 'order', 'text', 'group_label').order_by('order'))
     all_sections = list(attempt.passage.sections.values('id', 'order', 'heading', 'body').order_by('order'))
 
     from agents.reading_agent import map_questions_to_paragraphs, reading_agent_paragraph_strategy
 
-    mapping = map_questions_to_paragraphs(all_sections, all_questions)
-    related_q_ids = mapping.get(section.id, [])
-    related_questions = [q for q in all_questions if q['id'] in related_q_ids]
+    # Use the stored section FK first; fall back to the dynamic mapping if needed
+    related_q_ids = list(
+        IELTSQuestion.objects.filter(section=section).values_list('id', flat=True)
+    )
+    if related_q_ids:
+        related_questions = [q for q in all_questions if q['id'] in related_q_ids]
+    else:
+        mapping = map_questions_to_paragraphs(all_sections, all_questions)
+        related_q_ids = mapping.get(section.id, [])
+        related_questions = [q for q in all_questions if q['id'] in related_q_ids]
 
     ld_profile = {'confirmed': learner.ld_confirmed, 'suspected': learner.ld_suspected}
 
