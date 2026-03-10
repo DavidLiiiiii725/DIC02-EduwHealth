@@ -265,6 +265,9 @@ def _extract_questions(questions_raw: str) -> List[str]:
 # Threshold: hints_used > questions_answered × HINT_USAGE_THRESHOLD → high hint usage warning
 _HINT_USAGE_THRESHOLD = 1.5
 
+# Regex for extracting alpha-only keywords of at least 3 characters
+_KEYWORD_RE = re.compile(r'\b[A-Za-z]{3,}\b')
+
 _ADHD_TIPS = [
     "⚡ Focus: look at the paragraph letter first — it anchors your place.",
     "⚡ Read the first sentence slowly, then let your eyes scan the rest.",
@@ -706,3 +709,165 @@ def reading_agent_assistant_tip(
         current_section_heading=current_section_heading,
         section_body=section_body,
     )
+
+
+# ── Question-to-paragraph mapper ──────────────────────────────────
+
+def _score_question_paragraph_overlap(question_text: str, para_body: str) -> float:
+    """Score keyword overlap between a question and a paragraph body."""
+    if not para_body:
+        return 0.0
+    stop_words = {
+        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+        'of', 'with', 'by', 'is', 'are', 'was', 'were', 'it', 'this', 'that',
+        'these', 'those', 'which', 'who', 'what', 'where', 'when', 'how',
+        'according', 'passage', 'paragraph', 'text', 'author', 'writer',
+        'following', 'correct', 'true', 'false', 'not', 'given', 'question',
+        'answer', 'statement',
+    }
+
+    def extract_keywords(text: str) -> set:
+        words = _KEYWORD_RE.findall(text.lower())
+        return {w for w in words if w not in stop_words}
+
+    q_words = extract_keywords(question_text)
+    p_words = extract_keywords(para_body)
+
+    if not q_words:
+        return 0.0
+    overlap = len(q_words & p_words)
+    return overlap / len(q_words)
+
+
+def map_questions_to_paragraphs(
+    sections: List[Dict],
+    questions: List[Dict],
+) -> Dict[int, List[int]]:
+    """Map question IDs to section IDs based on content overlap.
+
+    Uses keyword overlap scoring when paragraph body text is available.
+    Falls back to even distribution for image-only passages.
+
+    Args:
+        sections:  List of dicts with keys: id, order, heading, body
+        questions: List of dicts with keys: id, order, text
+
+    Returns:
+        Dict mapping section_id -> list of associated question IDs.
+    """
+    if not sections or not questions:
+        return {}
+
+    n_sections = len(sections)
+    mapping: Dict[int, List[int]] = {s['id']: [] for s in sections}
+
+    has_body_text = any(s.get('body', '').strip() for s in sections)
+
+    unmapped: List[Dict] = []
+
+    if has_body_text:
+        for q in questions:
+            scores = [
+                (s['id'], _score_question_paragraph_overlap(q.get('text', ''), s.get('body', '')))
+                for s in sections
+            ]
+            best_id, best_score = max(scores, key=lambda x: x[1])
+            if best_score > 0.0:
+                mapping[best_id].append(q['id'])
+            else:
+                unmapped.append(q)
+    else:
+        unmapped = list(questions)
+
+    if unmapped:
+        # Distribute evenly; when len(unmapped) % n_sections != 0 the last
+        # section receives the remaining surplus questions (intentional: the
+        # final section of an IELTS passage typically tests the most content).
+        q_per_section = max(1, len(unmapped) // n_sections)
+        for i, q in enumerate(unmapped):
+            idx = min(i // q_per_section, n_sections - 1)
+            mapping[sections[idx]['id']].append(q['id'])
+
+    return mapping
+
+
+def _build_paragraph_strategy(
+    section: Dict,
+    related_questions: List[Dict],
+    ld_profile: dict,
+) -> str:
+    """Generate an inline reading strategy card for a paragraph and its questions.
+
+    Returns a Markdown-formatted string, or an empty string if there are
+    no related questions for this paragraph.
+    """
+    if not related_questions:
+        return ''
+
+    all_ld = set(
+        ld_profile.get('confirmed', []) + ld_profile.get('suspected', [])
+    )
+
+    q_nums = ', '.join(
+        f'Q{q["order"]}' for q in sorted(related_questions, key=lambda x: x['order'])
+    )
+
+    lines: List[str] = [f"**📌 Reading Strategy — {q_nums}**\n"]
+
+    q_texts = ' '.join(q.get('text', '') for q in related_questions).lower()
+
+    if any(w in q_texts for w in ['true', 'false', 'not given', 'yes', 'no']):
+        lines.append(
+            f"These questions test **factual accuracy**. "
+            f"As you read this paragraph, check whether each statement in "
+            f"{q_nums} *agrees with*, *contradicts*, or is *not mentioned* in the text."
+        )
+    elif any(w in q_texts for w in ['heading', 'title', 'main idea', 'which paragraph']):
+        lines.append(
+            f"These questions test **main idea comprehension**. "
+            f"Focus on the *first and last sentence* of this paragraph — "
+            f"they usually contain the paragraph's central point."
+        )
+    elif any(w in q_texts for w in ['according', 'what', 'when', 'where', 'how many', 'how much', 'who']):
+        key_terms: List[str] = []
+        for q in related_questions:
+            words = re.findall(r'\b[A-Z][a-z]{3,}\b', q.get('text', ''))
+            key_terms.extend(words[:2])
+        key_terms = list(dict.fromkeys(key_terms))[:4]
+        focus = f" Pay attention to: **{', '.join(key_terms)}**." if key_terms else ''
+        lines.append(
+            f"These questions test **specific details**.{focus} "
+            f"Scan for exact words, numbers, dates, and names that match the questions."
+        )
+    else:
+        lines.append(
+            f"Read this paragraph carefully to answer {q_nums}. "
+            f"Look for keywords from the questions that appear in the text."
+        )
+
+    if 'adhd' in all_ld:
+        lines.append(
+            f"\n⚡ *ADHD tip: Before reading, quickly glance at {q_nums} "
+            f"to prime your attention on what to look for.*"
+        )
+
+    return '\n'.join(lines)
+
+
+def reading_agent_paragraph_strategy(
+    section: Dict,
+    related_questions: List[Dict],
+    ld_profile: dict,
+) -> str:
+    """Return an inline reading strategy for a specific paragraph.
+
+    Args:
+        section:           Dict with keys id, order, heading, body.
+        related_questions: List of question dicts ({id, order, text}) mapped to
+                           this paragraph by map_questions_to_paragraphs().
+        ld_profile:        Learner LD profile dict.
+
+    Returns:
+        Markdown-formatted strategy string, or '' if no questions apply.
+    """
+    return _build_paragraph_strategy(section, related_questions, ld_profile)
