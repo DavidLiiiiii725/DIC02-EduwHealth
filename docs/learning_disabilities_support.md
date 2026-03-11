@@ -234,7 +234,7 @@ Three knowledge base files are indexed at build time:
 
 | File | Content | Domain tag |
 |---|---|---|
-| `kb.txt` | Machine learning fundamentals | `general` |
+| `kb.txt` | IELTS preparation (all four skills, vocabulary, grammar, strategies) | `general` |
 | `kb_learning_disabilities.txt` | EFD, ADHD, anxiety, motivational disorders, 2024-2026 advances | `learning_disabilities` |
 | `kb_interventions.txt` | Tiered intervention protocols, risk-response procedures, technology tools | `interventions` |
 

@@ -101,7 +101,7 @@ You build embeddings once.
 You reuse the vector index on every run.
 
 Three knowledge bases are indexed:
-- `kb.txt` — machine learning fundamentals  
+- `kb.txt` — IELTS preparation knowledge base  
 - `kb_learning_disabilities.txt` — learning disabilities research  
 - `kb_interventions.txt` — evidence-based intervention strategies  
 
