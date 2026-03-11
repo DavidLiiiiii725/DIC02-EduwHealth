@@ -54,12 +54,12 @@ AGENT_TIE_THRESHOLD = 0.05   # abs difference below which higher-priority wins
 
 # ── Knowledge Base ────────────────────────────
 KB_STORE_DIR = "kb_store"
-# Domain partition sub-directories inside KB_STORE_DIR
+# Logical domain labels used in chunk metadata (see build_vector_kb.py).
+# Each label maps to the source KB file(s) that belong to that domain.
 KB_DOMAINS = {
-    "writing":     "kb_writing",
-    "auditory":    "kb_auditory",
-    "motivation":  "kb_motivation",
-    "general":     "kb_general",
+    "general":               "kb.txt",                       # ML fundamentals
+    "learning_disabilities": "kb_learning_disabilities.txt", # LD research
+    "interventions":         "kb_interventions.txt",         # intervention strategies
 }
 
 # Source files ingested by build_vector_kb.py
