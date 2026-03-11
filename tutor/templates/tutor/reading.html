@@ -1961,7 +1961,7 @@ async function setAssistantMode(mode) {
         el.classList.toggle('active', el.dataset.mode === mode);
       });
       // Persist choice in localStorage for UX continuity
-      try { localStorage.setItem('eduwhealth_assistant_mode', mode); } catch(_) {}
+      try { localStorage.setItem('eduwhealth_assistant_mode', mode); } catch(e) { console.warn('Failed to save mode preference:', e); }
       // Refresh assistant tip with new mode
       if (state.attemptId) refreshAssistantTip(state.attemptId);
     }

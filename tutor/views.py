@@ -661,8 +661,8 @@ def api_reading_next_section(request):
             try:
                 from analytics.strategy_tracker import record_experiment_completion
                 record_experiment_completion(attempt.pk, attempt.score)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.exception("Failed to record experiment completion: %s", exc)
 
         from agents.reading_agent import reading_agent_strategy
         ld_profile = {'confirmed': learner.ld_confirmed, 'suspected': learner.ld_suspected}
@@ -1011,9 +1011,12 @@ def api_strategy_performance(request):
         ld_type=<str>   Filter by LD profile type (e.g. "adhd")
 
     Returns JSON with performance summaries for the admin dashboard.
-    Requires no authentication beyond the session — suitable for internal
-    dashboards only.
+    Restricted to Django staff users (is_staff=True) to prevent
+    unauthorised access to aggregate performance metrics.
     """
+    if not (request.user.is_authenticated and request.user.is_staff):
+        return JsonResponse({'error': 'Permission denied.'}, status=403)
+
     from analytics.strategy_tracker import get_performance_summary
     ld_type = request.GET.get('ld_type')
 

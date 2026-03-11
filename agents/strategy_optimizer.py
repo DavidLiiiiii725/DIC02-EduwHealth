@@ -342,7 +342,7 @@ def run_strategy_optimization() -> Dict[str, Any]:
     summary = {
         'log': log,
         'optimised_variants': optimised,
-        'status': 'ok' if optimised is not None else 'error',
+        'status': 'error' if any(entry.startswith('ERROR:') for entry in log) else 'ok',
     }
     logger.info("Strategy optimisation complete: %d variants updated.", len(optimised))
     return summary
@@ -377,8 +377,11 @@ def assign_strategy_variant(ld_profile: dict, mode: str = 'auto') -> str:
             .first()
         )
         if best:
-            # 80 % chance of best variant, 20 % challenger (next best or new v2)
-            if random.random() < 0.8:
+            # Exploitation-vs-exploration balance (multi-armed bandit):
+            # 80 % chance of best-known variant (exploitation),
+            # 20 % chance of challenger/new variant (exploration).
+            _EXPLOIT_RATIO = 0.8
+            if random.random() < _EXPLOIT_RATIO:
                 return best.strategy_variant
             # Try next best; fall back to generating a new variant label
             second = (

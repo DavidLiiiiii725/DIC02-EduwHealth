@@ -1023,6 +1023,7 @@ def _build_assistant_tip(
             )
 
     # ── ADHD-specific tip ────────────────────────────────────────
+    ld_focus_lines: List[str] = []
     if 'adhd' in all_ld or effective_mode == 'focus':
         adhd_tips = [
             "⚡ Focus: trace each line with your finger as you read.",
@@ -1032,17 +1033,25 @@ def _build_assistant_tip(
             "⚡ Glance at the paragraph heading before you start reading the body text.",
         ]
         tip = adhd_tips[(para_order - 1) % len(adhd_tips)]
-        lines.append(f"\n{tip}")
+        ld_focus_lines.append(f"\n{tip}")
 
     # ── Anxiety tip ──────────────────────────────────────────────
+    ld_calm_lines: List[str] = []
     if 'anxiety' in all_ld or effective_mode == 'calm':
-        lines.append(
+        ld_calm_lines.append(
             "\n🌀 Remember: every answer is *in the passage*. "
             "Trust your reading — you don't need prior knowledge."
         )
 
     # ── Mode-specific injections ──────────────────────────────────
-    if effective_mode == 'focus':
+    # Speed mode: skip LD-specific scaffolding and give direct guidance.
+    if effective_mode == 'speed':
+        lines.append(
+            "\n🚀 **Speed Mode:** Scan for keywords from the question, "
+            "locate the matching sentence in the paragraph, verify your answer."
+        )
+    elif effective_mode == 'focus':
+        lines.extend(ld_focus_lines)
         # Shorter chunks + break reminders for ADHD/Focus mode
         if para_order % 2 == 0:
             lines.append(
@@ -1056,18 +1065,16 @@ def _build_assistant_tip(
                 "Pause after each sentence and ask: \"What did that say?\""
             )
     elif effective_mode == 'calm':
+        lines.extend(ld_calm_lines)
         lines.append(
             "\n🌀 **Calm Mode:** There is no time pressure here. "
             "Read at your own comfortable pace. "
             "If a question feels hard, park it and come back later."
         )
-    elif effective_mode == 'speed':
-        # Skip extra scaffolding — give a direct, concise tip
-        lines = [l for l in lines if not l.startswith('\n⚡') and not l.startswith('\n🌀')]
-        lines.append(
-            "\n🚀 **Speed Mode:** Scan for keywords from the question, "
-            "locate the matching sentence in the paragraph, verify your answer."
-        )
+    else:
+        # Default: include both LD-specific tips when applicable
+        lines.extend(ld_focus_lines)
+        lines.extend(ld_calm_lines)
 
     return '\n'.join(lines)
 
