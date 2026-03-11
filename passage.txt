@@ -1,0 +1,132 @@
+{
+  "passage_id": "ielts_reading_agriculture_risks",
+  "title": "The risks agriculture faces in developing countries",
+  "subtitle": "Synthesis of an online debate",
+  "paragraphs": [
+    {
+      "id": "A",
+      "text": "Two things distinguish food production from all other productive activities: first, every single person needs food each day and has a right to it; and second, it is hugely dependent on nature. These two unique aspects, one political, the other natural, make food production highly vulnerable and different from any other business. At the same time, cultural values are highly entrenched in food and agricultural systems worldwide."
+    },
+    {
+      "id": "B",
+      "text": "Farmers everywhere face major risks, including extreme weather, long-term climate change, and price volatility in input and product markets. However, smallholder farmers in developing countries must in addition deal with adverse environments, both natural, in terms of soil quality, rainfall, etc., and human, in terms of infrastructure, financial systems, markets, knowledge and technology. Counter-intuitively, hunger is prevalent among many smallholder farmers in the developing world."
+    },
+    {
+      "id": "C",
+      "text": "Participants in the online debate argued that our biggest challenge is to address the underlying causes of the agricultural system's inability to ensure sufficient food for all, and they identified as drivers of this problem our dependency on fossil fuels and unsupportive government policies."
+    },
+    {
+      "id": "D",
+      "text": "On the question of mitigating the risks farmers face, most essayists called for greater state intervention. In his essay, Kanayo F. Nwanze, President of the International Fund for Agricultural Development, argued that governments can significantly reduce risks for farmers by providing basic services like roads to get produce more efficiently to markets, or water and food storage facilities to reduce losses. Sophia Murphy, senior advisor to the Institute for Agriculture and Trade Policy, suggested that the procurement and holding of stocks by governments can also help mitigate wild swings in food prices by alleviating uncertainties about market supply."
+    },
+    {
+      "id": "E",
+      "text": "Shenggen Fan, Director General of the International Food Policy Research Institute, held up social safety nets and public welfare programmes in Ethiopia, Brazil and Mexico as valuable ways to address poverty among farming families and reduce their vulnerability to agriculture shocks. However, some commentators responded that cash transfers to poor families do not necessarily translate into increased food security, as these programmes do not always strengthen food production or raise incomes. Regarding state subsidies for agriculture, Rokeya Kabir, Executive Director of Bangladesh Nari Progati Sangha, commented that sixty percent of beneficiaries of subsidies are not poor, but rich landowners and non-farmer traders."
+    },
+    {
+      "id": "F",
+      "text": "Nwanze, Murphy and Fan argued that private risk management tools, like private insurance, commodity futures markets, and rural finance can help small-scale producers mitigate risk and allow for investment in improvements. Kabir warned that financial support schemes often encourage the adoption of high-input agricultural practices, which in the medium term may raise production costs beyond the value of their harvests. Murphy noted that when futures markets become excessively financialised they can contribute to short-term price volatility, which increases farmers' food insecurity."
+    },
+    {
+      "id": "G",
+      "text": "Many participants emphasised that greater transparency in markets is needed to mitigate volatility. Climate change increases the magnitude and frequency of extreme weather events, increasing smallholder vulnerability. One solution would be to develop crop varieties that are more resilient to new climate trends and extreme weather patterns. Pat Mooney suggested adopting policies that allow diversification of plant and animal species."
+    },
+    {
+      "id": "H",
+      "text": "Some authors argued for community-based risk management strategies through collective action groups, co-operatives or producers' groups. These groups enhance market opportunities, reduce marketing costs and improve bargaining power. Giel Ton warned that collective action requires time, effort and resources to organise and maintain."
+    },
+    {
+      "id": "I",
+      "text": "Some participants explained that market price volatility is worsened by intermediary purchasers who dictate prices. Farmers can gain greater control by selling directly to consumers. Sonali Bisht described community-supported agriculture, where consumers invest in farmers and guarantee fair prices."
+    }
+  ],
+  "people": {
+    "A": "Kanayo F. Nwanze",
+    "B": "Sophia Murphy",
+    "C": "Shenggen Fan",
+    "D": "Rokeya Kabir",
+    "E": "Pat Mooney",
+    "F": "Giel Ton",
+    "G": "Sonali Bisht"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "type": "paragraph_matching",
+      "instruction": "Which paragraph contains the following information?",
+      "prompt": "a reference to characteristics that only apply to food production",
+      "options": ["A","B","C","D","E","F","G","H","I"]
+    },
+    {
+      "id": 2,
+      "type": "paragraph_matching",
+      "instruction": "Which paragraph contains the following information?",
+      "prompt": "a reference to challenges faced only by farmers in certain parts of the world",
+      "options": ["A","B","C","D","E","F","G","H","I"]
+    },
+    {
+      "id": 3,
+      "type": "paragraph_matching",
+      "instruction": "Which paragraph contains the following information?",
+      "prompt": "a reference to difficulties in bringing about co-operation between farmers",
+      "options": ["A","B","C","D","E","F","G","H","I"]
+    },
+    {
+      "id": 4,
+      "type": "person_matching",
+      "instruction": "Match each statement with the correct person.",
+      "prompt": "Financial assistance from the government does not always go to the farmers who most need it.",
+      "options": ["A","B","C","D","E","F","G"]
+    },
+    {
+      "id": 5,
+      "type": "person_matching",
+      "instruction": "Match each statement with the correct person.",
+      "prompt": "Farmers can benefit from collaborating as a group.",
+      "options": ["A","B","C","D","E","F","G"]
+    },
+    {
+      "id": 6,
+      "type": "person_matching",
+      "instruction": "Match each statement with the correct person.",
+      "prompt": "Financial assistance from the government can improve the standard of living of farmers.",
+      "options": ["A","B","C","D","E","F","G"]
+    },
+    {
+      "id": 7,
+      "type": "person_matching",
+      "instruction": "Match each statement with the correct person.",
+      "prompt": "Farmers may be helped if there is financial input by the same individuals who buy from them.",
+      "options": ["A","B","C","D","E","F","G"]
+    },
+    {
+      "id": 8,
+      "type": "person_matching",
+      "instruction": "Match each statement with the correct person.",
+      "prompt": "Governments can help to reduce variation in prices.",
+      "options": ["A","B","C","D","E","F","G"]
+    },
+    {
+      "id": 9,
+      "type": "person_matching",
+      "instruction": "Match each statement with the correct person.",
+      "prompt": "Improvements to infrastructure can have a major impact on risk for farmers.",
+      "options": ["A","B","C","D","E","F","G"]
+    },
+    {
+      "id": 10,
+      "type": "multiple_choice",
+      "instruction": "Choose TWO letters.",
+      "prompt": "Which TWO problems are mentioned which affect farmers with small farms in developing countries?",
+      "options": {
+        "A": "lack of demand for locally produced food",
+        "B": "lack of irrigation programmes",
+        "C": "being unable to get insurance",
+        "D": "the effects of changing weather patterns",
+        "E": "having to sell their goods to intermediary buyers"
+      },
+      "select": 2
+    }
+
+  ]
+}

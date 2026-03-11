@@ -1,0 +1,243 @@
+
+{% extends "tutor/base.html" %}
+
+{% block title %}{{ passage_data.title }}{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 1rem;
+        background-color: #f0f2f5;
+        color: #1c1e21;
+    }
+    .container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        max-width: 1400px;
+        margin: auto;
+    }
+    .passage-column, .questions-column {
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .questions-column {
+        position: sticky;
+        top: 1rem;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+    h1, h2 {
+        color: #333;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.5rem;
+        margin-top: 0;
+    }
+    .passage-display {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background-color: #fafafa;
+    }
+    .paragraph-id {
+        font-weight: bold;
+        margin-right: 1rem;
+        color: #0056b3;
+        float: left;
+    }
+    .paragraph-text {
+        text-align: justify;
+        overflow: hidden;
+    }
+    .agent-guidance {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background-color: #e7f3ff;
+        border-left: 4px solid #0056b3;
+        border-radius: 4px;
+    }
+    .agent-guidance p { margin: 0; }
+    .navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+    }
+    .nav-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+    }
+    .nav-btn:hover { background-color: #0056b3; }
+    .nav-btn:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    .progress-indicator {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    .question {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+    }
+</style>
+
+<div class="container">
+    <div class="passage-column">
+        <h1 id="passage-title"></h1>
+        <div class="agent-guidance">
+            <p id="passage-prompt"></p>
+        </div>
+        <div id="reading-view">
+            <div class="passage-display">
+                <div id="paragraph-content"></div>
+                <div id="agent-guidance-container" class="agent-guidance" style="display: none;">
+                    <p id="agent-guidance-text"></p>
+                </div>
+            </div>
+            <div class="navigation">
+                <button id="prev-paragraph-btn" class="nav-btn">Previous Paragraph</button>
+                <span id="progress-indicator" class="progress-indicator"></span>
+                <button id="next-paragraph-btn" class="nav-btn">Next Paragraph</button>
+            </div>
+        </div>
+    </div>
+    <div class="questions-column">
+        <h2>Questions</h2>
+        <div id="questions-list"></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const passageData = JSON.parse('{{ passage_data_json|escapejs }}');
+        const passagePrompt = '{{ passage_prompt|escapejs }}';
+
+        let currentParagraph = 0;
+        const paragraphs = passageData.paragraphs;
+        const totalParagraphs = paragraphs.length;
+
+        const passageTitle = document.getElementById('passage-title');
+        const passagePromptEl = document.getElementById('passage-prompt');
+        const paragraphContent = document.getElementById('paragraph-content');
+        const agentGuidanceContainer = document.getElementById('agent-guidance-container');
+        const agentGuidanceText = document.getElementById('agent-guidance-text');
+        const prevButton = document.getElementById('prev-paragraph-btn');
+        const nextButton = document.getElementById('next-paragraph-btn');
+        const progressIndicator = document.getElementById('progress-indicator');
+        const questionsList = document.getElementById('questions-list');
+
+        function getCsrfToken() {
+            return document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+        }
+
+        function loadParagraph(index) {
+            const paragraph = paragraphs[index];
+            paragraphContent.innerHTML = `
+                <span class="paragraph-id">${paragraph.id}</span>
+                <p class="paragraph-text">${paragraph.text}</p>
+            `;
+            
+            agentGuidanceContainer.style.display = 'none';
+            agentGuidanceText.textContent = 'Loading guidance...';
+
+            fetch('/api/reading/paragraph/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                },
+                body: JSON.stringify({ text: paragraph.text })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.guidance) {
+                    agentGuidanceText.textContent = data.guidance;
+                    agentGuidanceContainer.style.display = 'block';
+                }
+            });
+
+            updateNav(index);
+        }
+
+        function updateNav(index) {
+            currentParagraph = index;
+            progressIndicator.textContent = `Paragraph ${index + 1} of ${totalParagraphs}`;
+            prevButton.disabled = index === 0;
+            nextButton.disabled = index === totalParagraphs - 1;
+            if (index === totalParagraphs - 1) {
+                nextButton.textContent = 'Finish Reading';
+            } else {
+                nextButton.textContent = 'Next Paragraph';
+            }
+        }
+
+        function renderQuestions() {
+            let html = '';
+            for (const q of passageData.questions) {
+                html += `<div class="question" id="q${q.id}">`;
+                html += `<p><strong>Question ${q.id}</strong></p><p>${q.instruction}</p><p>${q.prompt}</p>`;
+                
+                if (q.type === 'paragraph_matching') {
+                    html += '<select><option value="">Select Paragraph</option>';
+                    for (const opt of q.options) {
+                        html += `<option value="${opt}">${opt}</option>`;
+                    }
+                    html += '</select>';
+                } else if (q.type === 'person_matching') {
+                    html += '<select><option value="">Select Person</option>';
+                    for (const person of q.person_options) {
+                        html += `<option value="${person.key}">${person.name}</option>`;
+                    }
+                    html += '</select>';
+                } else if (q.type === 'multiple_choice') {
+                    html += '<ul class="options">';
+                    for (const [key, value] of Object.entries(q.options)) {
+                        html += `<li><label><input type="checkbox" name="q${q.id}" value="${key}"> ${key}: ${value}</label></li>`;
+                    }
+                    html += '</ul>';
+                    if (q.select) {
+                        html += `<p><em>(Choose ${q.select})</em></p>`;
+                    }
+                }
+                html += '</div>';
+            }
+            questionsList.innerHTML = html;
+        }
+
+        prevButton.addEventListener('click', () => {
+            if (currentParagraph > 0) {
+                loadParagraph(currentParagraph - 1);
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (currentParagraph < totalParagraphs - 1) {
+                loadParagraph(currentParagraph + 1);
+            } else {
+                alert('You have finished the passage!');
+            }
+        });
+
+        // Initial setup
+        passageTitle.textContent = passageData.title;
+        passagePromptEl.textContent = passagePrompt;
+        renderQuestions();
+        loadParagraph(0);
+    });
+</script>
+{% endblock %}

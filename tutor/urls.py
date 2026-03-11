@@ -26,4 +26,7 @@ urlpatterns = [
     path('api/reading/assistant/',          views.api_reading_assistant,          name='api_reading_assistant'),
     path('api/reading/paragraph-strategy/', views.api_reading_paragraph_strategy, name='api_reading_paragraph_strategy'),
     path('api/reading/section-tips/', views.api_reading_section_tips, name='api_reading_section_tips'),
+
+    # API - Passage.txt reading
+    path('api/reading/paragraph/', views.api_reading_paragraph, name='api_reading_paragraph'),
 ]

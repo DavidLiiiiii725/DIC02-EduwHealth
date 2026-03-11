@@ -1,0 +1,32 @@
+{
+  "learner_id": "learner_1773211291",
+  "ld_profile": {
+    "confirmed": [
+      "adhd",
+      "executive_function",
+      "anxiety",
+      "motivation_disorder"
+    ],
+    "suspected": [],
+    "severity": {
+      "adhd": 0.5,
+      "executive_function": 0.5,
+      "anxiety": 0.5,
+      "motivation_disorder": 0.5
+    }
+  },
+  "baseline": {
+    "working_memory_span": 5.0,
+    "avg_session_attention_min": 15.0,
+    "task_initiation_latency_sec": 20.0,
+    "frustration_threshold": 0.55,
+    "recent_success_rate": 0.5
+  },
+  "intervention_history": [],
+  "metacog_log": [],
+  "session_count": 0,
+  "total_turns": 0,
+  "scaffold_fade_index": 1.0,
+  "created_at": 1773211305.596593,
+  "updated_at": 1773211305.596593
+}

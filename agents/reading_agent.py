@@ -18,6 +18,86 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from core.llm_client import LLMClient
+
+
+def generate_passage_prompt(passage_title: str, full_text: str, ld_profile: dict) -> str:
+    """Generates a high-level reading prompt for the entire passage."""
+    llm = LLMClient()
+    
+    adaptive_instructions = []
+    all_ld = set(ld_profile.get('confirmed', []) + ld_profile.get('suspected', []))
+    if 'adhd' in all_ld:
+        adaptive_instructions.append(
+            "The user has ADHD. Start with a ⚡ emoji. Give a very short, concrete instruction to help them start, like identifying the main subject. Keep it under 40 words."
+        )
+    else:
+        adaptive_instructions.append(
+            "Provide a brief, high-level reading strategy for the entire passage. Suggest what the user should pay attention to overall. Keep it concise."
+        )
+
+    prompt = f"""
+    The user is about to read a passage titled "{passage_title}".
+    Here is the full text:
+    ---
+    {full_text}
+    ---
+    Your task is to generate a single, high-level reading prompt to help the user focus before they begin reading paragraph by paragraph.
+
+    [ADAPTIVE INSTRUCTIONS]
+    {adaptive_instructions[0]}
+    """
+
+    try:
+        guidance = llm.chat(
+            system="You are a helpful reading coach. Your goal is to give a single, effective starting instruction for the entire passage.",
+            user=prompt,
+            temperature=0.5,
+            max_tokens=100,
+        )
+        return guidance
+    except Exception as e:
+        return f"As you read, think about the main argument of the passage '{passage_title}'."
+
+
+def generate_paragraph_guidance(paragraph_text: str, ld_profile: dict) -> str:
+    """Generates AI-powered guidance for a single paragraph."""
+    llm = LLMClient()
+    
+    adaptive_instructions = []
+    all_ld = set(ld_profile.get('confirmed', []) + ld_profile.get('suspected', []))
+    if 'adhd' in all_ld:
+        adaptive_instructions.append(
+            "The user has ADHD. Start with a ⚡ emoji. Ask a direct, engaging question to anchor their focus on this specific paragraph. Keep the guidance under 50 words."
+        )
+    else:
+        adaptive_instructions.append(
+            "Ask a thought-provoking question about this paragraph's main idea or purpose to encourage critical thinking. Keep it concise."
+        )
+
+    prompt = f"""
+    The user is reading the following paragraph:
+    ---
+    {paragraph_text}
+    ---
+    Your task is to generate a brief, engaging reading prompt to guide them for this specific paragraph.
+
+    [ADAPTIVE INSTRUCTIONS]
+    {adaptive_instructions[0]}
+    """
+
+    try:
+        guidance = llm.chat(
+            system="You are a helpful reading coach. Your goal is to improve the user's reading strategy with a single, focused question for the given paragraph.",
+            user=prompt,
+            temperature=0.6,
+            max_tokens=100,
+        )
+        return guidance
+    except Exception as e:
+        # Fallback for when LLM is not available
+        return "What is the main idea of this paragraph?"
+
 
 # ── Question page detection ───────────────────────────────────────
 #

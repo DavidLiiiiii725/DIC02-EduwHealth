@@ -2,6 +2,7 @@ import json
 import logging
 import time
 import threading
+from pathlib import Path
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -10,6 +11,7 @@ from django.utils import timezone
 from django.db.models import Avg, Sum
 
 from .models import LearnerProfile, ChatSession, ChatMessage, IELTSPassage, IELTSSection, IELTSQuestion, ReadingAttempt
+from agents.reading_agent import generate_paragraph_guidance, generate_passage_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -327,14 +329,82 @@ def api_interventions_apply(request):
 def reading(request):
     """IELTS reading assistant page."""
     learner = _get_or_create_learner(request)
-    # Find any active (non-completed) attempt
+    
+    passage_path = Path(__file__).parent.parent / "passage.txt"
+    if passage_path.exists():
+        try:
+            with open(passage_path, 'r', encoding='utf-8') as f:
+                passage_data = json.load(f)
+            
+            # De-duplicate questions
+            seen_prompts = set()
+            unique_questions = []
+            for q in passage_data.get('questions', []):
+                if q.get('prompt') not in seen_prompts:
+                    unique_questions.append(q)
+                    seen_prompts.add(q['prompt'])
+            passage_data['questions'] = unique_questions
+
+            # Pre-process person-matching questions for the template
+            for q in passage_data['questions']:
+                if q['type'] == 'person_matching':
+                    person_options = []
+                    for key in q.get('options', []):
+                        if key in passage_data.get('people', {}):
+                            person_options.append({
+                                'key': key,
+                                'name': passage_data['people'][key]
+                            })
+                    q['person_options'] = person_options
+            
+            # Generate high-level passage prompt
+            full_text = " ".join([p['text'] for p in passage_data.get('paragraphs', [])])
+            ld_profile = {
+                'confirmed': learner.ld_confirmed,
+                'suspected': learner.ld_suspected,
+            }
+            passage_prompt = generate_passage_prompt(passage_data.get('title', ''), full_text, ld_profile)
+
+            return render(request, 'tutor/reading_passage.html', {
+                'learner': learner,
+                'passage_data_json': json.dumps(passage_data),
+                'passage_prompt': passage_prompt,
+            })
+        except (json.JSONDecodeError, IOError) as e:
+            logger.error(f"Error processing passage.txt: {e}")
+            # Fall through to the default behavior
+    
+    # Default behavior for PDF upload
     attempt = ReadingAttempt.objects.filter(learner=learner, completed=False).last()
-    passage = attempt.passage if attempt else None
     return render(request, 'tutor/reading.html', {
         'learner': learner,
         'attempt': attempt,
-        'passage': passage,
+        'passage': attempt.passage if attempt else None,
     })
+
+
+@csrf_exempt
+@require_POST
+def api_reading_paragraph(request):
+    """Returns AI-generated guidance for a single paragraph."""
+    try:
+        data = json.loads(request.body)
+        paragraph_text = data.get('text', '')
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    if not paragraph_text:
+        return JsonResponse({'error': 'Paragraph text is required'}, status=400)
+
+    learner = _get_or_create_learner(request)
+    ld_profile = {
+        'confirmed': learner.ld_confirmed,
+        'suspected': learner.ld_suspected,
+    }
+
+    guidance = generate_paragraph_guidance(paragraph_text, ld_profile)
+    
+    return JsonResponse({'guidance': guidance})
 
 
 @csrf_exempt
