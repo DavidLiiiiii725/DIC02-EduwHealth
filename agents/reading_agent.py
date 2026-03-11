@@ -14,11 +14,14 @@
 from __future__ import annotations
 
 import io
+import logging
 import os
 import re
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from core.llm_client import LLMClient
+
+logger = logging.getLogger(__name__)
 
 
 def generate_passage_prompt(passage_title: str, full_text: str, ld_profile: dict) -> str:
@@ -61,42 +64,55 @@ def generate_passage_prompt(passage_title: str, full_text: str, ld_profile: dict
 
 
 def generate_paragraph_guidance(paragraph_text: str, ld_profile: dict) -> str:
-    """Generates AI-powered guidance for a single paragraph."""
+    """Generates AI-powered reading strategy for a single paragraph."""
     llm = LLMClient()
-    
-    adaptive_instructions = []
+
     all_ld = set(ld_profile.get('confirmed', []) + ld_profile.get('suspected', []))
+
     if 'adhd' in all_ld:
-        adaptive_instructions.append(
-            "The user has ADHD. Start with a ⚡ emoji. Ask a direct, engaging question to anchor their focus on this specific paragraph. Keep the guidance under 50 words."
+        adaptive_note = (
+            "The reader has ADHD. Use short sentences, bullet points, and start with ⚡. "
+            "Keep total response under 80 words."
         )
     else:
-        adaptive_instructions.append(
-            "Ask a thought-provoking question about this paragraph's main idea or purpose to encourage critical thinking. Keep it concise."
-        )
+        adaptive_note = "Keep the strategy concise and actionable (under 120 words)."
 
-    prompt = f"""
-    The user is reading the following paragraph:
-    ---
-    {paragraph_text}
-    ---
-    Your task is to generate a brief, engaging reading prompt to guide them for this specific paragraph.
+    prompt = f"""You are an IELTS reading coach. Analyse the paragraph below and provide a personalised reading strategy.
 
-    [ADAPTIVE INSTRUCTIONS]
-    {adaptive_instructions[0]}
-    """
+Paragraph:
+---
+{paragraph_text}
+---
+
+Generate a reading strategy that includes:
+- **Key Point**: What is the core argument or fact in this paragraph?
+- **Watch For**: 2–3 key terms or names to pay attention to.
+- **Reading Tip**: One specific technique for engaging with this paragraph.
+
+{adaptive_note}
+Do NOT ask a generic question like "What is the main idea?". Instead, give concrete, paragraph-specific advice."""
 
     try:
         guidance = llm.chat(
-            system="You are a helpful reading coach. Your goal is to improve the user's reading strategy with a single, focused question for the given paragraph.",
+            system=(
+                "You are an expert IELTS reading coach. Your role is to generate "
+                "specific, actionable reading strategies for individual paragraphs—"
+                "not generic questions. Be concise and helpful."
+            ),
             user=prompt,
             temperature=0.6,
-            max_tokens=100,
+            max_tokens=200,
         )
         return guidance
-    except Exception as e:
+    except Exception as exc:
+        logger.warning("generate_paragraph_guidance LLM call failed: %s", exc)
         # Fallback for when LLM is not available
-        return "What is the main idea of this paragraph?"
+        return (
+            "**Reading Strategy**\n\n"
+            "- Read the first and last sentence carefully to identify the main point.\n"
+            "- Look for proper nouns, numbers, and key terms.\n"
+            "- Ask: *What problem or solution does this paragraph describe?*"
+        )
 
 
 # ── Question page detection ───────────────────────────────────────

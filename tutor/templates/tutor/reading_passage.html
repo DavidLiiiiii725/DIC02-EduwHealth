@@ -5,239 +5,671 @@
 
 {% block content %}
 <style>
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        line-height: 1.6;
-        margin: 0;
-        padding: 1rem;
-        background-color: #f0f2f5;
-        color: #1c1e21;
-    }
-    .container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        max-width: 1400px;
-        margin: auto;
-    }
-    .passage-column, .questions-column {
-        background-color: #ffffff;
-        padding: 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-    .questions-column {
-        position: sticky;
-        top: 1rem;
-        height: calc(100vh - 2rem);
-        overflow-y: auto;
-    }
-    h1, h2 {
-        color: #333;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 0.5rem;
-        margin-top: 0;
-    }
-    .passage-display {
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-        background-color: #fafafa;
-    }
-    .paragraph-id {
-        font-weight: bold;
-        margin-right: 1rem;
-        color: #0056b3;
-        float: left;
-    }
-    .paragraph-text {
-        text-align: justify;
-        overflow: hidden;
-    }
-    .agent-guidance {
-        margin-top: 1.5rem;
-        padding: 1rem;
-        background-color: #e7f3ff;
-        border-left: 4px solid #0056b3;
-        border-radius: 4px;
-    }
-    .agent-guidance p { margin: 0; }
-    .navigation {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1rem;
-    }
-    .nav-btn {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        background-color: #007bff;
-        color: white;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: background-color 0.2s;
-    }
-    .nav-btn:hover { background-color: #0056b3; }
-    .nav-btn:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-    }
-    .progress-indicator {
-        color: #666;
-        font-size: 0.9rem;
-    }
-    .question {
-        margin-bottom: 1.5rem;
-        padding: 1rem;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-    }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0; padding: 0;
+    background: #f0f2f5;
+    color: #1c1e21;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Top bar ─────────────────────────────────────────────── */
+  .topbar {
+    background: #1A7A50; color: #fff;
+    padding: 0 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    height: 50px; flex-shrink: 0;
+  }
+  .topbar-title { font-weight: 700; font-size: 1rem; }
+  .topbar-sub   { font-size: 0.8rem; opacity: 0.8; }
+  .topbar-prog  {
+    margin-left: auto; font-size: 0.8rem;
+    background: rgba(255,255,255,0.2);
+    padding: 0.2rem 0.75rem; border-radius: 20px;
+  }
+
+  /* ── Main layout ─────────────────────────────────────────── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    height: calc(100vh - 50px);
+  }
+
+  /* ── Left: passage column ───────────────────────────────── */
+  .passage-col {
+    display: flex; flex-direction: column;
+    border-right: 1px solid #e0e0e0;
+    background: #fff; overflow: hidden;
+  }
+  .passage-scroll { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; }
+
+  .passage-heading  { font-size: 1.25rem; font-weight: 700; color: #1A7A50; margin-bottom: 0.2rem; }
+  .passage-subtitle { font-size: 0.83rem; color: #777; margin-bottom: 1.2rem; }
+
+  .para-block {
+    margin-bottom: 1.1rem; padding: 1rem 1.2rem;
+    border: 1px solid #e8e8e8; border-radius: 8px;
+    background: #fafafa; transition: border-color 0.2s, background 0.2s;
+  }
+  .para-block.active { border-color: #1A7A50; background: #f4fbf7; }
+  .para-id   { font-weight: 700; color: #1A7A50; margin-right: 0.4rem; }
+  .para-text { line-height: 1.8; font-size: 0.93rem; }
+
+  /* AI Strategy card */
+  .strategy-card {
+    margin: 0 2rem 0.75rem;
+    padding: 0.9rem 1.1rem;
+    background: #f0f7f4; border-left: 4px solid #1A7A50;
+    border-radius: 6px; font-size: 0.87rem; line-height: 1.7;
+    animation: fadeIn 0.3s ease;
+  }
+  .strategy-card .sc-header {
+    font-weight: 700; color: #1A7A50; margin-bottom: 0.35rem; font-size: 0.88rem;
+  }
+  .strategy-card.loading { color: #888; font-style: italic; }
+  .strategy-card p  { margin: 0.2rem 0; }
+  .strategy-card ul, .strategy-card ol { margin: 0.25rem 0 0.25rem 1rem; padding: 0; }
+  .strategy-card li { margin-bottom: 0.15rem; }
+  .strategy-card strong { color: #155e3c; }
+  .strategy-card em    { color: #444; }
+  .strategy-card code  { background: #e0f2ea; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.85em; }
+
+  /* Footer nav */
+  .passage-footer {
+    padding: 0.65rem 2rem; border-top: 1px solid #e0e0e0;
+    display: flex; align-items: center; gap: 0.6rem; background: #fff; flex-shrink: 0;
+  }
+  .btn-nav {
+    padding: 0.45rem 1.1rem; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: background 0.15s;
+  }
+  .btn-prev   { background: #ebebeb; color: #333; }
+  .btn-prev:hover { background: #d8d8d8; }
+  .btn-prev:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-next   { background: #1A7A50; color: #fff; }
+  .btn-next:hover { background: #156340; }
+  .btn-finish { background: #1A5FCC; color: #fff; }
+  .btn-finish:hover { background: #1550b0; }
+  .nav-progress { margin-left: auto; font-size: 0.8rem; color: #888; }
+
+  /* ── Right column ────────────────────────────────────────── */
+  .right-col { display: flex; flex-direction: column; overflow: hidden; background: #fafafa; }
+
+  .questions-panel {
+    flex: 1; overflow-y: auto; padding: 1rem 1.1rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .questions-panel h2 {
+    font-size: 0.95rem; font-weight: 700; color: #333;
+    margin: 0 0 0.7rem; padding-bottom: 0.35rem; border-bottom: 1px solid #eee;
+  }
+  .q-card {
+    margin-bottom: 0.9rem; padding: 0.8rem 0.9rem;
+    background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+  }
+  .q-card .q-num  { font-size: 0.72rem; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.25rem; }
+  .q-card .q-text { font-size: 0.87rem; line-height: 1.55; color: #222; margin-bottom: 0.45rem; }
+  .q-card select  { width: 100%; padding: 0.35rem 0.5rem; border: 1px solid #ccc; border-radius: 5px; background: #fff; font-size: 0.85rem; }
+  .q-opts         { list-style: none; margin: 0; padding: 0; }
+  .q-opts li      { margin-bottom: 0.25rem; }
+  .q-opts label   { display: flex; align-items: flex-start; gap: 0.35rem; cursor: pointer; font-size: 0.85rem; }
+  .q-select-note  { font-size: 0.76rem; color: #888; margin-top: 0.25rem; }
+  .q-group-note   {
+    font-size: 0.78rem; color: #555; background: #f5f5f5;
+    border-radius: 6px; padding: 0.45rem 0.7rem; margin-bottom: 0.6rem; line-height: 1.5;
+  }
+
+  /* ── AI Chat panel ───────────────────────────────────────── */
+  .chat-panel {
+    height: 270px; flex-shrink: 0;
+    display: flex; flex-direction: column;
+    background: #fff; border-top: 2px solid #1A7A50;
+  }
+  .chat-hdr {
+    padding: 0.45rem 1rem; background: #1A7A50; color: #fff;
+    font-size: 0.83rem; font-weight: 600;
+    display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;
+  }
+  .chat-msgs    { flex: 1; overflow-y: auto; padding: 0.55rem 0.75rem; }
+  .chat-msg {
+    margin-bottom: 0.55rem; padding: 0.45rem 0.7rem;
+    border-radius: 8px; font-size: 0.81rem; line-height: 1.6; animation: fadeIn 0.2s ease;
+  }
+  .chat-msg.ai   { background: #f0f7f4; border-left: 3px solid #1A7A50; }
+  .chat-msg.user { background: #e8f0fe; border-left: 3px solid #1A5FCC; margin-left: 1.25rem; }
+  .chat-msg.typing { color: #aaa; font-style: italic; }
+  .chat-msg p    { margin: 0 0 0.2rem; }
+  .chat-msg ul, .chat-msg ol { margin: 0.2rem 0 0.2rem 1rem; padding: 0; }
+  .chat-msg li   { margin-bottom: 0.1rem; }
+  .chat-msg strong { color: #1A5FCC; }
+
+  .chat-input-row {
+    display: flex; padding: 0.45rem 0.65rem; gap: 0.4rem;
+    border-top: 1px solid #eee; flex-shrink: 0;
+  }
+  .chat-ta {
+    flex: 1; border: 1px solid #ccc; border-radius: 6px;
+    padding: 0.3rem 0.55rem; font-size: 0.81rem; font-family: inherit;
+    resize: none; outline: none;
+  }
+  .chat-ta:focus { border-color: #1A7A50; }
+  .chat-send {
+    background: #1A7A50; color: #fff; border: none; border-radius: 6px;
+    padding: 0.3rem 0.7rem; font-size: 0.81rem; cursor: pointer; font-weight: 600;
+  }
+  .chat-send:hover    { background: #156340; }
+  .chat-send:disabled { background: #a5c9b8; cursor: not-allowed; }
+
+  /* ── Review overlay ──────────────────────────────────────── */
+  #review-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9000;
+    display: none; /* flex when visible */
+    align-items: flex-start; justify-content: center;
+    overflow-y: auto; padding: 2rem 1rem;
+  }
+  .review-modal {
+    background: #fff; border-radius: 12px;
+    width: 100%; max-width: 800px; padding: 2rem;
+    animation: slideUp 0.3s ease;
+  }
+  .rv-title   { font-size: 1.4rem; font-weight: 700; color: #1A7A50; margin-bottom: 0.25rem; }
+  .rv-score   {
+    display: inline-block; background: #f0f7f4;
+    border: 1px solid #b9ddc9; border-radius: 8px;
+    padding: 0.5rem 1.4rem; margin: 0.7rem 0 1.1rem;
+    font-size: 1rem;
+  }
+  .rv-score .score-num { font-size: 1.8rem; font-weight: 700; color: #1A5FCC; }
+  .rv-q {
+    margin-bottom: 1.1rem;
+    border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;
+  }
+  .rv-q-hdr {
+    padding: 0.5rem 1rem; background: #f5f5f5;
+    font-size: 0.75rem; font-weight: 700; color: #777;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .rv-q-body { padding: 0.7rem 1rem; }
+  .rv-q-text { font-size: 0.88rem; color: #222; margin-bottom: 0.55rem; line-height: 1.5; }
+  .rv-row    { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .rv-ans    { padding: 0.45rem 0.7rem; border-radius: 6px; font-size: 0.84rem; }
+  .rv-ans .al { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.2rem; }
+  .rv-user-wrong  { background: #f8d7da; border: 1px solid #dc3545; }
+  .rv-user-wrong .al { color: #721c24; }
+  .rv-user-ok  { background: #d4edda; border: 1px solid #28a745; }
+  .rv-user-ok .al  { color: #155724; }
+  .rv-correct { background: #d4edda; border: 1px solid #28a745; }
+  .rv-correct .al { color: #155724; }
+  .rv-exp {
+    padding: 0.45rem 0.7rem; background: #e8f0fe;
+    border-radius: 6px; border-left: 3px solid #1A5FCC;
+    font-size: 0.82rem; color: #333; line-height: 1.6;
+  }
+  .rv-exp .el { font-size: 0.7rem; font-weight: 700; color: #1A5FCC; text-transform: uppercase; margin-bottom: 0.2rem; }
+  .rv-btns { margin-top: 1.4rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .rv-back {
+    padding: 0.6rem 1.8rem;
+    background: #1A7A50; color: #fff; border: none;
+    border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  .rv-back:hover    { background: #156340; }
+  .rv-restart {
+    padding: 0.6rem 1.8rem;
+    background: #e74c3c; color: #fff; border: none;
+    border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  .rv-restart:hover { background: #c0392b; }
+
+  /* Top-bar restart button */
+  .topbar-restart {
+    margin-left: 0.75rem;
+    padding: 0.25rem 0.85rem;
+    background: rgba(255,255,255,0.18);
+    color: #fff; border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+    cursor: pointer; transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .topbar-restart:hover { background: rgba(255,255,255,0.3); }
+
+  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 </style>
 
-<div class="container">
-    <div class="passage-column">
-        <h1 id="passage-title"></h1>
-        <div class="agent-guidance">
-            <p id="passage-prompt"></p>
-        </div>
-        <div id="reading-view">
-            <div class="passage-display">
-                <div id="paragraph-content"></div>
-                <div id="agent-guidance-container" class="agent-guidance" style="display: none;">
-                    <p id="agent-guidance-text"></p>
-                </div>
-            </div>
-            <div class="navigation">
-                <button id="prev-paragraph-btn" class="nav-btn">Previous Paragraph</button>
-                <span id="progress-indicator" class="progress-indicator"></span>
-                <button id="next-paragraph-btn" class="nav-btn">Next Paragraph</button>
-            </div>
-        </div>
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-title" id="tb-title">Reading</div>
+  <div class="topbar-sub"   id="tb-sub"></div>
+  <div class="topbar-prog"  id="tb-prog">Paragraph 1</div>
+  <button class="topbar-restart" onclick="confirmRestart()" title="Restart from paragraph 1" aria-label="Restart from paragraph 1">🔄 Restart</button>
+</div>
+
+<div class="main-layout">
+
+  <!-- ── Left: passage ──────────────────────────────────────── -->
+  <div class="passage-col">
+    <div class="passage-scroll" id="passage-scroll">
+      <div class="passage-heading"  id="psg-heading"></div>
+      <div class="passage-subtitle" id="psg-subtitle"></div>
+      <div id="para-container"></div>
     </div>
-    <div class="questions-column">
-        <h2>Questions</h2>
-        <div id="questions-list"></div>
+
+    <!-- AI reading strategy card (shown below the passage scroll) -->
+    <div id="strategy-card" class="strategy-card" style="display:none;">
+      <div class="sc-header">🤖 AI Reading Strategy</div>
+      <div id="strategy-body"></div>
     </div>
+
+    <div class="passage-footer">
+      <button class="btn-nav btn-prev"   id="btn-prev"   onclick="navigate(-1)" disabled>← Prev</button>
+      <button class="btn-nav btn-next"   id="btn-next"   onclick="navigate(1)">Next →</button>
+      <button class="btn-nav btn-finish" id="btn-finish" onclick="finishReading()" style="display:none;">✓ Finish Reading</button>
+      <span class="nav-progress" id="nav-prog"></span>
+    </div>
+  </div>
+
+  <!-- ── Right: questions + AI chat ─────────────────────────── -->
+  <div class="right-col">
+    <div class="questions-panel">
+      <h2>Questions</h2>
+      <div id="questions-list"></div>
+    </div>
+
+    <!-- AI Chat -->
+    <div class="chat-panel">
+      <div class="chat-hdr">🤖 AI Reading Assistant — ask me anything</div>
+      <div class="chat-msgs" id="chat-msgs"></div>
+      <div class="chat-input-row">
+        <textarea class="chat-ta" id="chat-ta" rows="2"
+          placeholder="Ask about the current paragraph…"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+        <button class="chat-send" id="chat-send" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Review overlay -->
+<div id="review-overlay">
+  <div class="review-modal" id="review-modal"></div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const passageData = JSON.parse('{{ passage_data_json|escapejs }}');
-        const passagePrompt = '{{ passage_prompt|escapejs }}';
+// ── Minimal markdown renderer ─────────────────────────────
+const md = {
+  parse(src) {
+    if (!src) return '';
+    const esc = s => String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const lines = src.split(/\r?\n/);
+    let html = '', inUl = false, inOl = false;
+    const closeLists = () => {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (inOl) { html += '</ol>'; inOl = false; }
+    };
+    const inline = raw => esc(raw)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+      .replace(/_(.+?)_/g,       '<em>$1</em>')
+      .replace(/`(.+?)`/g,       '<code>$1</code>');
+    for (const raw of lines) {
+      const line = raw.trimEnd();
+      if (/^#{1,6}\s/.test(line)) {
+        closeLists();
+        const lvl = line.match(/^(#+)/)[1].length;
+        html += `<h${lvl}>${inline(line.replace(/^#+\s*/,''))}</h${lvl}>`;
+      } else if (/^\s*[-*]\s+/.test(line)) {
+        if (!inUl) { closeLists(); html += '<ul>'; inUl = true; }
+        html += `<li>${inline(line.replace(/^\s*[-*]\s+/,''))}</li>`;
+      } else if (/^\s*\d+\.\s+/.test(line)) {
+        if (!inOl) { closeLists(); html += '<ol>'; inOl = true; }
+        html += `<li>${inline(line.replace(/^\s*\d+\.\s+/,''))}</li>`;
+      } else if (/^>\s*/.test(line)) {
+        closeLists();
+        html += `<blockquote>${inline(line.replace(/^>\s*/,''))}</blockquote>`;
+      } else if (line === '') {
+        closeLists(); html += '<br>';
+      } else {
+        closeLists();
+        html += `<p>${inline(line)}</p>`;
+      }
+    }
+    closeLists();
+    return html;
+  }
+};
 
-        let currentParagraph = 0;
-        const paragraphs = passageData.paragraphs;
-        const totalParagraphs = paragraphs.length;
+// ── Data ──────────────────────────────────────────────────
+const passageData = JSON.parse('{{ passage_data_json|escapejs }}');
+const paragraphs  = passageData.paragraphs || [];
+const questions   = passageData.questions  || [];
+const people      = passageData.people     || {};
+let curIdx = 0;
 
-        const passageTitle = document.getElementById('passage-title');
-        const passagePromptEl = document.getElementById('passage-prompt');
-        const paragraphContent = document.getElementById('paragraph-content');
-        const agentGuidanceContainer = document.getElementById('agent-guidance-container');
-        const agentGuidanceText = document.getElementById('agent-guidance-text');
-        const prevButton = document.getElementById('prev-paragraph-btn');
-        const nextButton = document.getElementById('next-paragraph-btn');
-        const progressIndicator = document.getElementById('progress-indicator');
-        const questionsList = document.getElementById('questions-list');
+// ── CSRF ──────────────────────────────────────────────────
+function getCsrf() {
+  const m = document.cookie.match(/csrftoken=([^;]+)/);
+  return m ? m[1] : '';
+}
 
-        function getCsrfToken() {
-            return document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
-        }
+// ── Escape HTML ───────────────────────────────────────────
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-        function loadParagraph(index) {
-            const paragraph = paragraphs[index];
-            paragraphContent.innerHTML = `
-                <span class="paragraph-id">${paragraph.id}</span>
-                <p class="paragraph-text">${paragraph.text}</p>
-            `;
-            
-            agentGuidanceContainer.style.display = 'none';
-            agentGuidanceText.textContent = 'Loading guidance...';
+// ── Render paragraphs ─────────────────────────────────────
+function renderParagraphs() {
+  const c = document.getElementById('para-container');
+  c.innerHTML = paragraphs.map((p, i) =>
+    `<div class="para-block${i===0?' active':''}" id="pb-${i}">` +
+    `<span class="para-id">${esc(p.id)}</span>` +
+    `<span class="para-text">${esc(p.text)}</span>` +
+    `</div>`
+  ).join('');
+}
 
-            fetch('/api/reading/paragraph/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken(),
-                },
-                body: JSON.stringify({ text: paragraph.text })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.guidance) {
-                    agentGuidanceText.textContent = data.guidance;
-                    agentGuidanceContainer.style.display = 'block';
-                }
-            });
+// ── Question type instructions ────────────────────────────
+const TYPE_INSTRS = {
+  paragraph_matching: 'Match each description with the correct paragraph (A–I).',
+  person_matching:    'Match each statement with the correct person from the list.',
+  multiple_choice:    'Choose the correct answer(s).',
+};
 
-            updateNav(index);
-        }
+// ── Render questions ──────────────────────────────────────
+function renderQuestions() {
+  const list = document.getElementById('questions-list');
+  let html = '';
+  let lastType = null;
+  for (const q of questions) {
+    if (q.type !== lastType) {
+      const instr = TYPE_INSTRS[q.type];
+      if (instr) html += `<div class="q-group-note">${esc(instr)}</div>`;
+      lastType = q.type;
+    }
+    html += `<div class="q-card" id="qc-${q.id}">`;
+    html += `<div class="q-num">Q${q.id}</div>`;
+    html += `<div class="q-text">${esc(q.prompt)}</div>`;
+    if (q.type === 'paragraph_matching') {
+      html += `<select id="ans-${q.id}"><option value="">— Select —</option>`;
+      for (const opt of (q.options||[])) {
+        html += `<option value="${esc(opt)}">${esc(opt)}</option>`;
+      }
+      html += '</select>';
+    } else if (q.type === 'person_matching') {
+      html += `<select id="ans-${q.id}"><option value="">— Select —</option>`;
+      for (const po of (q.person_options||[])) {
+        html += `<option value="${esc(po.key)}">${esc(po.name)}</option>`;
+      }
+      html += '</select>';
+    } else if (q.type === 'multiple_choice') {
+      html += '<ul class="q-opts">';
+      for (const [k,v] of Object.entries(q.options||{})) {
+        html += `<li><label><input type="checkbox" name="mc${q.id}" value="${esc(k)}"> ${esc(k)}: ${esc(v)}</label></li>`;
+      }
+      html += '</ul>';
+      if (q.select) html += `<div class="q-select-note">Choose ${q.select}</div>`;
+    }
+    html += '</div>';
+  }
+  list.innerHTML = html;
+}
 
-        function updateNav(index) {
-            currentParagraph = index;
-            progressIndicator.textContent = `Paragraph ${index + 1} of ${totalParagraphs}`;
-            prevButton.disabled = index === 0;
-            nextButton.disabled = index === totalParagraphs - 1;
-            if (index === totalParagraphs - 1) {
-                nextButton.textContent = 'Finish Reading';
-            } else {
-                nextButton.textContent = 'Next Paragraph';
-            }
-        }
+// ── Navigate ──────────────────────────────────────────────
+function navigate(dir) {
+  const n = curIdx + dir;
+  if (n < 0 || n >= paragraphs.length) return;
+  goTo(n);
+}
 
-        function renderQuestions() {
-            let html = '';
-            for (const q of passageData.questions) {
-                html += `<div class="question" id="q${q.id}">`;
-                html += `<p><strong>Question ${q.id}</strong></p><p>${q.instruction}</p><p>${q.prompt}</p>`;
-                
-                if (q.type === 'paragraph_matching') {
-                    html += '<select><option value="">Select Paragraph</option>';
-                    for (const opt of q.options) {
-                        html += `<option value="${opt}">${opt}</option>`;
-                    }
-                    html += '</select>';
-                } else if (q.type === 'person_matching') {
-                    html += '<select><option value="">Select Person</option>';
-                    for (const person of q.person_options) {
-                        html += `<option value="${person.key}">${person.name}</option>`;
-                    }
-                    html += '</select>';
-                } else if (q.type === 'multiple_choice') {
-                    html += '<ul class="options">';
-                    for (const [key, value] of Object.entries(q.options)) {
-                        html += `<li><label><input type="checkbox" name="q${q.id}" value="${key}"> ${key}: ${value}</label></li>`;
-                    }
-                    html += '</ul>';
-                    if (q.select) {
-                        html += `<p><em>(Choose ${q.select})</em></p>`;
-                    }
-                }
-                html += '</div>';
-            }
-            questionsList.innerHTML = html;
-        }
+function goTo(idx) {
+  document.getElementById(`pb-${curIdx}`)?.classList.remove('active');
+  curIdx = idx;
+  const block = document.getElementById(`pb-${idx}`);
+  if (block) { block.classList.add('active'); block.scrollIntoView({behavior:'smooth',block:'center'}); }
+  updateNav();
+  fetchStrategy(idx);
+}
 
-        prevButton.addEventListener('click', () => {
-            if (currentParagraph > 0) {
-                loadParagraph(currentParagraph - 1);
-            }
-        });
+function updateNav() {
+  const isLast = curIdx === paragraphs.length - 1;
+  document.getElementById('btn-prev').disabled = curIdx === 0;
+  document.getElementById('btn-next').style.display   = isLast ? 'none' : '';
+  document.getElementById('btn-finish').style.display = isLast ? '' : 'none';
+  const label = `Paragraph ${curIdx+1} of ${paragraphs.length}`;
+  document.getElementById('nav-prog').textContent = label;
+  document.getElementById('tb-prog').textContent  = label;
+}
 
-        nextButton.addEventListener('click', () => {
-            if (currentParagraph < totalParagraphs - 1) {
-                loadParagraph(currentParagraph + 1);
-            } else {
-                alert('You have finished the passage!');
-            }
-        });
+// ── Fetch AI reading strategy ─────────────────────────────
+async function fetchStrategy(idx) {
+  const card = document.getElementById('strategy-card');
+  const body = document.getElementById('strategy-body');
+  const text = paragraphs[idx]?.text || '';
+  if (!text) { card.style.display = 'none'; return; }
 
-        // Initial setup
-        passageTitle.textContent = passageData.title;
-        passagePromptEl.textContent = passagePrompt;
-        renderQuestions();
-        loadParagraph(0);
+  card.style.display = '';
+  card.className = 'strategy-card loading';
+  body.innerHTML = '<em>Generating reading strategy…</em>';
+
+  const tid = chatTyping();
+
+  try {
+    const r = await fetch('/api/reading/paragraph/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+      body: JSON.stringify({text}),
     });
+    const d = await r.json();
+    const g = d.guidance || '';
+    card.className = 'strategy-card';
+    body.innerHTML = md.parse(g);
+    chatAdd('ai', `📌 **Strategy — Paragraph ${paragraphs[idx].id}**\n\n${g}`);
+  } catch (err) {
+    console.error('fetchStrategy error:', err);
+    card.className = 'strategy-card';
+    body.innerHTML = '<em>Could not load strategy. Please try again.</em>';
+  } finally {
+    chatRemTyping(tid);
+  }
+}
+
+// ── Chat ──────────────────────────────────────────────────
+let _tc = 0;
+function chatTyping() {
+  const id = `ct-${++_tc}`;
+  const msgs = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = 'chat-msg ai typing'; d.id = id; d.textContent = '⏳ Thinking…';
+  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+function chatRemTyping(id) { document.getElementById(id)?.remove(); }
+function chatAdd(role, text) {
+  const msgs = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = `chat-msg ${role}`; d.innerHTML = md.parse(text);
+  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function sendChat() {
+  const ta  = document.getElementById('chat-ta');
+  const btn = document.getElementById('chat-send');
+  const txt = ta.value.trim();
+  if (!txt) return;
+  chatAdd('user', txt);
+  ta.value = ''; ta.style.height = 'auto'; btn.disabled = true;
+  const para = paragraphs[curIdx];
+  const ctx  = para ? `[Paragraph ${para.id}]: "${para.text}"\n\nQuestion: ${txt}` : txt;
+  const tid  = chatTyping();
+  try {
+    const r = await fetch('/api/chat/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+      body: JSON.stringify({message: ctx}),
+    });
+    const d = await r.json();
+    chatRemTyping(tid);
+    chatAdd('ai', d.response || '(No response)');
+  } catch {
+    chatRemTyping(tid);
+    chatAdd('ai', '_Connection error. Please try again._');
+  }
+  btn.disabled = false;
+  ta.focus();
+}
+
+// ── Collect answers ───────────────────────────────────────
+function collectAnswers() {
+  const ans = {};
+  for (const q of questions) {
+    if (q.type === 'paragraph_matching' || q.type === 'person_matching') {
+      const el = document.getElementById(`ans-${q.id}`);
+      ans[q.id] = el ? el.value : '';
+    } else if (q.type === 'multiple_choice') {
+      const checked = document.querySelectorAll(`input[name="mc${q.id}"]:checked`);
+      ans[q.id] = Array.from(checked).map(c => c.value);
+    }
+  }
+  return ans;
+}
+
+// ── Finish Reading → review screen ───────────────────────
+function finishReading() {
+  showReview(collectAnswers());
+}
+
+function showReview(userAns) {
+  let correct = 0;
+  const total = questions.length;
+
+  // Check each answer
+  const results = questions.map(q => {
+    const ua = userAns[q.id];
+    const ca = q.answer;
+    let ok;
+    if (Array.isArray(ca)) {
+      const uaSet = new Set(Array.isArray(ua) ? ua : [ua]);
+      const caSet = new Set(ca);
+      ok = uaSet.size === caSet.size && [...caSet].every(x => uaSet.has(x));
+    } else {
+      ok = String(ua || '').trim() === String(ca || '').trim();
+    }
+    if (ok) correct++;
+    return {q, ua, ca, ok};
+  });
+
+  const pct = total > 0 ? Math.round(correct/total*100) : 0;
+
+  let html = `<div class="rv-title">📝 Results — ${esc(passageData.title || '')}</div>`;
+  html += `<div class="rv-score">Score: <span class="score-num">${correct}/${total}</span>`;
+  html += ` &nbsp;(<span style="color:#1A7A50;font-weight:700;">${pct}%</span>)</div>`;
+
+  for (const {q, ua, ca, ok} of results) {
+    const uaLabel = fmtAns(ua, q);
+    const caLabel = fmtAns(ca, q);
+    html += `<div class="rv-q">`;
+    html += `<div class="rv-q-hdr">Question ${q.id} &nbsp; ${ok ? '✅ Correct' : '❌ Incorrect'}</div>`;
+    html += `<div class="rv-q-body">`;
+    html += `<div class="rv-q-text">${esc(q.prompt)}</div>`;
+    html += `<div class="rv-row">`;
+    html += `<div class="rv-ans ${ok ? 'rv-user-ok' : 'rv-user-wrong'}"><div class="al">Your Answer</div>${esc(uaLabel || '(not answered)')}</div>`;
+    html += `<div class="rv-ans rv-correct"><div class="al">Correct Answer</div>${esc(caLabel)}</div>`;
+    html += `</div>`;
+    if (q.explanation) {
+      html += `<div class="rv-exp"><div class="el">Explanation</div>${esc(q.explanation)}</div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  html += `<div class="rv-btns">`;
+  html += `<button class="rv-back" onclick="closeReview()">← Back to Passage</button>`;
+  html += `<button class="rv-restart" onclick="restartReading()">🔄 Restart from Paragraph 1</button>`;
+  html += `</div>`;
+  document.getElementById('review-modal').innerHTML = html;
+  const ov = document.getElementById('review-overlay');
+  ov.style.display = 'flex';
+  ov.scrollTop = 0;
+}
+
+function closeReview() {
+  document.getElementById('review-overlay').style.display = 'none';
+}
+
+function restartReading() {
+  document.getElementById('review-overlay').style.display = 'none';
+
+  // Reset paragraph index
+  document.getElementById(`pb-${curIdx}`)?.classList.remove('active');
+  curIdx = 0;
+
+  // Re-render paragraphs and questions (clears all answer inputs)
+  renderParagraphs();
+  renderQuestions();
+  updateNav();
+
+  // Scroll passage back to top
+  const scroll = document.getElementById('passage-scroll');
+  if (scroll) scroll.scrollTop = 0;
+
+  // Reset AI strategy card
+  const card = document.getElementById('strategy-card');
+  if (card) card.style.display = 'none';
+
+  // Add restart message to chat
+  chatAdd('ai',
+    `🔄 **Restarted!** Back to Paragraph 1.\n\n` +
+    `All your answers have been cleared. Good luck on your second attempt!`
+  );
+
+  // Fetch strategy for paragraph 1
+  fetchStrategy(0);
+}
+
+// Ask for confirmation before restarting (to avoid accidental loss of answers)
+function confirmRestart() {
+  if (confirm('Restart from Paragraph 1? Your current answers will be cleared.')) {
+    restartReading();
+  }
+}
+
+function fmtAns(val, q) {
+  if (val === null || val === undefined || val === '') return '';
+  if (Array.isArray(val)) return val.map(v => _resolveKey(v, q)).join(', ');
+  return _resolveKey(String(val), q);
+}
+function _resolveKey(k, q) {
+  if (!k) return '';
+  if (q.type === 'person_matching' && people[k]) return `${k}: ${people[k]}`;
+  if (q.type === 'multiple_choice' && q.options && q.options[k]) return `${k}: ${q.options[k]}`;
+  return k;
+}
+
+// ── Init ──────────────────────────────────────────────────
+(function init() {
+  document.getElementById('tb-title').textContent   = passageData.title    || 'Reading';
+  document.getElementById('tb-sub').textContent     = `${paragraphs.length} paragraphs · ${questions.length} questions`;
+  document.getElementById('psg-heading').textContent  = passageData.title    || '';
+  document.getElementById('psg-subtitle').textContent = passageData.subtitle || '';
+
+  renderParagraphs();
+  renderQuestions();
+  updateNav();
+
+  // Welcome message
+  chatAdd('ai',
+    `👋 **Welcome!** I'm your AI Reading Assistant for *${passageData.title || 'this passage'}*.\n\n` +
+    `I'll show a personalised **reading strategy** for each paragraph as you navigate. ` +
+    `Feel free to ask me questions about any part of the text!`
+  );
+
+  fetchStrategy(0);
+})();
 </script>
 {% endblock %}
