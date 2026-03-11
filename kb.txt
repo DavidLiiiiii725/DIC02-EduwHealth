@@ -1,1052 +1,944 @@
-# Machine Learning Knowledge Base
-# EduwHealth 2.0 — ML Fundamentals for Adaptive Tutoring
+# IELTS Learning Knowledge Base
+# EduwHealth 2.0 — IELTS Preparation for Adaptive Tutoring
 # ─────────────────────────────────────────────────────────────────
 
 ---
 
-## Topic: What Is Machine Learning
-Machine learning (ML) is a subfield of artificial intelligence that enables systems to learn from data and improve their performance on tasks without being explicitly programmed for every case.
+## Topic: IELTS Overview
+The International English Language Testing System (IELTS) is one of the world's most widely recognised English proficiency examinations. It is jointly managed by the British Council, IDP: IELTS Australia, and Cambridge Assessment English.
 
-In traditional programming, a developer writes rules: INPUT + RULES → OUTPUT.
-In machine learning, the system discovers rules from examples: INPUT + OUTPUT → RULES (model).
+Two versions are available:
+- Academic: required for undergraduate and postgraduate university admission, and for professional registration in medicine, nursing, and similar fields.
+- General Training: used for secondary education, work experience, and migration to English-speaking countries (Australia, Canada, New Zealand, the UK).
 
-Machine learning is especially valuable when:
-- The rules are too complex or numerous to write by hand (e.g., recognising faces)
-- The environment changes over time and rules must adapt (e.g., spam filters)
-- Patterns exist in large datasets that humans cannot easily identify manually
+The test measures four language skills:
+1. Listening (30 minutes + 10 minutes transfer time)
+2. Reading (60 minutes)
+3. Writing (60 minutes)
+4. Speaking (11-14 minutes)
 
-Core terminology:
-- Dataset: a collection of examples used for learning
-- Feature (input variable): a measurable property of each example
-- Label (target variable): the outcome we want to predict
-- Model: a mathematical function learned from data that maps features to predictions
-- Training: the process of adjusting model parameters to fit the data
+Band scores range from 0 to 9 in 0.5 increments. An Overall Band Score is the average of the four skill scores, rounded to the nearest 0.5.
 
-The central challenge in ML is generalisation: a model must perform well on new, unseen data, not just the examples it learned from.
+Typical band score requirements:
+- Undergraduate university admission: 6.0-6.5
+- Postgraduate university admission: 6.5-7.0
+- Medical and nursing registration (UK): 7.0-7.5
+- UK skilled worker visa: 4.0
 
----
-
-## Topic: The Machine Learning Pipeline
-A typical ML project follows a structured pipeline with distinct phases. Understanding this pipeline helps learners see where each concept fits.
-
-Phase 1 — Problem Definition:
-- Clarify the business or research question
-- Decide whether the problem is classification, regression, clustering, or generation
-- Define a success metric (accuracy, RMSE, F1, etc.)
-
-Phase 2 — Data Collection and Exploration:
-- Gather raw data from files, databases, APIs, or sensors
-- Explore with descriptive statistics and visualisations
-- Identify data quality issues (missing values, outliers, class imbalance)
-
-Phase 3 — Data Preprocessing:
-- Handle missing values (imputation or deletion)
-- Encode categorical variables (one-hot encoding, label encoding)
-- Scale/normalise numerical features
-- Split into training, validation, and test sets
-
-Phase 4 — Feature Engineering:
-- Create new features from existing ones
-- Select the most informative features
-- Apply dimensionality reduction if needed
-
-Phase 5 — Model Selection and Training:
-- Choose candidate algorithms based on problem type and data size
-- Train models on the training set
-- Tune hyperparameters using the validation set
-
-Phase 6 — Evaluation:
-- Measure performance on the held-out test set
-- Diagnose errors (confusion matrix, residual plots)
-- Check for fairness and bias issues
-
-Phase 7 — Deployment and Monitoring:
-- Package the model for production
-- Monitor performance drift over time
-- Retrain when performance degrades
-
-Understanding the full pipeline prevents a common mistake: jumping directly to modelling without adequate data exploration and preprocessing.
+IELTS scores are valid for two years from the test date.
 
 ---
 
-## Topic: Types of Machine Learning
-Machine learning is divided into four major paradigms based on the type of feedback available during training.
+## Topic: IELTS Band Score Descriptors
+Understanding what each band score represents helps you set realistic targets and track progress.
 
-1. Supervised Learning:
-The model is trained on labelled examples — each example has a known correct answer.
-Goal: learn a mapping f(X) → Y that generalises to new inputs.
-Examples: email spam detection, house price prediction, medical diagnosis.
+Band 9 - Expert user:
+Full operational command of English. Appropriate, accurate, and fluent with complete understanding.
 
-2. Unsupervised Learning:
-The model is trained on unlabelled data and must discover structure on its own.
-Goal: identify clusters, patterns, or compressed representations.
-Examples: customer segmentation, topic modelling, anomaly detection.
+Band 8 - Very good user:
+Fully operational command with only occasional unsystematic inaccuracies and inappropriate usage. May misunderstand in unfamiliar situations.
 
-3. Semi-Supervised Learning:
-A small amount of labelled data is combined with a large amount of unlabelled data.
-Useful when labelling is expensive but raw data is abundant.
-Example: labelling medical images is costly; semi-supervised methods leverage unlabelled scans.
+Band 7 - Good user:
+Operational command with occasional inaccuracies and misunderstandings. Generally handles complex language well.
 
-4. Reinforcement Learning:
-An agent interacts with an environment and learns by receiving rewards or penalties.
-Goal: learn a policy that maximises cumulative reward.
-Examples: game playing (AlphaGo), robot locomotion, recommendation systems.
+Band 6 - Competent user:
+Generally effective command despite some inaccuracies and misunderstandings. Can use and understand fairly complex language, particularly in familiar situations.
 
-Self-Supervised Learning (a growing paradigm):
-The model generates its own supervision signal from the structure of the data.
-Example: predicting masked words in a sentence (the basis of BERT and GPT).
+Band 5 - Modest user:
+Partial command; copes with overall meaning in most situations but is likely to make many mistakes. Can handle basic communication in own field.
 
----
+Band 4 - Limited user:
+Basic competence limited to familiar situations. Frequent problems in understanding and expression.
 
-## Topic: Supervised Learning — Classification
-Classification is a supervised learning task where the output is a discrete category.
+Band 3 - Extremely limited user:
+Only the most basic understanding of English in very familiar situations.
 
-Binary classification: two classes (e.g., positive / negative, spam / not-spam).
-Multi-class classification: more than two mutually exclusive classes (e.g., digit recognition: 0–9).
-Multi-label classification: each example can belong to multiple classes simultaneously (e.g., image tagging).
+Band 2 - Intermittent user:
+Real difficulty understanding spoken and written English.
 
-Common algorithms:
-- Logistic Regression: models the probability of a class using the sigmoid function; interpretable and fast.
-- k-Nearest Neighbours (kNN): classifies a new example by majority vote of its k closest training examples.
-- Decision Tree: partitions the feature space using a tree of if-then rules; interpretable but prone to overfitting.
-- Random Forest: ensemble of decision trees trained on random data subsets; robust and accurate.
-- Support Vector Machine (SVM): finds the hyperplane with maximum margin between classes; effective in high dimensions.
-- Neural Networks: powerful for complex patterns (images, text); require more data and compute.
+Band 1 - Non-user:
+Essentially no ability to use the language beyond a few isolated words.
 
-Key evaluation metrics:
-- Accuracy: fraction of correct predictions (misleading with imbalanced classes).
-- Precision: of all predicted positives, how many are truly positive?
-- Recall (Sensitivity): of all true positives, how many did the model detect?
-- F1-Score: harmonic mean of precision and recall; useful when classes are imbalanced.
-- ROC-AUC: area under the Receiver Operating Characteristic curve; measures discrimination ability.
-- Confusion Matrix: table showing true positives, false positives, true negatives, false negatives.
+The four assessment criteria for Writing and Speaking each carry equal weight:
+- Writing Task 2: Task Achievement, Coherence and Cohesion, Lexical Resource, Grammatical Range and Accuracy.
 
 ---
 
-## Topic: Supervised Learning — Regression
-Regression is a supervised learning task where the output is a continuous numerical value.
+## Topic: IELTS Listening Overview and Format
+The IELTS Listening test is identical for both Academic and General Training candidates.
 
-Common regression tasks:
-- Predicting house prices from features (size, location, age)
-- Forecasting temperature or stock prices from historical data
-- Estimating a patient's blood pressure from clinical measurements
+Format:
+- 4 sections, 10 questions each (40 questions total)
+- Audio is played once only - no replay
+- Recordings include monologues and conversations
+- Accents include British, Australian, American, and Canadian English
 
-Common algorithms:
-- Linear Regression: fits a linear relationship y = wᵀx + b; interpretable and fast.
-- Ridge Regression (L2): linear regression with a penalty on large weights to reduce overfitting.
-- Lasso Regression (L1): linear regression with a sparsity-inducing penalty; performs feature selection.
-- Polynomial Regression: extends linear regression with polynomial features for non-linear relationships.
-- Decision Tree Regressor: partitions the feature space and predicts the mean of leaf node values.
-- Random Forest Regressor: ensemble of regression trees; robust to outliers.
-- Gradient Boosting (XGBoost, LightGBM): sequential ensemble that corrects previous errors; state-of-the-art on tabular data.
-- Neural Networks: universal function approximators; effective for high-dimensional or structured input.
+Section 1: A conversation between two people in an everyday social context (e.g., booking an appointment, enquiring about a service).
 
-Key evaluation metrics:
-- Mean Absolute Error (MAE): average of absolute differences between predictions and true values.
-- Mean Squared Error (MSE): average of squared differences; penalises large errors more heavily.
-- Root Mean Squared Error (RMSE): square root of MSE; interpretable in the same units as the target.
-- R² Score (Coefficient of Determination): proportion of variance explained by the model (1.0 = perfect fit, 0 = baseline mean).
+Section 2: A monologue in an everyday social context (e.g., a radio broadcast about local facilities, a welcome speech at an induction).
 
----
+Section 3: A conversation between up to four people in an educational or training context (e.g., students discussing a project with a tutor).
 
-## Topic: Bias-Variance Tradeoff
-The bias-variance tradeoff is one of the most fundamental concepts in machine learning. It explains why models make errors and guides model selection.
+Section 4: A monologue on an academic topic (e.g., a university lecture).
 
-Total prediction error = Bias² + Variance + Irreducible Noise
+Common question types:
+- Multiple choice
+- Matching
+- Plan/map/diagram labelling
+- Form completion
+- Note completion
+- Table completion
+- Flow chart completion
+- Summary completion
+- Sentence completion
+- Short-answer questions
 
-Bias: error from incorrect assumptions in the model.
-- High bias → underfitting: the model is too simple to capture the true pattern.
-- Example: fitting a straight line to data that is actually curved.
-
-Variance: error from sensitivity to small fluctuations in the training data.
-- High variance → overfitting: the model memorises training data noise.
-- Example: fitting a very complex polynomial that passes through every training point exactly.
-
-Irreducible noise: inherent randomness in the data that no model can remove.
-
-The tradeoff:
-- Simpler models have high bias and low variance.
-- Complex models have low bias and high variance.
-- The goal is to find the sweet spot that minimises total error on unseen data.
-
-How to diagnose:
-- If training error is high → high bias (underfitting). Fix: increase model complexity, add features.
-- If training error is low but validation error is high → high variance (overfitting). Fix: reduce complexity, add more data, use regularisation.
+Scoring: 1 mark per correct answer. Raw score out of 40 is converted to a band score.
+Approximate conversion: 39-40 = Band 9; 35-36 = Band 8; 30 = Band 7; 23 = Band 6; 16 = Band 5.
 
 ---
 
-## Topic: Overfitting and Regularisation
-Overfitting is the most common failure mode in machine learning. A model that overfits has memorised training data patterns (including noise) and fails to generalise.
+## Topic: IELTS Listening Strategies for Success
+Effective listening in IELTS requires both comprehension and strategic test-taking skills.
 
-Signs of overfitting:
-- Very low training loss, much higher validation/test loss
-- Model makes confident but wrong predictions on new examples
-- Adding more features consistently helps training but hurts validation performance
+Before the audio plays - use the preparation time:
+- Read the questions carefully and predict the type of answer expected (a number? a name? a noun phrase?).
+- Underline key words in the questions to anchor your attention.
+- Anticipate synonyms: the audio rarely uses the exact words from the question.
 
-Regularisation techniques:
-1. L1 Regularisation (Lasso): adds the sum of absolute weight values to the loss. Encourages sparse weights (some features get weight zero). Useful for feature selection.
-2. L2 Regularisation (Ridge): adds the sum of squared weight values to the loss. Shrinks all weights toward zero without zeroing them. Reduces complexity smoothly.
-3. Elastic Net: combines L1 and L2 penalties. Useful when many features are correlated.
-4. Dropout (Neural Networks): randomly deactivates neurons during training, preventing co-adaptation. A powerful regulariser for deep networks.
-5. Early Stopping: stop training when validation loss stops improving. Prevents the model from over-learning noise.
-6. Data Augmentation: artificially expand the training set by applying transformations (flipping images, adding noise). Effective in computer vision and NLP.
-7. Cross-Validation: estimate generalisation performance more reliably by training and validating on multiple data splits.
+During the audio:
+- Listen for signpost language: "Firstly...", "Moving on to...", "The key point is...". These indicate where answers are located.
+- Do not get stuck on a missed answer. Move forward immediately to avoid missing the next one.
+- Write as you listen; do not rely on memory.
+- For completion tasks, answers must fit grammatically into the space. This is a useful check.
 
----
+Common traps to avoid:
+- Distractors: a speaker may initially say one thing and then correct themselves ("It starts at 6... no, sorry, 7 o'clock"). The corrected answer is always the right one.
+- Paraphrasing: questions use different words from the audio. Listen for meaning, not identical wording.
+- Spelling: names, places, and technical terms are often spelled out in the recording - write exactly what you hear.
+- Word limits: "Write NO MORE THAN TWO WORDS" means a three-word answer is automatically wrong.
 
-## Topic: Cross-Validation and Model Selection
-Cross-validation is a technique for estimating how well a model generalises to unseen data by using the training data more efficiently.
-
-Why standard train/test split is insufficient:
-A single split may produce a lucky or unlucky evaluation. The result depends heavily on which examples end up in each split.
-
-k-Fold Cross-Validation:
-1. Divide the training data into k equal parts (folds).
-2. Train on k-1 folds, validate on the remaining fold.
-3. Repeat k times, each time using a different fold as the validation set.
-4. Average the k validation scores for a stable estimate of generalisation performance.
-
-Common choices: k = 5 or k = 10.
-
-Stratified k-Fold:
-Ensures that each fold has the same class proportions as the full dataset. Always use this for classification with imbalanced classes.
-
-Leave-One-Out Cross-Validation (LOOCV):
-k = N (number of training examples). Accurate but computationally expensive. Used only when datasets are very small.
-
-Model selection workflow:
-1. Use cross-validation to compare multiple algorithms (e.g., logistic regression vs random forest).
-2. For the winning algorithm, tune hyperparameters using cross-validation.
-3. Train the final model on ALL training data with the best hyperparameters.
-4. Evaluate ONCE on the held-out test set. Do not peek at test performance during selection.
+After the audio:
+- Use the 10-minute transfer time wisely. Check spelling, grammar agreement, and that answers fit within the word limit.
+- Do not leave blanks - a wrong answer receives no penalty, so always write something.
 
 ---
 
-## Topic: Data Preprocessing and Cleaning
-Raw data is rarely clean. Data preprocessing is often the most time-consuming and impactful step in an ML project.
+## Topic: IELTS Reading Academic Format
+The Academic Reading test consists of three long passages (total 2,150-2,750 words) taken from books, journals, magazines, and newspapers. All topics are of general academic interest.
 
-Handling missing values:
-- Deletion: remove examples or features with too many missing values (use when missing data is rare and random).
-- Mean/Median/Mode Imputation: replace missing values with the column's central tendency (simple but can distort distributions).
-- Model-Based Imputation: predict missing values using other features (more accurate but complex).
-- Indicator Flag: add a binary feature marking whether a value was missing (preserves the missingness pattern as a signal).
+Structure:
+- 40 questions in 60 minutes
+- Passages are arranged in order of increasing difficulty
+- At least one passage contains a detailed argument or extended logical discussion
 
-Handling outliers:
-- Detect using z-scores, IQR method, or visualisation (box plots, scatter plots).
-- Options: remove, cap/clip to a maximum value, or transform (log, square root).
-- Important: do not remove outliers without understanding why they exist.
+Common question types:
+- Multiple choice (one or multiple answers)
+- Identifying information (True / False / Not Given)
+- Identifying the writer's views (Yes / No / Not Given)
+- Matching information to paragraphs
+- Matching headings to paragraphs
+- Matching sentence endings
+- Matching features (matching names/dates to statements)
+- Sentence completion
+- Summary/note/table/flow-chart completion
+- Diagram label completion
+- Short-answer questions
 
-Encoding categorical variables:
-- One-Hot Encoding: creates a binary column for each category. Suitable for nominal categories with no order.
-  Risk: high cardinality features (e.g., city names with 1000 cities) create very wide feature matrices.
-- Label Encoding: maps categories to integers. Only valid if there is a meaningful ordinal relationship.
-- Target Encoding: replace each category with the mean of the target variable. Effective but risks data leakage if not done carefully.
-
-Feature scaling:
-- Standardisation (Z-score normalisation): subtract mean, divide by standard deviation. Output has mean 0, std 1. Required for algorithms sensitive to feature magnitude (SVM, kNN, neural networks, regularised linear models).
-- Min-Max Normalisation: scales features to [0, 1]. Useful when you need a bounded range.
-- Robust Scaling: uses median and interquartile range; less sensitive to outliers than standardisation.
-
-Important: always fit scaler/encoder on training data only, then apply to validation and test data. Fitting on the full dataset causes data leakage.
+Time management:
+Allocate roughly 20 minutes per passage. Harder passages (usually passage 3) may require more time. Do not over-invest time on difficult questions; move on and return if time allows.
 
 ---
 
-## Topic: Feature Engineering
-Feature engineering is the process of using domain knowledge to create, transform, or select input features that improve model performance.
+## Topic: IELTS Reading General Training Format
+The General Training Reading test also has 40 questions in 60 minutes but uses shorter, multiple texts.
 
-Why feature engineering matters:
-A well-engineered feature can dramatically improve a model's ability to learn a pattern. The best features encode the underlying structure of the problem in a form the model can exploit.
+Structure:
+Section 1 (Social context): two or three short factual texts (e.g., notices, advertisements, timetables). Tests ability to find specific information.
 
-Types of feature engineering:
-1. Feature Creation: deriving new variables from existing ones.
-   - Date/time: extract day of week, hour, month, quarter, is_weekend.
-   - Interaction terms: multiply or combine two features (e.g., room_size × price_per_sqm).
-   - Polynomial features: x², x³ to capture non-linear relationships in linear models.
-   - Domain-specific: in a medical dataset, body mass index = weight / height².
+Section 2 (Work context): two texts related to work (e.g., staff handbooks, job descriptions, training materials). Tests ability to understand workplace English.
 
-2. Feature Transformation:
-   - Log transform: compresses right-skewed distributions (e.g., income, prices).
-   - Square root transform: moderate compression for count data.
-   - Binning/Discretisation: convert continuous values to categories (e.g., age groups).
+Section 3 (General reading): one longer, more complex text of general interest. Tests higher-level reading comprehension.
 
-3. Feature Selection:
-   - Filter methods: rank features by statistical correlation with the target (chi-squared, mutual information, Pearson correlation). Fast but ignores feature interactions.
-   - Wrapper methods: train a model on subsets of features and select the best subset (recursive feature elimination, RFE). More accurate but expensive.
-   - Embedded methods: feature selection is built into the model (Lasso's L1 penalty, tree feature importances). Efficient and effective.
+Texts in Sections 1 and 2 are less challenging; Section 3 is comparable in difficulty to Academic Reading passages.
 
-Caution: only engineer features using information available at prediction time. Using future information in a feature causes data leakage and inflated performance estimates.
+Question types are the same as Academic Reading.
+
+Key difference from Academic: General Training reading passages are shorter and more practically oriented. Candidates should aim to complete Sections 1 and 2 quickly, leaving maximum time for Section 3.
 
 ---
 
-## Topic: Gradient Descent and Optimization
-Most ML models are trained by minimising a loss function using gradient descent or a variant.
+## Topic: IELTS Reading Core Strategies
+Reading efficiently under time pressure is the central challenge of the IELTS Reading test.
 
-The loss function measures the difference between model predictions and true labels.
-- Mean Squared Error (MSE) for regression: L = (1/n) Σ (ŷᵢ - yᵢ)²
-- Cross-Entropy Loss for classification: L = -(1/n) Σ [yᵢ log(ŷᵢ) + (1-yᵢ) log(1-ŷᵢ)]
+Skimming:
+Reading quickly to get the gist or main idea of a text without reading every word.
+When to skim: first read of a passage; understanding paragraph organisation; locating the topic of each paragraph.
+How to skim: read the title, subheadings, first and last sentences of each paragraph, and any bold or italicised words.
 
-Gradient descent algorithm:
-1. Compute the gradient of the loss with respect to each parameter: ∂L/∂w
-2. Update parameters in the direction that reduces the loss: w ← w - η · ∂L/∂w
-3. Repeat until convergence.
-η (eta) is the learning rate: the step size per update.
+Scanning:
+Reading quickly to locate specific information (a name, date, number, or key term).
+When to scan: answering True/False/Not Given, sentence completion, and short-answer questions where you need to find a particular detail.
+How to scan: move your eyes rapidly through the text; look for the specific word or a synonym; do not read every word.
 
-Learning rate effects:
-- Too large: parameters oscillate or diverge; training becomes unstable.
-- Too small: training converges very slowly; gets stuck in flat regions.
-- Just right: smooth, steady reduction in loss.
+True / False / Not Given strategy:
+- TRUE: the statement AGREES with information explicitly stated in the text.
+- FALSE: the statement CONTRADICTS information explicitly stated in the text.
+- NOT GIVEN: the statement is not mentioned in the text at all, or there is insufficient information to confirm or contradict it.
 
-Variants of gradient descent:
-- Batch Gradient Descent: compute gradient over the entire dataset per update. Stable but slow on large datasets.
-- Stochastic Gradient Descent (SGD): compute gradient using one example per update. Fast and noisy; noise can help escape local minima.
-- Mini-Batch Gradient Descent: compute gradient over a small batch (16–256 examples). Best of both worlds; most commonly used in practice.
+Critical distinction: "Not Given" is NOT the same as "False". If information is simply absent, the answer is Not Given.
+Do not use your own knowledge - all answers must be based on what the text says.
 
-Advanced optimisers:
-- Momentum: accumulates a velocity vector in the direction of persistent gradient, damping oscillations.
-- RMSProp: adapts the learning rate per parameter based on the magnitude of recent gradients.
-- Adam (Adaptive Moment Estimation): combines momentum and RMSProp. Default choice for deep learning in most cases.
-- Learning Rate Schedules: reduce learning rate over time (step decay, cosine annealing, warmup + decay). Critical for stable deep network training.
+Matching headings to paragraphs:
+- Read the list of headings first.
+- Identify the main idea of each paragraph (usually in the first 1-2 sentences).
+- Match by main idea, not by key words that also appear in the rest of the passage.
+- Eliminate used headings to narrow choices.
 
 ---
 
-## Topic: Neural Networks — Fundamentals
-Artificial neural networks are models loosely inspired by biological neural circuits. They are the foundation of modern deep learning.
+## Topic: IELTS Writing Task 1 Academic Charts and Graphs
+In Academic Writing Task 1, candidates must describe and summarise visual data in at least 150 words within 20 minutes.
 
-Architecture:
-- Input layer: receives raw features (one neuron per feature).
-- Hidden layers: one or more intermediate layers that learn progressively abstract representations.
-- Output layer: produces predictions (one neuron for binary classification with sigmoid; N neurons for N-class classification with softmax; one neuron for regression).
+Common visual types:
+- Bar charts (vertical or horizontal)
+- Line graphs (trends over time)
+- Pie charts (proportional data)
+- Tables (comparative numerical data)
+- Diagrams (processes, maps, or objects showing change over time)
 
-A single neuron:
-output = activation(wᵀx + b)
-- wᵀx: weighted sum of inputs
-- b: bias term
-- activation: non-linear function
+Structure of a strong Task 1 response:
+1. Introduction (1-2 sentences): paraphrase the question/title; state what the chart shows. Do NOT copy the question.
+2. Overview (1-2 sentences): describe the most significant overall trends or differences. This paragraph is critical for a high band score.
+3. Detail paragraphs (2 paragraphs): describe specific data with accurate figures, using appropriate language for comparison and change.
 
-Activation functions:
-- Sigmoid: σ(x) = 1/(1+e⁻ˣ). Outputs 0–1. Used in binary output layers. Vanishing gradient problem in deep networks.
-- Tanh: outputs -1 to 1. Slightly better than sigmoid in hidden layers. Still suffers from vanishing gradients.
-- ReLU (Rectified Linear Unit): f(x) = max(0, x). Computationally efficient, avoids vanishing gradients for positive values. Default for hidden layers.
-- Leaky ReLU: f(x) = max(0.01x, x). Addresses the "dying ReLU" problem where neurons get stuck at zero.
-- Softmax: converts a vector of raw scores to a probability distribution over classes. Used in multi-class output layers.
+The overview is the most important paragraph. A response without a clear overview rarely achieves Band 6 or above.
 
-Why depth matters:
-- Shallow networks (1 hidden layer) are universal approximators in theory, but in practice require exponentially more neurons than deep networks for complex functions.
-- Deep networks learn hierarchical representations: early layers detect simple features (edges, word patterns), later layers detect complex combinations (objects, semantic meaning).
+Language for describing trends:
+- Increase: rose, grew, climbed, surged, went up, increased
+- Decrease: fell, dropped, declined, dipped, decreased, went down
+- Stability: remained stable, stayed constant, levelled off, plateaued
+- Fluctuation: fluctuated, varied, was volatile
 
----
+Modifiers for degree of change:
+- Sharp / dramatic / significant / steep / considerable
+- Slight / gradual / modest / marginal / steady
 
-## Topic: Backpropagation
-Backpropagation is the algorithm that makes training deep neural networks feasible. It computes the gradient of the loss with respect to every parameter in the network efficiently.
+Language for proportions and comparison:
+- Accounted for, constituted, represented, made up (for percentages/fractions)
+- Was twice as high as, was three times greater than, was significantly higher/lower than
 
-Conceptual steps:
-1. Forward pass: feed the input through the network layer by layer; compute the loss.
-2. Backward pass: propagate the gradient of the loss backwards through the network using the chain rule of calculus.
-3. Update: adjust each weight by moving in the negative gradient direction (gradient descent).
-
-Why the chain rule?
-A neural network is a composition of functions: loss = L(f_N(f_{N-1}(... f_1(x) ...))). The chain rule allows us to decompose the gradient of a complex composition into a product of simpler local gradients.
-
-Computational graphs:
-Modern frameworks (PyTorch, TensorFlow) represent networks as directed computational graphs, automatically computing gradients through "autograd" or "autodifferentiation". Practitioners rarely implement backpropagation manually.
-
-Vanishing and exploding gradients:
-- Vanishing gradients: gradients become very small as they propagate backward through many layers, effectively preventing early layers from learning.
-  Solutions: ReLU activations, batch normalisation, residual connections (skip connections in ResNets).
-- Exploding gradients: gradients grow very large, causing unstable training.
-  Solutions: gradient clipping (cap gradients above a threshold), careful weight initialisation.
-
-Weight initialisation:
-- Random initialisation is essential; all-zero weights cause all neurons to learn the same features.
-- Xavier/Glorot initialisation: designed for sigmoid/tanh; scales variance by layer size.
-- He initialisation: designed for ReLU; recommended default for most deep networks.
+Avoid interpretation: do not explain why trends occurred unless the question specifically asks for it.
 
 ---
 
-## Topic: Convolutional Neural Networks (CNN)
-Convolutional Neural Networks are the dominant architecture for image understanding tasks and have applications in any domain where data has spatial or sequential structure.
+## Topic: IELTS Writing Task 1 General Training Letters
+General Training Writing Task 1 requires a letter of at least 150 words in 20 minutes.
 
-Core idea: exploit translation invariance and local structure by sharing weights across spatial positions.
+Three letter types:
+1. Formal letter: written to someone you do not know (e.g., a company, a government official, an editor).
+2. Semi-formal letter: written to someone you know professionally but not personally (e.g., a landlord, a college administrator).
+3. Informal letter: written to a friend or family member.
 
-Key layers:
-- Convolutional layer: applies a set of learnable filters to the input. Each filter slides across the input and computes a dot product, producing a feature map. Detects local patterns (edges, textures, shapes).
-- Pooling layer: reduces spatial resolution by computing a maximum or average over a local region. Introduces limited translation invariance and reduces computation.
-- Fully Connected layer: at the end of the network, flattened feature maps are passed through standard dense layers for classification or regression.
+Letter register must match the situation. Mixing formal and informal language is the most common error.
 
-Important concepts:
-- Filter/Kernel: a small matrix of learnable weights (e.g., 3×3) applied via convolution.
-- Padding: adding zeros around the input to control output spatial size. "Same" padding preserves spatial dimensions.
-- Stride: the step size when sliding the filter. Stride > 1 reduces spatial resolution.
-- Depth: each convolutional layer can have many filters, each detecting a different pattern.
+Formal openings and closings:
+- Dear Sir or Madam -> Yours faithfully
+- Dear Mr/Ms [Name] -> Yours sincerely
 
-Landmark architectures:
-- LeNet-5 (1998): pioneered CNNs for digit recognition.
-- AlexNet (2012): deep CNN that won ImageNet; triggered the deep learning revolution.
-- VGGNet (2014): deep network using only 3×3 convolutions; widely used as a feature extractor.
-- ResNet (2015): introduced residual (skip) connections to train networks of 100+ layers without vanishing gradients.
-- EfficientNet (2019): scales depth, width, and resolution jointly for best accuracy/efficiency tradeoff.
+Informal openings and closings:
+- Dear [First name] -> Best wishes / Kind regards / Lots of love
 
-Transfer learning from CNNs:
-Pre-trained CNN weights (from ImageNet) serve as powerful general visual feature extractors. Fine-tuning a pre-trained CNN on a small dataset is almost always better than training from scratch.
+Structure:
+1. Opening: state your purpose clearly in the first sentence.
+2. Body (2-3 paragraphs): address each bullet point from the question prompt. Give sufficient detail for each; do not list without elaborating.
+3. Closing: end politely and appropriately for the register.
 
----
-
-## Topic: Recurrent Neural Networks and Sequence Models
-Recurrent Neural Networks (RNNs) are designed for sequential data, where the order of elements matters.
-
-Core idea: process one element at a time while maintaining a hidden state (memory) that carries information from previous elements.
-
-RNN recurrence: hₜ = tanh(Wₓhₓₜ + Wₕhₜ₋₁ + b)
-
-Limitations of basic RNNs:
-- Vanishing gradients: gradients across many time steps become negligibly small, preventing learning of long-range dependencies.
-- Practical limit: standard RNNs effectively only remember ~10-20 time steps.
-
-Long Short-Term Memory (LSTM):
-- Introduced gating mechanisms (forget gate, input gate, output gate) that selectively remember or forget information.
-- Cell state acts as a "conveyor belt" that carries information with minimal modification across many steps.
-- Learns dependencies spanning hundreds of time steps.
-
-Gated Recurrent Unit (GRU):
-- Simplified version of LSTM with fewer gates (reset gate, update gate).
-- Comparable performance to LSTM with fewer parameters; often preferred for shorter sequences.
-
-Applications of RNNs/LSTMs:
-- Language modelling
-- Machine translation
-- Speech recognition
-- Time series forecasting
-- Text generation
-
-Note: Transformers (attention-based models) have largely replaced RNNs for most NLP tasks due to better parallelisation and stronger long-range modelling.
+Common letter types and expected content:
+- Complaint letter: describe the problem clearly, explain the impact, and state what action you expect.
+- Request letter: state what you need, explain why you need it, and express appreciation.
+- Apology letter: acknowledge the problem, accept responsibility, explain the circumstances, and offer a remedy.
+- Invitation letter: describe the event clearly, explain why you are inviting the person, and give any necessary details.
 
 ---
 
-## Topic: Transformer Architecture and Attention
-Transformers are the architecture behind modern large language models (BERT, GPT, T5, LLaMA). They rely on self-attention rather than recurrence.
+## Topic: IELTS Writing Task 2 Essay Types
+Writing Task 2 requires a discursive essay of at least 250 words in 40 minutes. It carries double the weight of Task 1 in the Writing band score calculation.
 
-Self-Attention mechanism:
-- Each position in a sequence attends to every other position, computing a weighted sum.
-- Weights (attention scores) are computed as: Attention(Q, K, V) = softmax(QKᵀ/√dₖ)V
-  where Q (Query), K (Key), V (Value) are linear projections of the input.
-- Allows capturing arbitrary long-range dependencies with constant computation depth.
+The five main essay types:
 
-Multi-Head Attention:
-- Run h attention heads in parallel with different projections.
-- Concatenate and project the outputs.
-- Each head learns to attend to different aspects of the input simultaneously.
+1. Opinion essay (Agree/Disagree):
+Key phrase: "To what extent do you agree or disagree?"
+Task: State and justify your own position clearly. You may fully agree, fully disagree, or partially agree with clear reasoning.
 
-Positional Encoding:
-Transformers have no inherent notion of order (unlike RNNs). Positional encoding adds a signal about each token's position to its embedding.
+2. Discussion essay (Discuss both views):
+Key phrase: "Discuss both views and give your own opinion."
+Task: Present both sides of an argument fairly, then give your personal view.
 
-Transformer block:
-- Multi-Head Self-Attention
-- Add & Norm (residual connection + layer normalisation)
-- Feed-Forward Network (two linear layers with ReLU)
-- Add & Norm
+3. Problem/Solution essay:
+Key phrase: "What are the causes of this problem? What solutions can you suggest?"
+Task: Identify causes or problems and propose practical solutions.
 
-Encoder vs Decoder:
-- Encoder-only (BERT): good for understanding tasks (classification, NER, question answering).
-- Decoder-only (GPT): good for generation tasks (text completion, code generation).
-- Encoder-Decoder (T5, BART): good for sequence-to-sequence tasks (translation, summarisation).
+4. Advantages/Disadvantages essay:
+Key phrase: "What are the advantages and disadvantages of...?"
+Task: Present the benefits and drawbacks of the given issue.
 
-Scale:
-Transformer performance scales powerfully with data and parameter count. GPT-4 has hundreds of billions of parameters; this scale produces emergent capabilities.
+5. Two-part question essay:
+Key phrase: Two separate questions (e.g., "Why is this happening? Is this a positive or negative development?")
+Task: Answer both questions with appropriate development.
+
+Identifying the essay type is crucial before writing. Misidentifying the task type is a common cause of low Task Response scores. Always read the question twice and underline the instruction verb.
 
 ---
 
-## Topic: Transfer Learning and Fine-Tuning
-Transfer learning leverages knowledge learned on one task and applies it to a related task, dramatically reducing the need for labelled data.
+## Topic: IELTS Writing Task 2 Essay Structure
+A well-structured essay helps the examiner follow your argument and ensures all parts of the question are addressed.
 
-Why transfer learning works:
-- Neural networks trained on large datasets learn general features in early layers (edges, shapes for images; grammar, semantics for text).
-- These general features are useful starting points for many downstream tasks.
+Recommended five-paragraph structure:
 
-Common transfer learning strategies:
-1. Feature Extraction: freeze the pre-trained model weights; use its output as input features for a new classifier. Fast and effective when the target dataset is small.
-2. Fine-Tuning: continue training some or all layers of the pre-trained model on the target task. More powerful but requires more data and care to avoid forgetting.
+Paragraph 1 - Introduction (40-60 words):
+- Paraphrase the question background statement.
+- State your thesis (your main position or the essay's direction).
+- Do NOT copy from the question; paraphrase using synonyms and different grammar.
 
-Practical guidelines:
-- Small target dataset + similar to pre-training data → feature extraction.
-- Large target dataset → fine-tune more layers.
-- Different domain from pre-training data → may need to fine-tune deeper layers.
+Paragraph 2 - Body Paragraph 1 (90-120 words):
+- Topic sentence: introduce the main idea of this paragraph.
+- Explanation: develop the idea and explain why or how.
+- Example: give a specific, concrete example to support the point.
+- Link: optionally connect to the next paragraph or back to the thesis.
 
-Pre-trained models commonly used:
-- Images: ResNet, EfficientNet, ViT (Vision Transformer) — pre-trained on ImageNet.
-- Text: BERT, RoBERTa, GPT-2, T5 — pre-trained on large text corpora.
-- Audio: Wav2Vec, Whisper — pre-trained on speech data.
+Paragraph 3 - Body Paragraph 2 (90-120 words):
+- Same PEEL structure (Point, Evidence/Example, Explanation, Link).
 
-Fine-tuning tips:
-- Use a smaller learning rate than when training from scratch (0.0001–0.00001).
-- Unfreeze layers gradually from top to bottom.
-- Monitor validation loss carefully to detect catastrophic forgetting.
+Paragraph 4 - Body Paragraph 3 (for discussion and two-part questions, 90-120 words):
+- The opposing view or the second question.
 
----
+Paragraph 5 - Conclusion (40-60 words):
+- Summarise the key points without adding new information.
+- Restate your thesis in different words.
+- For opinion essays, your conclusion must align with your introduction position.
 
-## Topic: Natural Language Processing Fundamentals
-Natural Language Processing (NLP) is the field of ML concerned with understanding and generating human language.
-
-Key NLP tasks:
-- Text classification: sentiment analysis, topic categorisation, spam detection.
-- Named Entity Recognition (NER): identify people, organisations, locations in text.
-- Machine Translation: translate text between languages.
-- Question Answering: retrieve or generate an answer to a natural language question.
-- Text Generation: produce coherent text given a prompt.
-- Summarisation: condense a document to its key points.
-
-Text representation:
-- Bag-of-Words (BoW): represent a document by word counts; ignores word order; high-dimensional and sparse.
-- TF-IDF (Term Frequency-Inverse Document Frequency): weights words by how distinctive they are for a document relative to the corpus; improves on BoW.
-- Word Embeddings (Word2Vec, GloVe): map each word to a dense vector that captures semantic similarity (similar words have similar vectors).
-- Contextual Embeddings (BERT, GPT): represent each word by a vector that depends on surrounding context; far more powerful than static embeddings.
-
-Tokenisation:
-Converting raw text into tokens (sub-word units) that can be processed by a model.
-- Byte Pair Encoding (BPE): split words into frequent sub-word pieces. Handles rare words and morphologically rich languages.
-- WordPiece: similar to BPE; used by BERT.
-
-The pre-training + fine-tuning paradigm:
-1. Pre-train a large language model on massive unlabelled text (masked language modelling, next token prediction).
-2. Fine-tune on a small labelled dataset for the target task.
-This approach achieves state-of-the-art performance across virtually all NLP tasks.
+Time planning for Task 2:
+- 2-3 minutes: plan and outline your essay before writing.
+- 33-35 minutes: write the essay.
+- 2 minutes: proofread for errors.
 
 ---
 
-## Topic: Unsupervised Learning — Clustering
-Clustering algorithms group examples such that examples within a group are more similar to each other than to examples in other groups.
+## Topic: IELTS Writing Coherence and Cohesion
+Coherence and Cohesion (CC) assesses how logically and smoothly your writing flows.
 
-k-Means Clustering:
-Algorithm:
-1. Randomly initialise k cluster centroids.
-2. Assign each example to the nearest centroid (by Euclidean distance).
-3. Update each centroid to the mean of all examples assigned to it.
-4. Repeat until assignments no longer change.
+Coherence: the logical organisation of ideas.
+- Each paragraph has a clear central idea.
+- Ideas progress logically from general to specific within a paragraph.
+- The essay as a whole has a clear beginning, development, and end.
 
-Choosing k:
-- Elbow method: plot inertia (within-cluster sum of squared distances) vs k; look for the "elbow" where improvement slows.
-- Silhouette score: measures how similar a point is to its own cluster vs the nearest other cluster. Range [-1, 1]; higher is better.
+Cohesion: the linguistic tools used to connect ideas.
+- Cohesive devices (linking words and phrases)
+- Reference pronouns (it, they, this, these, such)
+- Substitution (using a different word to refer back to the same concept)
+- Lexical repetition and collocation
 
-k-Means limitations:
-- Assumes spherical clusters of similar size and density.
-- Sensitive to outliers and initialisation.
-- Must specify k in advance.
+Essential cohesive devices by function:
+Adding information: furthermore, in addition, moreover, besides, also, what is more
+Contrasting: however, on the other hand, in contrast, nevertheless, despite this, while, whereas
+Cause and effect: therefore, as a result, consequently, thus, hence, this leads to, due to
+Exemplifying: for example, for instance, such as, to illustrate, a case in point is
+Sequencing: firstly, secondly, then, subsequently, finally, in the first place
+Conceding: although, even though, while it is true that, admittedly, granted that
 
-DBSCAN (Density-Based Spatial Clustering of Applications with Noise):
-- Groups together closely packed points; marks outliers as noise.
-- Discovers clusters of arbitrary shape.
-- Does not require specifying k in advance.
+Common CC errors:
+- Overusing "Firstly, Secondly, Thirdly" without developing points.
+- Starting every sentence with a linking word (over-linking).
+- Using cohesive devices incorrectly (e.g., "Despite of the fact..." - "despite" does not take "of").
+- Unclear pronoun reference ("it" with no clear antecedent).
 
-Hierarchical Clustering:
-- Agglomerative: start with each example as its own cluster; repeatedly merge the two nearest clusters.
-- Results in a dendrogram that allows inspecting cluster structure at any granularity.
-
-Applications of clustering:
-- Customer segmentation for marketing
-- Document topic discovery
-- Gene expression analysis in bioinformatics
-- Anomaly detection (unusual examples form their own small cluster or noise)
+Paragraph cohesion tip: each body paragraph should begin with a clear topic sentence, and the final sentence should link back to the essay question or thesis.
 
 ---
 
-## Topic: Dimensionality Reduction
-Dimensionality reduction compresses high-dimensional data into a lower-dimensional representation while retaining as much meaningful information as possible.
+## Topic: IELTS Writing Lexical Resource
+Lexical Resource (LR) assesses the range, accuracy, and appropriacy of your vocabulary.
 
-Why reduce dimensionality?
-- High-dimensional data is hard to visualise (curse of dimensionality).
-- Removing irrelevant or redundant features can improve model performance and training speed.
-- Compression enables storage and transmission efficiency.
+For a Band 7 Lexical Resource:
+- A sufficient range of vocabulary to allow some flexibility and precision.
+- Less common vocabulary used with some awareness of style and collocation.
+- Occasional errors in word choice and spelling.
 
-Principal Component Analysis (PCA):
-- Finds the directions (principal components) along which the data varies most.
-- Projects data onto the top-k principal components.
-- The first principal component explains the maximum variance; each subsequent one explains the most remaining variance.
-- Linear method; excellent for visualisation and preprocessing but cannot capture non-linear structure.
+Strategies to improve Lexical Resource:
+1. Learn vocabulary in collocations, not in isolation.
+   - Not: "make a big effect" - but "have a significant impact"
+   - Not: "high crime" - but "rising crime rates" or "soaring crime levels"
+2. Use topic-specific vocabulary appropriately for common IELTS essay topics.
+3. Use paraphrase rather than repetition.
+4. Avoid informal vocabulary in Academic essays: kids -> children; lots of -> numerous; big -> significant.
+5. Learn common suffixes to generate word families: -tion, -ity, -ment, -ness, -al, -ous, -ify, -ise.
 
-t-SNE (t-distributed Stochastic Neighbour Embedding):
-- Non-linear method designed for visualisation (typically 2D or 3D).
-- Preserves local neighbourhood structure: similar examples appear close together.
-- Computationally expensive; perplexity hyperparameter controls the balance between local and global structure.
-- Not suitable for general compression or preprocessing (only visualisation).
+Common lexical errors in IELTS essays:
+- Incorrect collocations: "take a decision" vs "make a decision"
+- Wrong word form: "The educate of children..." should be "The education of children..."
+- Confused pairs: affect (verb) / effect (noun); their / there / they're; principle / principal
+- Spelling errors: government, environment, necessary, accommodate, benefit
 
-UMAP (Uniform Manifold Approximation and Projection):
-- Faster than t-SNE; better preserves global structure.
-- Increasingly preferred for visualisation and preprocessing.
-
-Autoencoders:
-- Neural network trained to reconstruct its input through a bottleneck (encoder → latent code → decoder).
-- The latent code is a compressed representation.
-- Variational Autoencoders (VAEs) produce a structured latent space useful for generation.
+Avoid memorised phrases: examiners penalise memorised "model essay" phrases that do not fit the specific question.
 
 ---
 
-## Topic: Ensemble Methods
-Ensemble methods combine multiple models to produce predictions that are more accurate and robust than any single model.
+## Topic: IELTS Writing Grammatical Range and Accuracy
+Grammatical Range and Accuracy (GRA) assesses the variety and correctness of your sentence structures.
 
-Bagging (Bootstrap Aggregating):
-- Train multiple models on random subsets of the training data (sampled with replacement).
-- Aggregate predictions by majority vote (classification) or averaging (regression).
-- Reduces variance without increasing bias.
-- Random Forest is the most popular bagging algorithm.
+For a Band 7 GRA:
+- A variety of complex structures used with some flexibility.
+- The majority of sentences are error-free.
+- Punctuation is generally well managed.
 
-Random Forest:
-- Ensemble of decision trees trained on bagged data subsets.
-- Each tree also uses a random subset of features at each split → decorrelates trees.
-- Hyperparameters: n_estimators (number of trees), max_depth, max_features.
-- Provides feature importance estimates.
+Key complex structures to demonstrate in IELTS essays:
 
-Boosting:
-- Train models sequentially; each model focuses on correcting errors made by the previous ensemble.
-- Reduces bias and variance.
-- Gradient Boosting: general framework using gradient descent to optimise the ensemble.
+1. Relative clauses:
+   - Defining: "The government that invests in education will see long-term benefits."
+   - Non-defining: "The government, which has a duty to its citizens, must act now."
 
-XGBoost (Extreme Gradient Boosting):
-- Highly optimised gradient boosting implementation.
-- Regularisation (L1 + L2 on tree weights) to prevent overfitting.
-- Handles missing values natively.
-- State-of-the-art for structured/tabular data competitions.
+2. Conditional sentences:
+   - Type 1: "If the government increases funding, more students will benefit."
+   - Type 2: "If more funding were available, schools could hire better teachers."
+   - Type 3: "If the policy had been implemented earlier, the situation would have improved."
 
-LightGBM:
-- Gradient boosting with histogram-based splitting; faster and more memory-efficient than XGBoost on large datasets.
+3. Passive voice:
+   - "Thousands of species are threatened by deforestation every year."
+   - Useful for academic writing and process descriptions.
 
-CatBoost:
-- Gradient boosting with native support for categorical features; minimal preprocessing required.
+4. Gerunds and infinitives:
+   - "Banning single-use plastics would reduce ocean pollution significantly."
+   - "It is essential to address the root causes of poverty."
 
-Stacking:
-- Train multiple diverse base models.
-- Train a "meta-learner" on the base models' predictions.
-- Can combine models of very different types (neural network + random forest + SVM).
+5. Participial phrases:
+   - "Driven by economic pressures, many young people leave rural areas."
+   - "Having considered both sides, I believe the advantages outweigh the disadvantages."
 
----
+6. Cleft sentences for emphasis:
+   - "It is education that plays the most crucial role in development."
+   - "What governments need to do is invest in renewable energy."
 
-## Topic: Model Evaluation and Metrics
-Choosing the right evaluation metric is critical. The metric should reflect what matters for the specific problem.
-
-Classification metrics:
-- Accuracy: (TP + TN) / total. Simple but misleading for imbalanced datasets (99% negative class → trivially 99% accurate).
-- Precision: TP / (TP + FP). How many predicted positives are truly positive? Relevant when false positives are costly (e.g., spam filter that blocks legitimate emails).
-- Recall (Sensitivity): TP / (TP + FN). How many true positives did we detect? Relevant when false negatives are costly (e.g., cancer screening).
-- F1-Score: 2 × (Precision × Recall) / (Precision + Recall). Harmonic mean; useful when both false positives and false negatives matter.
-- ROC curve: plots true positive rate vs false positive rate at different classification thresholds.
-- AUC-ROC: area under the ROC curve. 1.0 = perfect; 0.5 = random. Threshold-independent measure of discrimination.
-- PR-AUC: area under the Precision-Recall curve; more informative than ROC-AUC for highly imbalanced datasets.
-
-Regression metrics:
-- MAE: average |ŷ - y|. Robust to outliers; easy to interpret.
-- MSE: average (ŷ - y)². Penalises large errors more; differentiable everywhere.
-- RMSE: √MSE. In the same units as the target; commonly reported.
-- MAPE: mean absolute percentage error. Intuitive (e.g., "5% average error") but undefined when y = 0.
-- R²: proportion of variance explained. R² = 0 → model does no better than predicting the mean; R² = 1 → perfect.
-
-Calibration:
-A well-calibrated model's predicted probabilities match empirical frequencies. Important in medicine and risk assessment. Assess with calibration curves and Brier score.
+Common GRA errors:
+- Subject-verb agreement: "The number of students are..." -> "The number is..."
+- Article misuse: omitting "the" for specific reference; using "a/an" with uncountable nouns
+- Tense consistency: shifting between present and past tense without reason
+- Run-on sentences and comma splices
 
 ---
 
-## Topic: Hyperparameter Tuning
-Hyperparameters are configuration settings of a model or training process that are not learned from data and must be set before training.
+## Topic: IELTS Speaking Overview and Format
+The IELTS Speaking test is a face-to-face interview with a certified examiner. It is the same format for both Academic and General Training.
 
-Examples of hyperparameters:
-- Learning rate, batch size, number of epochs
-- Number of layers, number of neurons per layer, dropout rate
-- Maximum depth of decision trees, number of trees in random forest
-- k in k-Nearest Neighbours, C and kernel in SVM
-- L1/L2 regularisation strength
+Duration: 11-14 minutes.
 
-Hyperparameter search strategies:
-1. Grid Search: evaluate every combination of a predefined set of hyperparameter values. Exhaustive but exponentially expensive.
-2. Random Search: sample combinations randomly. Empirically as good as or better than grid search at a fraction of the cost. Recommended as the baseline.
-3. Bayesian Optimisation: model the performance surface and use it to select the next hyperparameter setting intelligently. Most sample-efficient; preferred when each trial is expensive.
-4. Hyperband / ASHA: multi-fidelity methods that train promising configurations longer and prune unpromising ones early. Very efficient for deep learning.
+Three parts:
 
-Practical tips:
-- Tune the most impactful hyperparameter first (often learning rate for deep learning).
-- Use logarithmic spacing for learning rate and regularisation strength (e.g., [0.001, 0.01, 0.1, 1]).
-- Always tune on the validation set or via cross-validation, never the test set.
-- Track all experiments (use MLflow, Weights & Biases, or a simple spreadsheet).
+Part 1 - Introduction and Interview (4-5 minutes):
+The examiner asks questions about familiar, personal topics: your home, your work or studies, your hobbies and interests, your hometown, your daily routine, travel, food, technology, sport, and similar everyday subjects.
 
----
+Part 2 - Individual Long Turn (3-4 minutes):
+You are given a task card describing a topic and 3-4 bullet point prompts. You have 1 minute to prepare and make notes. You then speak for 1-2 minutes. The examiner may ask one or two follow-up questions at the end.
 
-## Topic: Reinforcement Learning Basics
-Reinforcement Learning (RL) is a learning paradigm where an agent learns to make decisions by interacting with an environment and receiving rewards or penalties.
+Part 3 - Two-way Discussion (4-5 minutes):
+The examiner asks questions related to the Part 2 topic but at a more abstract and analytical level. This part tests your ability to discuss ideas, express opinions, speculate, and reason.
 
-Core components:
-- Agent: the learner/decision-maker.
-- Environment: everything the agent interacts with.
-- State (s): a description of the current situation.
-- Action (a): what the agent does in a state.
-- Reward (r): scalar feedback signal from the environment.
-- Policy (π): the agent's strategy; maps states to actions.
-- Value Function (V(s)): expected cumulative reward from state s under policy π.
-- Q-Function (Q(s,a)): expected cumulative reward for taking action a in state s, then following policy π.
-
-The RL objective: find the policy π that maximises expected cumulative discounted reward.
-
-Key algorithms:
-- Q-Learning: model-free algorithm that learns Q-values directly from experience without needing a model of the environment.
-- Deep Q-Network (DQN): uses a neural network to approximate Q(s,a). First algorithm to achieve human-level performance on Atari games (DeepMind, 2015).
-- Policy Gradient Methods (REINFORCE): directly optimise the policy by gradient ascent on expected reward.
-- Actor-Critic Methods (PPO, A3C): combine value-based and policy gradient methods; stable and efficient. PPO is the most widely used deep RL algorithm.
-
-Exploration vs exploitation:
-- Exploration: try new actions to learn their value.
-- Exploitation: use known high-value actions to maximise immediate reward.
-- ε-greedy: with probability ε take a random action (explore), otherwise take the best known action (exploit).
-
-Applications of RL:
-- Game playing (AlphaGo, OpenAI Five, AlphaStar)
-- Robot control and locomotion
-- Recommendation systems
-- Algorithm optimisation (e.g., neural architecture search)
-- RLHF (Reinforcement Learning from Human Feedback) for aligning language models (ChatGPT)
+Assessment criteria (equal weight):
+- Fluency and Coherence (FC): speaking without excessive hesitation; organising speech logically.
+- Lexical Resource (LR): range and accuracy of vocabulary.
+- Grammatical Range and Accuracy (GRA): range and accuracy of grammar.
+- Pronunciation (P): clarity, word stress, sentence stress, connected speech, and intonation.
 
 ---
 
-## Topic: ML Tools and Python Ecosystem
-Practical ML requires familiarity with core Python libraries. Each has a distinct role in the workflow.
+## Topic: IELTS Speaking Part 1 Strategies
+Part 1 tests conversational English about familiar personal topics. Answers should be natural, extended, and informative without being excessively long.
 
-Data Handling:
-- NumPy: fast numerical computation with N-dimensional arrays; the foundation of the Python ML stack.
-  Key: array operations, linear algebra (np.dot, np.linalg), broadcasting.
-- Pandas: tabular data manipulation with DataFrames.
-  Key: reading CSV/Excel, filtering rows, groupby aggregations, merge/join, handling missing values.
+Key strategies for Part 1:
 
-Visualisation:
-- Matplotlib: low-level plotting library; full control over every element.
-- Seaborn: statistical visualisation built on Matplotlib; beautiful defaults with less code.
-- Plotly: interactive visualisations for web and dashboards.
+Extend your answers:
+Do not give one-word or one-sentence answers. Use a simple structure: ANSWER + REASON/DETAIL + EXAMPLE.
+Question: "Do you enjoy cooking?"
+Weak: "Yes, I like cooking."
+Strong: "Yes, I really enjoy it, especially at weekends when I have more time. I particularly like trying out new cuisines - I recently attempted making Thai green curry from scratch, which turned out surprisingly well."
 
-Machine Learning:
-- Scikit-learn: industry-standard library for classical ML in Python.
-  Key: consistent API (fit/predict/transform), preprocessing, cross-validation, metrics, pipelines.
-  Contains: linear models, trees, random forests, SVM, kNN, clustering, dimensionality reduction.
+Use a range of tenses:
+Part 1 questions often ask about habits, past experiences, and future plans. Show range by using present simple, present perfect, past simple, and "going to / would like to" naturally.
 
-Deep Learning:
-- PyTorch: dynamic computational graph; Pythonic and flexible; dominant in research.
-  Key: Tensor operations, autograd, nn.Module, DataLoader, optimisers.
-- TensorFlow / Keras: production-focused deep learning framework; Keras provides a high-level API.
-  Key: model building with Sequential or functional API, model.compile/fit/evaluate.
+Do not try to sound too formal:
+Part 1 is conversational. Natural, slightly informal language is appropriate. Academic vocabulary is not required and can sound unnatural.
 
-Experiment Tracking:
-- Weights & Biases (wandb): log metrics, hyperparameters, and artefacts; compare runs; visualise training curves.
-- MLflow: open-source experiment tracking and model registry.
+Useful fillers and hesitation phrases (use sparingly):
+- "That's an interesting question..."
+- "Let me think about that for a second..."
+- "Well, to be honest..."
+- "Actually, now that you mention it..."
 
-Data Version Control:
-- DVC: version control for datasets and models, analogous to Git for code.
+Common Part 1 topics: hometown, accommodation, work/studies, hobbies, sports, technology, music, travel, food, weather, daily routine, friends, shopping.
 
 ---
 
-## Topic: ML Project Workflow and Best Practices
-Successful ML projects require disciplined workflow, not just modelling skill.
+## Topic: IELTS Speaking Part 2 Cue Card Strategies
+Part 2 tests your ability to speak at length, coherently, and fluently on an assigned topic.
 
-Project phases and common pitfalls:
+Using the 1-minute preparation time effectively:
+- Note keywords for each bullet point on the task card (not full sentences).
+- Plan a rough time for each bullet point: e.g., 30 seconds each for 4 bullets.
+- Plan a brief introduction sentence and a concluding comment.
+- Do not write out what you plan to say - notes only.
 
-1. Problem framing:
-   - Clearly define the input and output of the model.
-   - Understand how the model's predictions will be used (decision threshold, cost of errors).
-   - Pitfall: skipping this step and jumping straight to modelling.
+Structure for a high-scoring Part 2 response:
+1. Introduction: set the scene briefly. (Who? Where? When? What?)
+2. Bullet 1-3: address each prompt with specific detail and personal reaction.
+3. Bullet 4 (usually "explain why..."): demonstrate the most complex language and ideas here.
+4. Closing comment: end naturally, e.g., "That experience had a real impact on me because..."
 
-2. Baseline models:
-   - Always start with the simplest possible model (linear regression, decision tree, rule-based heuristic).
-   - A baseline establishes the minimum performance expected.
-   - Pitfall: spending weeks on complex models before establishing a baseline.
+Language to demonstrate range in Part 2:
+- Narrative: "I remember it vividly because..."; "It was at that point that I realised..."
+- Speculation: "I imagine that..."; "It must have been..."
+- Contrast: "Although I was nervous at first, I ended up really enjoying it."
+- Emphasis: "What struck me most was..."; "The thing that really stood out was..."
 
-3. Error analysis:
-   - Look at specific examples where the model makes mistakes.
-   - Categorise errors to understand systematic failure modes.
-   - Pitfall: relying only on aggregate metrics and missing systematic errors.
-
-4. Iterative improvement:
-   - Make one change at a time; measure the effect of each change.
-   - Keep a log of what worked and what did not.
-   - Pitfall: making multiple changes simultaneously and not knowing which helped.
-
-5. Reproducibility:
-   - Set random seeds for all stochastic operations.
-   - Version your data, code, and model.
-   - Document the exact training command and hyperparameters.
-   - Pitfall: getting a good result once and being unable to reproduce it.
-
-6. Data leakage:
-   - Data leakage occurs when information from the test set (or future) influences model training.
-   - Common sources: preprocessing on the full dataset before splitting, using future features.
-   - Consequence: inflated performance estimates that don't hold in production.
-   - Prevention: always split data first, then preprocess within each fold.
-
-7. Model deployment considerations:
-   - Latency requirements: how quickly must the model respond?
-   - Data distribution shift: will the production data distribution differ from training data?
-   - Monitoring: implement alerts for performance degradation.
+Common Part 2 mistakes:
+- Running out of things to say: use the bullet points as a guide; never skip one.
+- Going off-topic: stick to the task card subject; you will be assessed on relevance.
+- Memorised speeches: examiners can detect memorised content and will redirect the topic.
+- Stopping before 1 minute: aim for a full 2 minutes.
 
 ---
 
-## Topic: Fairness, Bias, and Ethics in Machine Learning
-ML models can encode and amplify societal biases if not carefully designed and audited.
+## Topic: IELTS Speaking Part 3 Strategies
+Part 3 is the most analytically demanding part of the Speaking test. It requires discussing abstract ideas, giving opinions, speculating, and comparing different perspectives.
 
-Sources of bias:
-- Historical bias: the data reflects historical inequities (e.g., hiring decisions biased against women).
-- Measurement bias: the proxy variable used to measure a concept is biased (e.g., using criminal records as a proxy for recidivism risk).
-- Representation bias: some groups are underrepresented in training data (e.g., medical datasets with predominantly one ethnicity).
-- Label bias: human annotators introduce their own biases when labelling data.
-- Feedback loops: a biased model influences outcomes that become future training data, compounding the bias.
+Nature of Part 3 questions:
+Questions move from the personal (Part 2) to the general and societal. They often ask about trends, causes, comparisons, predictions, and solutions.
 
-Fairness definitions (not all can be satisfied simultaneously):
-- Demographic Parity: equal positive prediction rates across groups.
-- Equalised Odds: equal true positive AND false positive rates across groups.
-- Calibration: predicted probabilities equally accurate across groups.
+Example Part 2 topic: "Describe a skill you would like to learn."
+Example Part 3 questions: "Why is it important for people to continue learning throughout their lives?" / "How has technology changed the way people learn new skills?"
 
-Practical fairness steps:
-1. Disaggregate evaluation metrics by demographic subgroup.
-2. Identify which errors are most harmful in context.
-3. Apply bias mitigation techniques: re-sampling, re-weighting, post-hoc threshold adjustment.
-4. Engage with affected communities during development.
+Discourse management strategies for Part 3:
+- Give a direct answer first, then develop it.
+- Use hedging language to sound natural and avoid overconfidence: "I think...", "It seems to me...", "In my view...", "I would argue that..."
+- Acknowledge complexity: "It's a complex issue, but...", "There are several factors to consider here..."
+- Concede a counterpoint before returning to your position: "While some people might argue that..., I tend to believe that..."
+- Use discourse markers: "That said,", "On balance,", "From a broader perspective,"
 
-Ethical principles for responsible ML:
-- Transparency: document model limitations, training data, and known failure modes.
-- Accountability: identify who is responsible for model decisions.
-- Privacy: protect training data; implement differential privacy where needed.
-- Safety: anticipate misuse and include safeguards.
-- Human oversight: keep humans in the loop for high-stakes decisions.
+Handling difficult questions:
+- If you do not understand: "Could you rephrase that question, please?" or "Do you mean...?"
+- If you need time: "That's an interesting point. Let me think about that..." (pause briefly, then continue).
+- Avoid "I don't know": always speculate even if unsure. "I'm not entirely sure, but I would guess that..."
 
 ---
 
-## Topic: Common ML Mistakes and Debugging Strategies
-Knowing how to diagnose and fix problems is as important as knowing algorithms.
+## Topic: IELTS Vocabulary Academic Word List
+The Academic Word List (AWL) by Averil Coxhead (2000) contains 570 word families that appear frequently across a wide range of academic texts. Learning AWL words significantly boosts IELTS Reading and Writing scores.
 
-Problem: Model performance is poor on training data.
-Cause: Underfitting — model is too simple.
-Fix:
-- Use a more complex model (add layers, increase depth).
-- Add more or better features.
-- Train for more epochs.
-- Reduce regularisation.
+The AWL is divided into 10 sublists, with Sublist 1 being the most frequent.
 
-Problem: Model performs well on training but poorly on validation.
-Cause: Overfitting — model has memorised training data.
-Fix:
-- Increase training data.
-- Apply regularisation (L1, L2, Dropout, Early Stopping).
-- Use a simpler model.
-- Apply data augmentation.
+Key AWL word families for IELTS (Sublist 1):
+- analyse / analysis / analytical
+- approach / approachable
+- assess / assessment / assessor
+- assume / assumption
+- concept / conceptual / conceptualise
+- constitute / constitution / constitutional
+- define / definition / definitive
+- derive / derivation / derivative
+- distribute / distribution / distributive
+- establish / establishment
+- individual / individually / individualism
+- interpret / interpretation / interpretive
+- involve / involvement
+- method / methodology / methodical
+- occur / occurrence
+- policy / policies
+- principle / principled
+- proceed / procedure / procedural
+- require / requirement
+- respond / response / responsive
+- significant / significantly / significance
+- theory / theoretical / theorise
 
-Problem: Training loss is not decreasing.
-Causes and fixes:
-- Learning rate too small: increase it.
-- Learning rate too large (loss oscillates or diverges): decrease it.
-- Vanishing gradients: use ReLU activations, batch normalisation, He initialisation.
-- Exploding gradients: apply gradient clipping.
-- Bug in data pipeline: verify that batches are loaded and preprocessed correctly.
-
-Problem: Validation loss decreases then increases (training diverges after a while).
-Cause: Overfitting begins after initial generalisation.
-Fix: use early stopping; stop training when validation loss stops improving.
-
-Problem: Very slow training.
-Fix:
-- Use GPU (move tensors to device).
-- Increase batch size (use all available GPU memory).
-- Use mixed-precision training (float16 instead of float32).
-- Profile your data loader; it may be the bottleneck.
-
-Problem: Inconsistent results between runs.
-Fix:
-- Set random seeds for Python, NumPy, and the framework.
-- Use deterministic CUDA operations (at cost of some speed).
-
-Debugging checklist:
-□ Is the data loaded and shaped correctly?
-□ Are features scaled appropriately?
-□ Is there data leakage?
-□ Are the loss and metric values in a reasonable range?
-□ Is the model architecture correct (output shape, activation function)?
-□ Are gradients flowing (check gradient norms)?
+Learning strategy for AWL:
+1. Learn each word in its most common grammatical form first (usually the noun).
+2. Learn the full word family (noun, verb, adjective, adverb).
+3. Learn 2-3 typical collocations for each word.
+4. Practise using each word in an IELTS-style sentence.
 
 ---
 
-## Topic: Learning Strategies for ML Students
-Effective learning in machine learning requires deliberate strategies because the field is broad, mathematically demanding, and rapidly evolving.
+## Topic: IELTS Vocabulary Topic Word Banks
+High-scoring IELTS candidates use precise, topic-specific vocabulary. Below are key vocabulary banks for the most common essay topics.
 
-Principle 1 — Build intuition before formalism:
-Understand what an algorithm does conceptually before studying the mathematics.
-Example: understand that gradient descent "walks downhill on a loss landscape" before reading gradient formulas.
+Education:
+- academic attainment, scholastic achievement, educational outcomes
+- rote learning, critical thinking, problem-solving skills
+- vocational training, apprenticeship, lifelong learning
+- university tuition fees, student debt, graduate unemployment
+- standardised testing, continuous assessment, formative evaluation
 
-Principle 2 — Implement to understand:
-Reading about backpropagation is insufficient. Implementing it from scratch (even once) reveals the details that notation obscures.
+Environment:
+- carbon footprint, greenhouse gas emissions, global warming, climate change
+- deforestation, habitat destruction, biodiversity loss, endangered species
+- renewable energy sources (solar, wind, hydroelectric, geothermal)
+- fossil fuels, non-renewable resources, energy consumption
+- sustainable development, environmental conservation, carbon offsetting
 
-Principle 3 — Start small and scale:
-Begin with small datasets and simple models. Get the pipeline working end-to-end. Only add complexity when you have a working baseline.
+Technology:
+- artificial intelligence, automation, digital transformation
+- digital literacy, online learning platforms, e-learning
+- data privacy, cybersecurity, surveillance
+- social media, digital communication, virtual reality
+- technological unemployment, skills gap, digital divide
 
-Principle 4 — Experiment deliberately:
-Change one variable at a time. Keep a log of what you changed and what happened.
+Health:
+- sedentary lifestyle, obesity epidemic, chronic disease
+- preventive healthcare, public health campaigns, health literacy
+- mental health stigma, stress management, psychological well-being
+- healthcare expenditure, universal healthcare, health insurance
 
-Principle 5 — Embrace confusion:
-Confusion is evidence that you have encountered a concept that does not yet fit your mental model. It is a signal to slow down, not to give up.
-
-Principle 6 — Use multiple resources:
-Different textbooks and courses explain the same concept differently. When one explanation does not work for you, seek another.
-
-Principle 7 — Build projects:
-End-to-end projects consolidate knowledge and reveal gaps. Choose a topic you are genuinely interested in; motivation sustains the effort required.
-
-Principle 8 — Engage with the community:
-Kaggle competitions, paper reading groups, and online forums expose you to approaches and perspectives beyond any single course.
-
-Principle 9 — Teach what you learn:
-Explaining a concept to someone else reveals precisely what you do not understand. Use the Feynman technique: try to explain in simple language; where you get stuck, that is your gap.
-
----
-
-## Topic: Growth Mindset in Machine Learning
-Struggling with machine learning does not indicate lack of ability. It reflects the genuine difficulty of the material.
-
-Machine learning requires:
-- Abstract mathematical thinking (linear algebra, calculus, probability theory)
-- Programming proficiency (Python, numerical computing, debugging)
-- Systems thinking (pipelines, data flow, infrastructure)
-- Scientific discipline (hypothesis testing, controlled experiments)
-- Domain knowledge (understanding the data and the problem)
-
-Mastery requires integrating all of these simultaneously. This is challenging for everyone, regardless of background.
-
-Growth mindset principles for ML learners:
-- Ability is developed through effort and effective strategy, not fixed at birth.
-- Difficulty is information: it tells you where to focus effort, not that you should stop.
-- Mistakes are essential data points; examining them accelerates learning.
-- Other people's apparent ease comes from experience you haven't yet accumulated.
-
-Common negative thought patterns to reframe:
-- "I'm not smart enough for this" → "This concept is genuinely hard; what do I need to understand it?"
-- "Everyone else seems to understand" → "Everyone else has their own confusions; they are not all visible."
-- "I've been stuck for an hour; this is hopeless" → "Being stuck means I'm at the edge of my current understanding. That's exactly where growth happens."
-- "I got lucky on that project" → "I applied effective strategies that worked. I can identify what worked and do it again."
-
-Practical actions:
-- Set specific, achievable session goals ("understand how softmax is derived" rather than "learn NLP").
-- Track small wins; a learning journal builds evidence of progress.
-- Seek help before frustration becomes discouragement; asking for help is a skill, not a weakness.
+Urbanisation and Society:
+- urban sprawl, rural-to-urban migration, population density
+- social inequality, wealth gap, income disparity
+- community cohesion, social integration, cultural diversity
+- infrastructure, public transport, urban planning
+- ageing population, birth rate, demographic change
 
 ---
 
-## Topic: Motivation and Self-Efficacy in Technical Learning
-Motivation in technical subjects is closely linked to perceived self-efficacy — the belief that you can succeed at a task with effort.
+## Topic: IELTS Grammar Common Structures
+Demonstrating grammatical range and accuracy is essential for Band 7+ in both Writing and Speaking.
 
-Self-Determination Theory (Deci & Ryan):
-Three basic psychological needs support intrinsic motivation:
+Complex sentences with subordinate clauses:
+- Reason: "because", "since", "as", "given that"
+  "Since governments are responsible for public welfare, they should fund universal healthcare."
+- Contrast: "although", "even though", "despite the fact that", "while"
+  "Although technology has many benefits, it also poses significant risks."
+- Condition: "if", "unless", "provided that", "as long as"
+  "Unless immediate action is taken, the situation will deteriorate further."
+- Purpose: "so that", "in order to", "so as to"
+  "Many families relocate to cities in order to access better educational opportunities."
 
-1. Competence: the need to experience mastery and effectiveness.
-   - How to build it in ML: work through concrete exercises that produce visible results; use small datasets where training is fast.
-   - Celebrate small victories: "I built my first neural network that converges" is meaningful progress.
+Noun phrases for academic writing:
+- The + adjective + noun: "The rapid growth of urban populations"
+- The + noun + of + noun: "The impact of digital technology on communication"
+- Gerund phrases as subjects: "Reducing carbon emissions is the most urgent environmental priority."
 
-2. Autonomy: the need to feel volitional control over your learning.
-   - How to build it: choose projects aligned with your interests; drive your own learning path.
-   - Personalise your study: if you prefer intuition over formulas, start there.
+Expressing degree and qualification:
+- "relatively", "considerably", "substantially", "marginally", "slightly", "significantly"
+- "to a certain extent", "to a large degree", "to some extent"
+- "in many cases", "in some situations", "under certain circumstances"
 
-3. Relatedness: the need to feel connected to others who care about your success.
-   - How to build it: join study groups, online communities, pair-program with peers.
-   - Teaching others doubles as learning; explaining deepens understanding.
+Reported speech (useful for discussing research in IELTS):
+- "Research suggests that...", "Studies have shown that...", "It has been argued that..."
 
-Expectancy-Value Theory:
-Motivation is high when:
-- Expectancy: you believe you can succeed with effort (self-efficacy is high).
-- Value: the task is relevant, interesting, or important to your goals.
-
-Building self-efficacy in ML:
-1. Start with tasks slightly above your current ability (challenging but achievable).
-2. Break tasks into verifiable sub-steps so each completion is a success signal.
-3. Identify and attribute successes to your effort and strategy.
-4. Find a mentor or model who succeeded via consistent work, not innate genius.
-
-When motivation drops:
-- Return to something you already know and can do. Rebuild momentum.
-- Identify whether the drop is due to confusion (need help), boredom (need challenge), or exhaustion (need rest).
-- External deadlines and accountability partners can bridge motivation gaps.
+Mixed conditionals for sophisticated argument:
+- "If governments had invested in renewable energy earlier, we would not be facing the current crisis."
 
 ---
 
-## Topic: Managing Cognitive Load While Learning ML
-Cognitive load theory explains why some teaching approaches work better than others, and helps learners manage their own mental resources.
+## Topic: IELTS Grammar Common Errors and Corrections
+Eliminating common grammatical errors significantly improves your Writing and Speaking band scores.
 
-Types of cognitive load:
-- Intrinsic load: the inherent complexity of the material itself (e.g., backpropagation has many interacting components).
-- Extraneous load: unnecessary cognitive work caused by poor presentation (e.g., unclear notation, too many unrelated details at once).
-- Germane load: cognitive work that directly builds knowledge (e.g., relating a new concept to a prior one).
+Error 1 - Subject-verb agreement:
+Incorrect: "The number of people who use social media are increasing."
+Correct: "The number of people who use social media is increasing."
+Rule: "the number of" takes a singular verb; "a number of" takes a plural verb.
 
-Strategies for managing cognitive load in ML:
+Error 2 - Article usage:
+Rule: Use "the" for specific reference; no article for general concepts and uncountable nouns used in a general sense.
+Example: "Education is the key to success." (general concept, no article needed)
 
-Reduce extraneous load:
-- Use a single consistent notation across all resources.
-- Study one concept to clarity before moving to the next.
-- Remove distractions from your study environment.
-- Use visual diagrams (computation graphs, architecture diagrams) to externalise structure.
+Error 3 - Countable vs uncountable nouns:
+Uncountable nouns in IELTS essays (no plural, no "a/an"):
+information, advice, evidence, research, knowledge, equipment, furniture, accommodation, progress, news, behaviour, traffic, pollution, money, work, food.
 
-Manage intrinsic load:
-- Decompose complex topics into subtopics and master each before combining.
-- Use worked examples before attempting exercises independently.
-- When overwhelmed, return to simpler examples (reduce dimensionality, reduce dataset size).
+Error 4 - Gerund vs infinitive:
+- "avoid + -ing": "You should avoid making careless errors."
+- "consider + -ing": "Governments should consider investing more in public transport."
+- "tend + to infinitive": "Young people tend to prefer working in cities."
+- "allow/enable + object + to infinitive": "Technology enables students to learn at their own pace."
 
-Increase germane load:
-- Actively connect new concepts to known ones: "Attention in Transformers is like a weighted average — how is this related to k-nearest neighbours?"
-- Practice retrieval: close notes and write down what you remember about a topic.
-- Vary practice contexts: apply the same concept in different datasets or problem settings.
+Error 5 - Comparative structures:
+Incorrect: "This method is more better than the previous one."
+Correct: "This method is better than the previous one." / "This method is far better than..."
 
-Signs of cognitive overload:
-- Staring at code or equations without progress for > 15 minutes
-- Reading the same paragraph multiple times without retention
-- Irritability and inability to concentrate
-
-Response to overload:
-- Take a genuine break (5–20 minutes away from screens).
-- Switch to a lower-stakes, known task to rebuild confidence.
-- Sleep: memory consolidation occurs during sleep; rest is not wasted time.
+Error 6 - Prepositions after common verbs and adjectives:
+- depend on, rely on, result in, contribute to, lead to, be responsible for
+- be aware of, be concerned about, be committed to, be associated with, be critical of
 
 ---
 
-## Topic: Common Beginner Misconceptions in Machine Learning
-Correcting misconceptions early prevents wasted effort and builds more accurate mental models.
+## Topic: IELTS Speaking Pronunciation
+Pronunciation accounts for 25% of the Speaking band score. It is assessed on clarity, not accent. A non-British accent does not disadvantage a candidate.
 
-Misconception 1: "More data always helps."
-Reality: Data quality matters as much as quantity. 1,000 clean, representative examples often outperform 100,000 noisy, biased ones.
+What examiners assess:
+1. Individual sounds: clarity of consonants and vowels (particularly sounds that do not exist in the candidate's first language).
+2. Word stress: placing emphasis on the correct syllable.
+   - "reCORD" (verb) vs "REcord" (noun)
+   - "proTEST" (verb) vs "PROtest" (noun)
+3. Sentence stress: in connected speech, content words (nouns, verbs, adjectives) are stressed; function words (articles, prepositions) are reduced.
+4. Intonation: rising intonation for yes/no questions; falling intonation for wh-questions and statements.
+5. Connected speech features:
+   - Linking: "an apple" is pronounced "an-napple"
+   - Elision: "next day" - the /t/ is often dropped in natural speech
+   - Assimilation: natural blending of sounds at word boundaries
+6. Pace and rhythm: not too fast (unclear), not too slow (affects fluency score).
 
-Misconception 2: "More complex models are always better."
-Reality: Complexity that exceeds the signal in the data leads to overfitting. Start with simple models. Complexity is a cost to pay only when simpler models are insufficient.
+Common pronunciation errors by first language background:
+- Chinese speakers: th-sounds, final consonant clusters, tone vs stress distinction
+- Spanish speakers: /b/ vs /v/, vowel sounds, /j/ vs /dj/ (yes vs jet)
+- Arabic speakers: /p/ vs /b/, short vowel precision, consonant clusters
 
-Misconception 3: "High training accuracy means the model is good."
-Reality: A model can memorise the training set and fail entirely on new data. Always evaluate on held-out data the model has never seen.
-
-Misconception 4: "If I don't understand the math, I can't do ML."
-Reality: Conceptual understanding and practical implementation skill can be developed in parallel with mathematical understanding. Many practitioners build effective systems with intuitive rather than formal mathematical understanding.
-
-Misconception 5: "ML will automatically find the right features."
-Reality: Feature engineering is a major source of model improvement. Deep learning reduces manual feature engineering for some data types (images, text), but tabular data still benefits enormously from thoughtful feature design.
-
-Misconception 6: "My model performs well in testing, so it will work in production."
-Reality: Distributional shift — differences between training data and real-world data — is one of the most common sources of production failures. Always consider the gap between your training distribution and the deployment environment.
-
-Misconception 7: "Neural networks are always the best choice."
-Reality: For structured/tabular data, gradient boosting (XGBoost, LightGBM) consistently matches or beats deep neural networks. Neural networks shine for unstructured data (images, audio, text) and very large datasets.
-
-Misconception 8: "I can't do ML without a GPU."
-Reality: Many real problems can be solved on a laptop CPU. Start on small datasets locally; scale to the cloud when necessary.
-
-Misconception 9: "Once trained, a model is done."
-Reality: Models degrade as the real world changes (concept drift, data drift). Production ML requires monitoring, retraining, and continuous improvement.
+Improvement strategies:
+- Shadow native speaker recordings (listen and speak simultaneously).
+- Record yourself and compare to a model speaker.
+- Focus on 3-5 priority sounds from your first language background.
+- Use the IPA phonemic chart to learn the 44 English phonemes systematically.
 
 ---
 
-## Topic: Summary of Core ML Principles
-Machine learning is the practice of extracting patterns from data. Its power comes from generalisation: learning abstract structure that extends beyond the training examples.
+## Topic: IELTS Speaking Fluency and Coherence
+Fluency and Coherence accounts for 25% of the Speaking band score.
 
-The most important ideas to internalise:
+Fluency defined:
+Fluency is not about speaking fast. It is about speaking without unnatural hesitation, repetition, or self-correction that impedes communication.
 
-1. Generalisation over memorisation: the goal is always performance on unseen data.
-2. Bias-variance tradeoff: complexity must be matched to the available data.
-3. The pipeline matters as much as the model: data quality and feature engineering often dominate.
-4. Evaluation must be rigorous: use held-out data, the right metrics, and cross-validation.
-5. Iterate empirically: make one change at a time; measure everything.
-6. Understand your data: most model failures trace back to data problems.
-7. Simple models are underrated: always establish a strong baseline before increasing complexity.
+Signs of good fluency:
+- Speaking at a natural pace with appropriate pausing between ideas.
+- Using filler phrases naturally and sparingly ("Well...", "Right...", "You know...").
+- Completing thoughts without abandoning sentences halfway.
 
-For learners:
-- Machine learning mastery is a gradual, iterative process.
-- Confusion and struggle are part of learning, not evidence of inadequacy.
-- Every experienced practitioner made the same mistakes you are making now.
-- The field rewards persistence, curiosity, and careful thinking more than raw intelligence.
+Signs of poor fluency:
+- Long silences mid-sentence.
+- Excessive repetition ("I... I... I think... I think it's...").
+- Repeatedly restarting the same sentence.
+
+Coherence in Speaking:
+How to demonstrate coherence:
+- Use discourse markers to signal the organisation of your ideas: "First of all...", "On top of that...", "As a result of this...", "To give you an example..."
+- Maintain a clear topic thread: each sentence should clearly relate to the question or topic.
+- Use appropriate pronoun reference to track topics across sentences.
+
+A Band 7 fluency target:
+Speak for at least 90% of each Part without significant hesitation. Use a range of discourse markers. Demonstrate that you can develop an idea over multiple sentences.
+
+---
+
+## Topic: IELTS Listening Completion Tasks
+Completion tasks (note, sentence, summary, table, flow-chart) require you to fill in missing information from the audio recording. They are the most common question type in IELTS Listening.
+
+General rules for completion tasks:
+1. Word limit: always observe the instruction (e.g., "Write NO MORE THAN TWO WORDS AND/OR A NUMBER"). Three-word answers in a two-word-limit question are automatically wrong.
+2. The answer must be grammatically correct in context (singular/plural, the right part of speech).
+3. Answers appear in the recording in question order.
+4. Do not paraphrase: write exactly what you hear unless spelling corrections are needed.
+
+Form completion (Section 1):
+Forms ask for personal data: names, addresses, telephone numbers, dates, reference numbers.
+- Names and places are often spelled out: listen carefully and write exactly what is spelled.
+- Numbers: distinguish between 13 and 30, 14 and 40 (stress pattern helps: thirTEEN vs THIRty).
+- Email addresses: note the difference between underscore, hyphen, and full stop.
+
+Note/sentence completion (Sections 1-4):
+- The notes/sentences are a paraphrase of what is said in the recording. The actual answer word(s) come directly from the audio.
+- Predict the type of answer from context before the audio plays.
+
+Table completion:
+- Read the table headings before the recording plays to understand what type of information to listen for.
+- Answers may be in any cell of the table; the recording follows the table order left to right, top to bottom.
+
+---
+
+## Topic: IELTS Writing Paraphrasing the Question
+The ability to paraphrase accurately is one of the most fundamental skills for IELTS Writing.
+
+Why paraphrase matters:
+- IELTS examiners do not award marks for language copied directly from the question.
+- An accurate paraphrase demonstrates lexical and grammatical range.
+- The introduction to both Task 1 and Task 2 should always be a paraphrase of the question.
+
+Paraphrasing techniques:
+1. Synonym substitution: replace words with synonyms of similar meaning.
+   Original: "In many countries, the number of young people who commit crimes is increasing."
+   Paraphrase: "A growing number of countries are witnessing a rise in criminal behaviour among teenagers."
+
+2. Change sentence structure: convert active to passive, or change the grammatical subject.
+   Original: "The government should do more to protect the environment."
+   Paraphrase: "Greater efforts by authorities are needed to safeguard the natural world."
+
+3. Change word form: use a different part of speech (nominalisation is common in academic writing).
+   Original: "Technology is developing rapidly."
+   Paraphrase: "The rapid development of technology..."
+
+4. Change the perspective: express the same idea from a different angle.
+   Original: "Some people think that living in cities is better than living in rural areas."
+   Paraphrase: "There is a debate as to whether urban living offers greater advantages than rural life."
+
+Common paraphrasing errors:
+- Over-paraphrasing: changing so many words that the meaning becomes inaccurate.
+- Under-paraphrasing: changing only one or two words while keeping the rest identical.
+- Using an incorrect synonym: always check that your synonym is accurate and has the same connotation.
+
+---
+
+## Topic: IELTS Test Day Preparation and Strategy
+Practical strategies for the actual IELTS test day.
+
+Before the test:
+- Arrive 30 minutes early to allow time for registration and to settle.
+- Bring your valid passport or identification document (the same one used to register).
+- Do not eat a heavy meal immediately before; brain performance requires stable blood sugar.
+- Review key task instructions and format the night before - not the morning of.
+
+Listening test day tips:
+- Keep your pencil moving during the recording; write initial answers even if uncertain.
+- For multiple-choice questions, eliminate clearly wrong options first.
+- Use the 10-minute transfer time to copy answers to the answer sheet and check spelling.
+- Answer every question; there is no negative marking.
+
+Reading test day tips:
+- Do not read passages from beginning to end before looking at questions - this wastes time.
+- Start with question 1 and go to the passage only to find the answer.
+- If a question is taking too long (more than 2 minutes), mark it and move on.
+- For paper-based IELTS: all answers are written directly on the answer sheet during the 60 minutes (no transfer time).
+- For Computer-Delivered IELTS (CD-IELTS): answers are typed; 15 minutes of review time is built in.
+
+Writing test day tips:
+- Spend 2-3 minutes planning before writing each task.
+- Write Task 2 first if you run low on time, as it is worth more marks.
+- Leave 2 minutes at the end for proofreading each task.
+
+Speaking test day tips:
+- Speak clearly and at a natural pace; do not rush.
+- If you do not understand a question, ask the examiner to repeat or rephrase it.
+- Never apologise for your English; maintain confidence.
+
+---
+
+## Topic: IELTS Study Plan from Band 5 to Band 7
+A structured, time-efficient study plan for candidates aiming to improve from approximately Band 5 to Band 7 over 10-12 weeks.
+
+Week 1-2: Diagnosis and Foundation
+- Take a full official practice test under timed conditions.
+- Score each section and identify your weakest areas.
+- Study the format and marking criteria for each section in detail.
+- Begin an IELTS vocabulary notebook; learn 15-20 AWL words per day.
+
+Week 3-5: Skill Development
+- Reading: practise one passage per day; focus on your weakest question types.
+- Listening: complete one section per day; review transcripts after each practice.
+- Writing Task 2: write one essay every two days; focus on structure and task response.
+- Speaking: record a Part 2 response daily; listen back and identify errors.
+
+Week 6-8: Integrated Practice
+- Complete one full Listening + Reading test per week under timed conditions.
+- Writing: practise Task 1 and Task 2 on alternate days; seek feedback if possible.
+- Speaking: arrange weekly mock interviews with a language partner or tutor.
+- Grammar focus: identify your 3 most frequent grammar errors and eliminate them.
+
+Week 9-10: Consolidation and Exam Simulation
+- Complete two full mock tests under strict exam conditions.
+- Analyse errors and revisit any persistent weaknesses.
+- Review vocabulary notebooks; create summary flashcards of key topic words.
+- Rest the day before the test; avoid last-minute cramming.
+
+Daily habits for sustained improvement:
+- Read English-language news articles for 20-30 minutes each day.
+- Listen to BBC podcasts, TED talks, or academic lectures daily.
+- Write one short paragraph (6-8 sentences) in English every day.
+- Speak English with a partner for at least 15 minutes per day.
+
+---
+
+## Topic: IELTS Common Mistakes and How to Avoid Them
+Understanding the most common errors helps candidates avoid losing marks unnecessarily.
+
+Writing mistakes:
+1. Copying the question: any sentence copied verbatim from the prompt scores 0. Always paraphrase.
+2. Under-word-count: fewer than 150 words (Task 1) or 250 words (Task 2) results in a penalty.
+3. Missing overview (Task 1): an essay without a clear overview paragraph cannot score Band 6 or above.
+4. No clear opinion (Task 2 opinion essays): if the question asks for your opinion, state it clearly in the introduction and maintain it throughout.
+5. Over-using the same linking words: "Firstly... Secondly... Thirdly... Finally..." alone is insufficient range.
+6. Using informal language: "a lot of", "kids", "stuff", "get" are too informal for Academic Writing.
+7. Inaccurate data description (Task 1): misreading a chart value is a serious accuracy error.
+
+Reading mistakes:
+1. Changing answers based on general knowledge rather than the text.
+2. Running out of time: poor time management wastes marks on easy questions left unanswered.
+3. Spelling errors in completion tasks: correct content but wrong spelling loses the mark.
+
+Listening mistakes:
+1. Mishearing numbers: 13 vs 30, 14 vs 40.
+2. Ignoring corrections in the audio: the first thing said may be changed later.
+3. Panicking after missing an answer: this causes candidates to miss subsequent answers too.
+
+Speaking mistakes:
+1. Memorised speeches: examiners recognise and penalise memorised content by redirecting the topic.
+2. Short answers in Part 1: one-sentence answers do not demonstrate language range.
+3. Stopping mid-Part 2 before the time is up: always aim for the full 2 minutes.
+4. Answering a different question from the one asked: listen carefully to Part 3 questions before answering.
+
+---
+
+## Topic: IELTS Motivation and Mindset for Preparation
+Preparing for IELTS is a significant undertaking that tests not only language ability but also resilience, consistency, and self-belief.
+
+Why mindset matters:
+Candidates who view language errors as information - rather than as proof of inadequacy - improve faster. Each mistake shows exactly where your English needs development.
+
+Common psychological barriers for IELTS candidates:
+1. Performance anxiety: fear of test conditions affecting real ability.
+   Response: simulate test conditions as often as possible during preparation. Familiarity reduces anxiety.
+
+2. Comparison with others: focusing on other candidates' band scores rather than your own progress.
+   Response: track your personal improvement from your baseline. A 0.5-band improvement per month is realistic for most candidates.
+
+3. Perfectionism: refusing to speak or write unless you can do so perfectly.
+   Response: output practice (speaking and writing) is more valuable than passive study. Making errors and receiving feedback is how improvement happens.
+
+4. Plateau frustration: the feeling of being stuck at the same band score.
+   Response: a plateau often means surface errors have been corrected and deeper improvement is now happening. Seek targeted feedback on the specific criteria holding you back.
+
+5. Lack of motivation on difficult days:
+   Response: break practice into 25-minute focused sessions (Pomodoro technique). Short, consistent practice outperforms long, inconsistent sessions.
+
+Growth mindset for IELTS:
+- Language ability is not fixed. IELTS measures your current level, not your potential.
+- The most successful candidates treat mistakes as data, not as judgement.
+- Progress in English is non-linear: there will be weeks of rapid improvement and weeks where nothing seems to change.
+- Consistency across weeks - not daily perfection - determines outcomes.
+- Celebrate genuine milestones: completing a full timed test, writing an essay without notes, speaking for a full 2 minutes in Part 2.
+
+---
+
+## Topic: IELTS Summary and Core Preparation Principles
+Success in IELTS comes from systematic preparation across all four skills, combined with consistent effort and honest self-assessment.
+
+Core principles for effective IELTS preparation:
+
+1. Know the format thoroughly:
+Every task type has a specific strategy. Candidates who have practised every format multiple times perform far better under time pressure.
+
+2. Practise under real test conditions:
+Timed practice under authentic conditions is not optional - it is the most important type of practice in the final weeks of preparation.
+
+3. Seek feedback on Writing and Speaking:
+These are the two skills that improve most from expert feedback. Self-study alone has limits; a qualified IELTS teacher or examiner can identify errors and band-level weaknesses that self-assessment misses.
+
+4. Build vocabulary systematically:
+Random vocabulary learning is inefficient. Prioritise the AWL, high-frequency topic vocabulary, and collocations. Review words regularly using spaced repetition.
+
+5. Read and listen in English every day:
+Passive exposure builds implicit knowledge of grammar, collocations, and idiomatic usage that explicit study cannot fully replicate.
+
+6. Analyse your mistakes:
+Every error in a practice test is an opportunity. Categorise your errors (task response, grammar, vocabulary, strategy) and address each category deliberately.
+
+7. Do not neglect your strongest skill:
+Candidates often focus exclusively on weak skills and allow strong skills to deteriorate. Maintain all four.
+
+Realistic expectations:
+- Most candidates improve by 0.5-1.0 band per skill over 8-12 weeks of consistent preparation.
+- Improving from Band 6 to Band 7 typically requires deeper changes in grammar range and lexical precision.
+- There are no shortcuts: authentic language development requires sustained engagement over time.

@@ -57,14 +57,14 @@ KB_STORE_DIR = "kb_store"
 # Logical domain labels used in chunk metadata (see build_vector_kb.py).
 # Each label maps to the source KB file(s) that belong to that domain.
 KB_DOMAINS = {
-    "general":               "kb.txt",                       # ML fundamentals
+    "general":               "kb.txt",                       # IELTS preparation
     "learning_disabilities": "kb_learning_disabilities.txt", # LD research
     "interventions":         "kb_interventions.txt",         # intervention strategies
 }
 
 # Source files ingested by build_vector_kb.py
 KB_FILES = [
-    "kb.txt",                        # ML fundamentals (original)
+    "kb.txt",                        # IELTS preparation knowledge base
     "kb_learning_disabilities.txt",  # Learning disabilities knowledge base
     "kb_interventions.txt",          # Intervention strategies library
 ]
