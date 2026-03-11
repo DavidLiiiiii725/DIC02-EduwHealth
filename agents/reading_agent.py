@@ -915,6 +915,7 @@ def _build_assistant_tip(
     ld_profile: dict,
     current_section_heading: str = '',
     section_body: str = '',
+    mode: str = 'auto',
 ) -> str:
     """Generate a proactive assistant tip based on current reading progress.
 
@@ -923,10 +924,26 @@ def _build_assistant_tip(
     • Keyword extraction from the current paragraph heading / body
     • ADHD-specific focus tips
     • Hint-usage advice
+    • Mode-specific adjustments (focus / calm / speed / auto)
+
+    Args:
+        mode: Assistant mode — ``"auto"`` (default, uses LD profile),
+              ``"focus"`` (ADHD-optimised), ``"calm"`` (anxiety-optimised),
+              or ``"speed"`` (minimal scaffolding).
     """
     all_ld = set(
         ld_profile.get('confirmed', []) + ld_profile.get('suspected', [])
     )
+
+    # ── Resolve effective mode ────────────────────────────────────
+    effective_mode = mode
+    if effective_mode == 'auto':
+        if 'adhd' in all_ld:
+            effective_mode = 'focus'
+        elif 'anxiety' in all_ld:
+            effective_mode = 'calm'
+        else:
+            effective_mode = 'speed'  # treat as standard/direct for general learners
 
     total_answered = len(answers)
     correct = sum(1 for v in answers.values() if isinstance(v, dict) and v.get('correct'))
@@ -1006,7 +1023,8 @@ def _build_assistant_tip(
             )
 
     # ── ADHD-specific tip ────────────────────────────────────────
-    if 'adhd' in all_ld:
+    ld_focus_lines: List[str] = []
+    if 'adhd' in all_ld or effective_mode == 'focus':
         adhd_tips = [
             "⚡ Focus: trace each line with your finger as you read.",
             "⚡ Read the first sentence, pause, then continue.",
@@ -1015,14 +1033,48 @@ def _build_assistant_tip(
             "⚡ Glance at the paragraph heading before you start reading the body text.",
         ]
         tip = adhd_tips[(para_order - 1) % len(adhd_tips)]
-        lines.append(f"\n{tip}")
+        ld_focus_lines.append(f"\n{tip}")
 
     # ── Anxiety tip ──────────────────────────────────────────────
-    if 'anxiety' in all_ld:
-        lines.append(
+    ld_calm_lines: List[str] = []
+    if 'anxiety' in all_ld or effective_mode == 'calm':
+        ld_calm_lines.append(
             "\n🌀 Remember: every answer is *in the passage*. "
             "Trust your reading — you don't need prior knowledge."
         )
+
+    # ── Mode-specific injections ──────────────────────────────────
+    # Speed mode: skip LD-specific scaffolding and give direct guidance.
+    if effective_mode == 'speed':
+        lines.append(
+            "\n🚀 **Speed Mode:** Scan for keywords from the question, "
+            "locate the matching sentence in the paragraph, verify your answer."
+        )
+    elif effective_mode == 'focus':
+        lines.extend(ld_focus_lines)
+        # Shorter chunks + break reminders for ADHD/Focus mode
+        if para_order % 2 == 0:
+            lines.append(
+                "\n⚡ **Focus Mode:** You've reached paragraph "
+                f"{para_order}. Take a 30-second micro-break if needed — "
+                "stand up, stretch, then return."
+            )
+        else:
+            lines.append(
+                "\n⚡ **Focus Mode:** Read *one sentence at a time*. "
+                "Pause after each sentence and ask: \"What did that say?\""
+            )
+    elif effective_mode == 'calm':
+        lines.extend(ld_calm_lines)
+        lines.append(
+            "\n🌀 **Calm Mode:** There is no time pressure here. "
+            "Read at your own comfortable pace. "
+            "If a question feels hard, park it and come back later."
+        )
+    else:
+        # Default: include both LD-specific tips when applicable
+        lines.extend(ld_focus_lines)
+        lines.extend(ld_calm_lines)
 
     return '\n'.join(lines)
 
@@ -1072,6 +1124,7 @@ def reading_agent_assistant_tip(
     ld_profile: dict,
     current_section_heading: str = '',
     section_body: str = '',
+    mode: str = 'auto',
 ) -> str:
     """Return a proactive assistant tip for the current reading state.
 
@@ -1085,6 +1138,10 @@ def reading_agent_assistant_tip(
         section_body:            Body text of the current paragraph (may be empty
                                  when the section is image-only; raw_text is used
                                  as fallback in the view layer).
+        mode:                    Assistant mode — ``"auto"`` (uses LD profile),
+                                 ``"focus"`` (ADHD-optimised shorter chunks),
+                                 ``"calm"`` (reassuring, no time pressure),
+                                 or ``"speed"`` (minimal scaffolding).
     """
     return _build_assistant_tip(
         para_order=para_order,
@@ -1094,6 +1151,7 @@ def reading_agent_assistant_tip(
         ld_profile=ld_profile,
         current_section_heading=current_section_heading,
         section_body=section_body,
+        mode=mode,
     )
 
 

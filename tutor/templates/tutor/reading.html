@@ -353,6 +353,71 @@ textarea.q-answer:focus { border-color:var(--blue); }
 .modal-content li { margin: 0.2em 0; line-height: 1.7; }
 
 /* ══════════════════════════════════════════════════════════════
+   ASSISTANT MODE SELECTOR — sits next to the AI Hub button
+══════════════════════════════════════════════════════════════ */
+.mode-selector {
+  position: relative;
+}
+.mode-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #d0d8e8;
+  border-radius: 8px;
+  padding: 7px 13px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #111;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.mode-selector-btn:hover {
+  border-color: #1A5FCC;
+  box-shadow: 0 2px 10px rgba(26,95,204,0.12);
+}
+.mode-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #d0d8e8;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  z-index: 401;
+  min-width: 210px;
+  overflow: hidden;
+  animation: ai-hub-slide 0.18s ease;
+}
+.mode-menu-header {
+  padding: 9px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #1A5FCC 0%, #0d3a7a 100%);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.mode-option {
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.12s;
+  border-bottom: 1px solid #f0f4fa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mode-option:last-child { border-bottom: none; }
+.mode-option:hover { background: #eef2ff; }
+.mode-option.active {
+  background: #eef5ff;
+  font-weight: 600;
+  color: #1A5FCC;
+}
+
+/* ══════════════════════════════════════════════════════════════
    TOP-RIGHT AI HUB — floating menu (model selection + assistant)
 ══════════════════════════════════════════════════════════════ */
 .ai-hub {
@@ -853,6 +918,21 @@ textarea.q-answer:focus { border-color:var(--blue); }
         <div class="reading-topbar-sub" id="topbar-sub">Upload a passage to begin guided reading</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
+        <!-- Assistant Mode Selector -->
+        <div class="mode-selector" id="mode-selector">
+          <button class="mode-selector-btn" onclick="toggleModeMenu()" title="Assistant Mode">
+            <span id="current-mode-icon">🤖</span>
+            <span id="current-mode-label">Auto Mode</span>
+            <span style="font-size:0.65rem;margin-left:2px;opacity:0.6;">▾</span>
+          </button>
+          <div class="mode-menu" id="mode-menu" style="display:none;">
+            <div class="mode-menu-header">Assistant Mode</div>
+            <div class="mode-option active" data-mode="auto" onclick="setAssistantMode('auto')">🤖 Auto (Recommended)</div>
+            <div class="mode-option" data-mode="focus" onclick="setAssistantMode('focus')">⚡ Focus Mode (ADHD)</div>
+            <div class="mode-option" data-mode="calm" onclick="setAssistantMode('calm')">🌀 Calm Mode (Anxiety)</div>
+            <div class="mode-option" data-mode="speed" onclick="setAssistantMode('speed')">🚀 Speed Mode</div>
+          </div>
+        </div>
         <!-- AI Hub: model selector + chat assistant + strategy (top-right floating menu) -->
         <div class="ai-hub" id="ai-hub">
           <button class="ai-hub-btn" id="ai-hub-btn" onclick="toggleAIHub()" title="AI Reading Hub">
@@ -1845,6 +1925,65 @@ function escHtml(str) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
 }
+
+// ── Assistant Mode Selector ────────────────────────────────────
+let _modeMenuOpen = false;
+const _modeLabels = { auto: 'Auto Mode', focus: 'Focus Mode', calm: 'Calm Mode', speed: 'Speed Mode' };
+const _modeIcons  = { auto: '🤖', focus: '⚡', calm: '🌀', speed: '🚀' };
+
+function toggleModeMenu() {
+  _modeMenuOpen = !_modeMenuOpen;
+  document.getElementById('mode-menu').style.display = _modeMenuOpen ? '' : 'none';
+}
+
+// Close mode menu when clicking outside
+document.addEventListener('click', function(e) {
+  const sel = document.getElementById('mode-selector');
+  if (sel && !sel.contains(e.target)) {
+    document.getElementById('mode-menu').style.display = 'none';
+    _modeMenuOpen = false;
+  }
+});
+
+async function setAssistantMode(mode) {
+  try {
+    const resp = await fetch('/api/reading/set-assistant-mode/', {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+      body:    JSON.stringify({ mode: mode }),
+    });
+    if (resp.ok) {
+      // Update button label + icon
+      document.getElementById('current-mode-icon').textContent  = _modeIcons[mode]  || '🤖';
+      document.getElementById('current-mode-label').textContent = _modeLabels[mode] || 'Auto Mode';
+      // Update active class on menu options
+      document.querySelectorAll('#mode-menu .mode-option').forEach(el => {
+        el.classList.toggle('active', el.dataset.mode === mode);
+      });
+      // Persist choice in localStorage for UX continuity
+      try { localStorage.setItem('eduwhealth_assistant_mode', mode); } catch(e) { console.warn('Failed to save mode preference:', e); }
+      // Refresh assistant tip with new mode
+      if (state.attemptId) refreshAssistantTip(state.attemptId);
+    }
+  } catch(err) {
+    console.warn('setAssistantMode error:', err);
+  }
+  // Close menu
+  document.getElementById('mode-menu').style.display = 'none';
+  _modeMenuOpen = false;
+}
+
+function loadAssistantModeChoice() {
+  try {
+    const mode = localStorage.getItem('eduwhealth_assistant_mode') || 'auto';
+    document.getElementById('current-mode-icon').textContent  = _modeIcons[mode]  || '🤖';
+    document.getElementById('current-mode-label').textContent = _modeLabels[mode] || 'Auto Mode';
+    document.querySelectorAll('#mode-menu .mode-option').forEach(el => {
+      el.classList.toggle('active', el.dataset.mode === mode);
+    });
+  } catch(_) {}
+}
+document.addEventListener('DOMContentLoaded', loadAssistantModeChoice);
 
 // ── AI Hub (top-right floating menu) ──────────────────────────
 // Replaces the old bottom-right floating assistant widget.

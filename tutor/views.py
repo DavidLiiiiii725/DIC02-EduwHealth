@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from django.db.models import Avg, Sum
 
-from .models import LearnerProfile, ChatSession, ChatMessage, IELTSPassage, IELTSSection, IELTSQuestion, ReadingAttempt
+from .models import LearnerProfile, ChatSession, ChatMessage, IELTSPassage, IELTSSection, IELTSQuestion, ReadingAttempt, StrategyPerformance, ReadingStrategyExperiment
 from agents.reading_agent import generate_paragraph_guidance, generate_passage_prompt
 
 logger = logging.getLogger(__name__)
@@ -656,6 +656,14 @@ def api_reading_next_section(request):
             attempt.score = round(sum(scores) / len(scores), 2) if scores else None
         attempt.save()
 
+        # Record experiment completion for A/B tracking
+        if attempt.score is not None:
+            try:
+                from analytics.strategy_tracker import record_experiment_completion
+                record_experiment_completion(attempt.pk, attempt.score)
+            except Exception as exc:
+                logger.exception("Failed to record experiment completion: %s", exc)
+
         from agents.reading_agent import reading_agent_strategy
         ld_profile = {'confirmed': learner.ld_confirmed, 'suspected': learner.ld_suspected}
         strategy = reading_agent_strategy(
@@ -811,7 +819,8 @@ def api_reading_assistant(request):
 
     The assistant analyses current progress (paragraph position, answer scores,
     hint usage, LD profile) and returns adaptive guidance including keywords
-    extracted from the current paragraph.
+    extracted from the current paragraph.  The selected assistant mode
+    (stored in the session) is injected into the tip generation.
     """
     try:
         data = json.loads(request.body)
@@ -838,6 +847,8 @@ def api_reading_assistant(request):
         section_body = attempt.passage.raw_text or ''
 
     ld_profile = {'confirmed': learner.ld_confirmed, 'suspected': learner.ld_suspected}
+    # Read the session-stored assistant mode (default: 'auto')
+    assistant_mode = request.session.get('assistant_mode', 'auto')
 
     from agents.reading_agent import reading_agent_assistant_tip
     tip = reading_agent_assistant_tip(
@@ -848,9 +859,62 @@ def api_reading_assistant(request):
         ld_profile=ld_profile,
         current_section_heading=heading,
         section_body=section_body,
+        mode=assistant_mode,
     )
 
     return JsonResponse({'tip': tip})
+
+
+@csrf_exempt
+@require_POST
+def api_reading_set_assistant_mode(request):
+    """Set the assistant mode for the current learner session.
+
+    Body: { "mode": "auto" | "focus" | "calm" | "speed" }
+
+    The mode is persisted in the Django session so that subsequent calls
+    to ``api_reading_assistant`` use the chosen mode automatically.
+    Records an anonymous experiment entry for A/B tracking if an active
+    reading attempt exists.
+    """
+    _VALID_MODES = {'auto', 'focus', 'calm', 'speed'}
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    mode = data.get('mode', 'auto')
+    if mode not in _VALID_MODES:
+        return JsonResponse(
+            {'error': f"Invalid mode. Choose from: {', '.join(sorted(_VALID_MODES))}"},
+            status=400,
+        )
+
+    request.session['assistant_mode'] = mode
+
+    # Optionally log the mode switch against the active attempt for the
+    # strategy optimizer A/B tracking system.
+    learner = _get_or_create_learner(request)
+    active_attempt = ReadingAttempt.objects.filter(
+        learner=learner, completed=False
+    ).last()
+
+    if active_attempt:
+        from agents.strategy_optimizer import assign_strategy_variant
+        from analytics.strategy_tracker import create_experiment
+        ld_profile = {'confirmed': learner.ld_confirmed, 'suspected': learner.ld_suspected}
+        variant = assign_strategy_variant(ld_profile, mode=mode)
+        # Only create if no experiment exists yet for this attempt
+        from tutor.models import ReadingStrategyExperiment
+        if not ReadingStrategyExperiment.objects.filter(attempt=active_attempt).exists():
+            create_experiment(
+                learner_id=learner.pk,
+                attempt_id=active_attempt.pk,
+                variant=variant,
+            )
+
+    return JsonResponse({'ok': True, 'mode': mode})
 
 
 @csrf_exempt
@@ -937,3 +1001,27 @@ def api_reading_section_tips(request):
     )
     section = get_object_or_404(IELTSSection, passage=attempt.passage, order=section_order)
     return JsonResponse({'tips': list(section.reading_tips or [])})
+
+
+@require_GET
+def api_strategy_performance(request):
+    """Admin endpoint: return anonymised strategy performance data.
+
+    Query params (optional):
+        ld_type=<str>   Filter by LD profile type (e.g. "adhd")
+
+    Returns JSON with performance summaries for the admin dashboard.
+    Restricted to Django staff users (is_staff=True) to prevent
+    unauthorised access to aggregate performance metrics.
+    """
+    if not (request.user.is_authenticated and request.user.is_staff):
+        return JsonResponse({'error': 'Permission denied.'}, status=403)
+
+    from analytics.strategy_tracker import get_performance_summary
+    ld_type = request.GET.get('ld_type')
+
+    summary = get_performance_summary()
+    if ld_type:
+        summary = [r for r in summary if r['ld_profile_type'] == ld_type]
+
+    return JsonResponse({'performance': summary})
