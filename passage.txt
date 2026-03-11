@@ -17,27 +17,27 @@
     },
     {
       "id": "D",
-      "text": "On the question of mitigating the risks farmers face, most essayists called for greater state intervention. In his essay, Kanayo F. Nwanze, President of the International Fund for Agricultural Development, argued that governments can significantly reduce risks for farmers by providing basic services like roads to get produce more efficiently to markets, or water and food storage facilities to reduce losses. Sophia Murphy, senior advisor to the Institute for Agriculture and Trade Policy, suggested that the procurement and holding of stocks by governments can also help mitigate wild swings in food prices by alleviating uncertainties about market supply."
+      "text": "On the question of mitigating the risks farmers face, most essayists called for greater state intervention. In his essay, Kanayo F. Nwanze argued that governments can significantly reduce risks for farmers by providing basic services like roads to get produce more efficiently to markets, or water and food storage facilities to reduce losses. Sophia Murphy suggested that government food stocks can help mitigate wild swings in food prices."
     },
     {
       "id": "E",
-      "text": "Shenggen Fan, Director General of the International Food Policy Research Institute, held up social safety nets and public welfare programmes in Ethiopia, Brazil and Mexico as valuable ways to address poverty among farming families and reduce their vulnerability to agriculture shocks. However, some commentators responded that cash transfers to poor families do not necessarily translate into increased food security, as these programmes do not always strengthen food production or raise incomes. Regarding state subsidies for agriculture, Rokeya Kabir, Executive Director of Bangladesh Nari Progati Sangha, commented that sixty percent of beneficiaries of subsidies are not poor, but rich landowners and non-farmer traders."
+      "text": "Shenggen Fan promoted social safety nets and welfare programmes to reduce poverty among farming families. Rokeya Kabir argued that many government subsidies actually benefit wealthy landowners and traders rather than poor farmers."
     },
     {
       "id": "F",
-      "text": "Nwanze, Murphy and Fan argued that private risk management tools, like private insurance, commodity futures markets, and rural finance can help small-scale producers mitigate risk and allow for investment in improvements. Kabir warned that financial support schemes often encourage the adoption of high-input agricultural practices, which in the medium term may raise production costs beyond the value of their harvests. Murphy noted that when futures markets become excessively financialised they can contribute to short-term price volatility, which increases farmers' food insecurity."
+      "text": "Some authors supported private risk tools like insurance and futures markets. Kabir warned that financial schemes may encourage costly high-input farming. Murphy also warned that financialised futures markets can increase price volatility."
     },
     {
       "id": "G",
-      "text": "Many participants emphasised that greater transparency in markets is needed to mitigate volatility. Climate change increases the magnitude and frequency of extreme weather events, increasing smallholder vulnerability. One solution would be to develop crop varieties that are more resilient to new climate trends and extreme weather patterns. Pat Mooney suggested adopting policies that allow diversification of plant and animal species."
+      "text": "Climate change increases the frequency of extreme weather events, increasing vulnerability for small farmers. Pat Mooney suggested diversifying plant and animal species to increase resilience."
     },
     {
       "id": "H",
-      "text": "Some authors argued for community-based risk management strategies through collective action groups, co-operatives or producers' groups. These groups enhance market opportunities, reduce marketing costs and improve bargaining power. Giel Ton warned that collective action requires time, effort and resources to organise and maintain."
+      "text": "Some authors supported community-based collective action groups to strengthen farmers' bargaining power. Giel Ton warned that collective action takes time, effort and money to organise."
     },
     {
       "id": "I",
-      "text": "Some participants explained that market price volatility is worsened by intermediary purchasers who dictate prices. Farmers can gain greater control by selling directly to consumers. Sonali Bisht described community-supported agriculture, where consumers invest in farmers and guarantee fair prices."
+      "text": "Intermediary buyers often dictate prices. Sonali Bisht suggested community-supported agriculture where consumers invest directly in farmers and guarantee fair prices."
     }
   ],
   "people": {
@@ -53,70 +53,87 @@
     {
       "id": 1,
       "type": "paragraph_matching",
-      "instruction": "Which paragraph contains the following information?",
       "prompt": "a reference to characteristics that only apply to food production",
-      "options": ["A","B","C","D","E","F","G","H","I"]
+      "options": ["A","B","C","D","E","F","G","H","I"],
+      "answer": "A",
+      "evidence_paragraph": "A",
+      "explanation": "Paragraph A explains two unique characteristics of food production: everyone needs food daily and production depends heavily on nature."
     },
     {
       "id": 2,
       "type": "paragraph_matching",
-      "instruction": "Which paragraph contains the following information?",
       "prompt": "a reference to challenges faced only by farmers in certain parts of the world",
-      "options": ["A","B","C","D","E","F","G","H","I"]
+      "options": ["A","B","C","D","E","F","G","H","I"],
+      "answer": "B",
+      "evidence_paragraph": "B",
+      "explanation": "Paragraph B describes additional difficulties specifically faced by smallholder farmers in developing countries."
     },
     {
       "id": 3,
       "type": "paragraph_matching",
-      "instruction": "Which paragraph contains the following information?",
       "prompt": "a reference to difficulties in bringing about co-operation between farmers",
-      "options": ["A","B","C","D","E","F","G","H","I"]
+      "options": ["A","B","C","D","E","F","G","H","I"],
+      "answer": "H",
+      "evidence_paragraph": "H",
+      "explanation": "Paragraph H states that collective action requires time, effort and money to organise and maintain."
     },
     {
       "id": 4,
       "type": "person_matching",
-      "instruction": "Match each statement with the correct person.",
       "prompt": "Financial assistance from the government does not always go to the farmers who most need it.",
-      "options": ["A","B","C","D","E","F","G"]
+      "options": ["A","B","C","D","E","F","G"],
+      "answer": "D",
+      "evidence_paragraph": "E",
+      "explanation": "Rokeya Kabir said many subsidies benefit wealthy landowners and traders instead of poor farmers."
     },
     {
       "id": 5,
       "type": "person_matching",
-      "instruction": "Match each statement with the correct person.",
       "prompt": "Farmers can benefit from collaborating as a group.",
-      "options": ["A","B","C","D","E","F","G"]
+      "options": ["A","B","C","D","E","F","G"],
+      "answer": "B",
+      "evidence_paragraph": "H",
+      "explanation": "Sophia Murphy emphasised that collective action strengthens farmers' bargaining power and reduces risk."
     },
     {
       "id": 6,
       "type": "person_matching",
-      "instruction": "Match each statement with the correct person.",
       "prompt": "Financial assistance from the government can improve the standard of living of farmers.",
-      "options": ["A","B","C","D","E","F","G"]
+      "options": ["A","B","C","D","E","F","G"],
+      "answer": "C",
+      "evidence_paragraph": "E",
+      "explanation": "Shenggen Fan argued that social safety nets and welfare programmes can reduce poverty among farming families."
     },
     {
       "id": 7,
       "type": "person_matching",
-      "instruction": "Match each statement with the correct person.",
       "prompt": "Farmers may be helped if there is financial input by the same individuals who buy from them.",
-      "options": ["A","B","C","D","E","F","G"]
+      "options": ["A","B","C","D","E","F","G"],
+      "answer": "G",
+      "evidence_paragraph": "I",
+      "explanation": "Sonali Bisht described community-supported agriculture where consumers invest directly in farmers."
     },
     {
       "id": 8,
       "type": "person_matching",
-      "instruction": "Match each statement with the correct person.",
       "prompt": "Governments can help to reduce variation in prices.",
-      "options": ["A","B","C","D","E","F","G"]
+      "options": ["A","B","C","D","E","F","G"],
+      "answer": "B",
+      "evidence_paragraph": "D",
+      "explanation": "Sophia Murphy said government procurement and food stocks can stabilise food prices."
     },
     {
       "id": 9,
       "type": "person_matching",
-      "instruction": "Match each statement with the correct person.",
       "prompt": "Improvements to infrastructure can have a major impact on risk for farmers.",
-      "options": ["A","B","C","D","E","F","G"]
+      "options": ["A","B","C","D","E","F","G"],
+      "answer": "A",
+      "evidence_paragraph": "D",
+      "explanation": "Kanayo F. Nwanze emphasised that infrastructure such as roads and storage reduces risks for farmers."
     },
     {
       "id": 10,
       "type": "multiple_choice",
-      "instruction": "Choose TWO letters.",
       "prompt": "Which TWO problems are mentioned which affect farmers with small farms in developing countries?",
       "options": {
         "A": "lack of demand for locally produced food",
@@ -125,8 +142,10 @@
         "D": "the effects of changing weather patterns",
         "E": "having to sell their goods to intermediary buyers"
       },
-      "select": 2
+      "select": 2,
+      "answer": ["D","E"],
+      "evidence_paragraph": ["G","I"],
+      "explanation": "Paragraph G discusses climate change and extreme weather. Paragraph I explains how intermediary buyers dictate prices."
     }
-
   ]
 }
