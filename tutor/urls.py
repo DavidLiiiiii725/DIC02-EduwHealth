@@ -24,9 +24,13 @@ urlpatterns = [
     path('api/reading/hint/',         views.api_reading_hint,         name='api_reading_hint'),
     path('api/reading/strategy/',     views.api_reading_strategy,     name='api_reading_strategy'),
     path('api/reading/assistant/',          views.api_reading_assistant,          name='api_reading_assistant'),
+    path('api/reading/set-assistant-mode/', views.api_reading_set_assistant_mode, name='api_reading_set_assistant_mode'),
     path('api/reading/paragraph-strategy/', views.api_reading_paragraph_strategy, name='api_reading_paragraph_strategy'),
     path('api/reading/section-tips/', views.api_reading_section_tips, name='api_reading_section_tips'),
 
     # API - Passage.txt reading
     path('api/reading/paragraph/', views.api_reading_paragraph, name='api_reading_paragraph'),
+
+    # Admin – Strategy Optimisation
+    path('api/admin/strategy-performance/', views.api_strategy_performance, name='api_strategy_performance'),
 ]

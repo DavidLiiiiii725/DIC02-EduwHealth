@@ -103,3 +103,38 @@ class ReadingAttempt(models.Model):
 
     def __str__(self):
         return f"Attempt by {self.learner.display_name} on Passage {self.passage_id}"
+
+
+# ── Strategy Optimisation ─────────────────────────────────────────
+
+class StrategyPerformance(models.Model):
+    """Tracks anonymised strategy performance for self-optimisation.
+
+    All data is aggregate — no PII is stored.
+    """
+    strategy_variant = models.CharField(max_length=50)   # e.g. "focus_v1", "calm_v2"
+    ld_profile_type  = models.CharField(max_length=50)   # e.g. "adhd", "anxiety", "general"
+    total_attempts   = models.IntegerField(default=0)
+    avg_score        = models.FloatField(default=0.0)
+    avg_hints_used   = models.FloatField(default=0.0)
+    last_updated     = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('strategy_variant', 'ld_profile_type')
+        ordering = ['-avg_score']
+
+    def __str__(self):
+        return f"{self.strategy_variant} / {self.ld_profile_type} — avg {self.avg_score:.0%}"
+
+
+class ReadingStrategyExperiment(models.Model):
+    """A/B test tracker: links a learner attempt to a strategy variant."""
+    learner          = models.ForeignKey(LearnerProfile, on_delete=models.CASCADE, related_name='strategy_experiments')
+    attempt          = models.ForeignKey(ReadingAttempt, on_delete=models.CASCADE, related_name='experiments')
+    strategy_variant = models.CharField(max_length=50)
+    score            = models.FloatField(null=True, blank=True)
+    completed        = models.BooleanField(default=False)
+    created_at       = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Experiment {self.strategy_variant} — attempt {self.attempt_id}"
