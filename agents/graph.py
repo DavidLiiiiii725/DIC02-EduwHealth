@@ -105,6 +105,8 @@ def build_graph(memory):
 
     def metacog_node_conditional(state):
         """Only runs the MetaCog agent when conditions are met."""
+        if state.get("hub_mode"):
+            return {"metacog_response": ""}
         if should_activate_metacog(state):
             return metacog_agent(state, llm)
         return {"metacog_response": ""}

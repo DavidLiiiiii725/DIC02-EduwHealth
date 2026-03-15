@@ -7,16 +7,16 @@
   },
   "baseline": {
     "working_memory_span": 5.0,
-    "avg_session_attention_min": 12.102590491137228,
+    "avg_session_attention_min": 11.26409306524713,
     "task_initiation_latency_sec": 20.0,
     "frustration_threshold": 0.55,
-    "recent_success_rate": 0.5848450000000001
+    "recent_success_rate": 0.6263605000000001
   },
   "intervention_history": [],
   "metacog_log": [],
-  "session_count": 5,
-  "total_turns": 9,
-  "scaffold_fade_index": 0.8999999999999999,
+  "session_count": 6,
+  "total_turns": 10,
+  "scaffold_fade_index": 0.8499999999999999,
   "created_at": 1772295600.9025176,
-  "updated_at": 1773211269.9908671
+  "updated_at": 1773240296.6623232
 }

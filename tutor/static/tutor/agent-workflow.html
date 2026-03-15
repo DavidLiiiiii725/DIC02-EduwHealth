@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduwHealth 2.0 — Agent Workflow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --bg-card: #161b22;
+      --bg-node: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent-sage: #8b9a7a;
+      --accent-mint: #7a9a6e;
+      --accent-sky: #7a9a8e;
+      --accent-earth: #b8966a;
+      --accent-amber: #d4a574;
+      --accent-rose: #e07a7a;
+      --glow-sage: rgba(139,154,122,0.4);
+      --glow-mint: rgba(122,154,110,0.4);
+      --glow-sky: rgba(122,154,142,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .gradient-bg {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 100% 60% at 15% 15%, rgba(139,154,122,0.18) 0%, transparent 45%),
+        radial-gradient(ellipse 70% 50% at 85% 85%, rgba(122,154,110,0.12) 0%, transparent 45%),
+        radial-gradient(ellipse 80% 50% at 50% 50%, rgba(122,154,142,0.08) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+      animation: bgShift 12s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift {
+      0% { opacity: 1; }
+      100% { opacity: 0.92; }
+    }
+
+    .header {
+      position: relative;
+      z-index: 1;
+      padding: 2rem 2rem 1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header h1 {
+      font-weight: 700;
+      font-size: 1.6rem;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, var(--accent-sage), var(--accent-mint));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .controls {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem 2rem;
+    }
+
+    .btn {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--bg-node);
+      border-color: var(--accent-sage);
+      color: var(--accent-sage);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-sage), var(--accent-mint));
+      border: none;
+      color: var(--bg-dark);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .canvas-wrap {
+      position: relative;
+      z-index: 1;
+      padding: 2rem;
+      overflow: auto;
+    }
+
+    .flow-canvas {
+      margin: 0 auto;
+      max-width: 1200px;
+      min-height: 600px;
+      position: relative;
+      padding: 20px;
+      background: linear-gradient(145deg, rgba(22,27,34,0.6) 0%, rgba(13,17,23,0.8) 100%);
+      border: 1px solid rgba(139,154,122,0.2);
+      border-radius: 20px;
+      box-shadow: 0 0 60px rgba(139,154,122,0.06), inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+
+    /* ── SVG Flow ───────────────────────────────────────── */
+    .flow-svg {
+      width: 100%;
+      height: 100%;
+      min-height: 520px;
+    }
+
+    .edge {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 1.5;
+      stroke-dasharray: 8 4;
+      opacity: 0.5;
+      transition: all 0.4s;
+    }
+
+    .edge.active {
+      stroke: url(#gradFlow);
+      stroke-width: 3;
+      stroke-dasharray: 12 8;
+      stroke-dashoffset: 0;
+      opacity: 1;
+      filter: url(#glow);
+      animation: edgeFlow 0.6s linear infinite;
+    }
+
+    @keyframes edgeFlow {
+      to { stroke-dashoffset: -20; }
+    }
+
+    .edge.flow-dot {
+      stroke: none;
+      fill: var(--accent-mint);
+    }
+
+    /* ── Nodes ─────────────────────────────────────────── */
+    .node-group {
+      cursor: default;
+      transition: transform 0.2s;
+    }
+
+    .node-group:hover {
+      transform: scale(1.02);
+    }
+
+    .node-bg {
+      fill: var(--bg-node);
+      stroke: var(--border);
+      stroke-width: 1.5;
+      rx: 12;
+      ry: 12;
+      transition: all 0.3s;
+    }
+
+    .node-group.active .node-bg {
+      stroke: var(--node-color);
+      filter: drop-shadow(0 0 12px var(--node-glow));
+    }
+
+    .node-group.completed .node-bg {
+      stroke: var(--accent-mint);
+      stroke-width: 2;
+      opacity: 0.9;
+    }
+
+    .node-label {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      fill: var(--text);
+      text-anchor: middle;
+    }
+
+    .node-desc {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      fill: var(--text-muted);
+      text-anchor: middle;
+    }
+
+    /* Node colors */
+    .node-rag .node-bg { --node-color: var(--accent-sky); --node-glow: var(--glow-sky); }
+    .node-affect .node-bg { --node-color: var(--accent-rose); --node-glow: rgba(224,122,122,0.4); }
+    .node-csm .node-bg { --node-color: var(--accent-amber); --node-glow: rgba(212,165,116,0.4); }
+    .node-tutor .node-bg { --node-color: var(--accent-sage); --node-glow: var(--glow-sage); }
+    .node-coach .node-bg { --node-color: var(--accent-mint); --node-glow: var(--glow-mint); }
+    .node-critic .node-bg { --node-color: var(--accent-amber); --node-glow: rgba(212,165,116,0.4); }
+    .node-ld .node-bg { --node-color: var(--accent-sky); --node-glow: var(--glow-sky); }
+    .node-metacog .node-bg { --node-color: var(--accent-earth); --node-glow: rgba(184,150,106,0.4); }
+    .node-parliament .node-bg { --node-color: var(--accent-sage); --node-glow: var(--glow-sage); }
+    .node-risk .node-bg { --node-color: var(--accent-rose); --node-glow: rgba(224,122,122,0.4); }
+
+    /* ── Status Panel ───────────────────────────────────── */
+    .status-panel {
+      position: relative;
+      z-index: 1;
+      margin: 0 2rem 2rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .status-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .status-content {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .status-content .winner {
+      color: var(--accent-mint);
+      font-weight: 600;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-mint);
+      display: inline-block;
+      margin-right: 8px;
+      animation: pulse 1.5s ease-in-out infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .agent-scores {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .score-chip {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--bg-node);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      transition: all 0.3s;
+    }
+
+    .score-chip.highlight {
+      border-color: var(--accent-mint);
+      color: var(--accent-mint);
+      background: rgba(122,154,110,0.15);
+    }
+
+    /* ── Tooltip (detail on hover) ───────────────────────── */
+    .node-tooltip {
+      position: fixed;
+      z-index: 100;
+      max-width: 340px;
+      padding: 12px 14px;
+      background: linear-gradient(145deg, #1a2028 0%, #0f1419 100%);
+      border: 1px solid var(--accent-sage);
+      border-radius: 12px;
+      box-shadow: 0 0 30px rgba(139,154,122,0.25), 0 8px 24px rgba(0,0,0,0.5);
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--text);
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.95) translateY(4px);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .node-tooltip.visible {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    .node-tooltip strong { color: var(--accent-mint); }
+    .node-tooltip code { background: #0d1117; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+
+    /* ── Node badges (inline detail) ─────────────────────── */
+    .node-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      fill: var(--text-muted);
+      opacity: 0.85;
+    }
+    .node-group:hover .node-badge { fill: var(--accent-sage); opacity: 1; }
+
+    /* ── Parliament score bars in diagram ────────────────── */
+    .parliament-scores {
+      display: none;
+      position: absolute;
+      bottom: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 85%;
+      max-width: 700px;
+      background: rgba(22,27,34,0.95);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      z-index: 10;
+    }
+    .parliament-scores.visible { display: block; animation: slideUp 0.4s ease; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0;
+      font-size: 11px;
+    }
+    .score-row .label { width: 100px; color: var(--text-muted); }
+    .score-row .bar-wrap { flex: 1; height: 14px; background: var(--bg-dark); border-radius: 7px; overflow: hidden; }
+    .score-row .bar {
+      height: 100%;
+      border-radius: 7px;
+      transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .score-row.winner .label { color: var(--accent-mint); font-weight: 600; }
+    .score-row.winner .bar { background: linear-gradient(90deg, var(--accent-sage), var(--accent-mint)); box-shadow: 0 0 10px var(--glow-mint); }
+
+    /* ── Enhanced glow & pulse ───────────────────────────── */
+    .node-group.active .node-bg {
+      animation: nodePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes nodePulse {
+      0%, 100% { filter: drop-shadow(0 0 12px var(--node-glow)); }
+      50% { filter: drop-shadow(0 0 24px var(--node-glow)) drop-shadow(0 0 8px var(--node-color)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="gradient-bg"></div>
+
+  <header class="header">
+    <h1>EduwHealth 2.0 · Agent Workflow</h1>
+    <p>RAG → Affect → CSM → [Agents] → Parliament → Risk</p>
+  </header>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="btn-run">▶ 运行一次</button>
+    <button class="btn" id="btn-loop">循环演示</button>
+  </div>
+
+  <div id="node-tooltip" class="node-tooltip"></div>
+
+  <div class="canvas-wrap">
+    <div class="flow-canvas" style="position:relative">
+      <svg class="flow-svg" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="gradSage" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#8b9a7a"/>
+            <stop offset="100%" stop-color="#7a9a6e"/>
+          </linearGradient>
+          <linearGradient id="gradFlow" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#8b9a7a"><animate attributeName="stop-opacity" values="0.6;1;0.6" dur="1.2s" repeatCount="indefinite"/></stop>
+            <stop offset="50%" stop-color="#7a9a6e"><animate attributeName="stop-opacity" values="1;0.6;1" dur="1.2s" repeatCount="indefinite"/></stop>
+            <stop offset="100%" stop-color="#7a9a8e"><animate attributeName="stop-opacity" values="0.6;1;0.6" dur="1.2s" repeatCount="indefinite"/></stop>
+          </linearGradient>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-sage)"/>
+          </marker>
+        </defs>
+
+        <!-- Edges -->
+        <path class="edge" id="e-rag-affect" d="M 180 85 L 280 85"/>
+        <path class="edge" id="e-affect-csm" d="M 380 85 L 480 85"/>
+        <path class="edge" id="e-csm-tutor" d="M 580 85 L 580 155 L 180 155 L 180 205"/>
+        <path class="edge" id="e-csm-coach" d="M 580 85 L 580 155 L 340 155 L 340 205"/>
+        <path class="edge" id="e-csm-critic" d="M 580 85 L 580 155 L 500 155 L 500 205"/>
+        <path class="edge" id="e-csm-ld" d="M 580 85 L 580 155 L 660 155 L 660 205"/>
+        <path class="edge" id="e-csm-metacog" d="M 580 85 L 580 155 L 820 155 L 820 205"/>
+        <path class="edge" id="e-tutor-parliament" d="M 180 290 L 180 360 L 580 360"/>
+        <path class="edge" id="e-coach-parliament" d="M 340 290 L 340 360 L 580 360"/>
+        <path class="edge" id="e-critic-parliament" d="M 500 290 L 500 360 L 580 360"/>
+        <path class="edge" id="e-ld-parliament" d="M 660 290 L 660 360 L 580 360"/>
+        <path class="edge" id="e-metacog-parliament" d="M 820 290 L 820 360 L 580 360"/>
+        <path class="edge" id="e-parliament-risk" d="M 680 360 L 900 387"/>
+
+        <!-- Nodes (hover for detail tooltip) -->
+        <g class="node-group node-rag" id="node-rag" data-node="rag" data-tip="rag">
+          <rect class="node-bg" x="40" y="50" width="140" height="70"/>
+          <text class="node-label" x="110" y="78">RAG</text>
+          <text class="node-desc" x="110" y="95">知识检索 k=6 depth=2</text>
+          <text class="node-badge" x="110" y="112">→ rag_context · rag_evidence</text>
+        </g>
+        <g class="node-group node-affect" id="node-affect" data-node="affect" data-tip="affect">
+          <rect class="node-bg" x="240" y="50" width="140" height="70"/>
+          <text class="node-label" x="310" y="78">Affect</text>
+          <text class="node-desc" x="310" y="95">EmotionDetector</text>
+          <text class="node-badge" x="310" y="112">→ emotion dict</text>
+        </g>
+        <g class="node-group node-csm" id="node-csm" data-node="csm_update" data-tip="csm">
+          <rect class="node-bg" x="440" y="50" width="140" height="70"/>
+          <text class="node-label" x="510" y="78">CSM Update</text>
+          <text class="node-desc" x="510" y="95">EWMA α=0.35 · 4-dim</text>
+          <text class="node-badge" x="510" y="112">flags · ld_profile</text>
+        </g>
+        <g class="node-group node-tutor" id="node-tutor" data-node="tutor" data-tip="tutor">
+          <rect class="node-bg" x="120" y="205" width="120" height="85"/>
+          <text class="node-label" x="180" y="235">Tutor</text>
+          <text class="node-desc" x="180" y="255">教学辅导 pri=0.6</text>
+          <text class="node-badge" x="180" y="275">score ∝ 1−0.5×WM</text>
+        </g>
+        <g class="node-group node-coach" id="node-coach" data-node="coach" data-tip="coach">
+          <rect class="node-bg" x="280" y="205" width="120" height="85"/>
+          <text class="node-label" x="340" y="235">Coach</text>
+          <text class="node-desc" x="340" y="255">动机支持 pri=0.9</text>
+          <text class="node-badge" x="340" y="275">mot↓ / affect负 ↑</text>
+        </g>
+        <g class="node-group node-critic" id="node-critic" data-node="critic" data-tip="critic">
+          <rect class="node-bg" x="440" y="205" width="120" height="85"/>
+          <text class="node-label" x="500" y="235">Critic</text>
+          <text class="node-desc" x="500" y="255">安全审核 pri=0.5</text>
+          <text class="node-badge" x="500" y="275">追加安全备注</text>
+        </g>
+        <g class="node-group node-ld" id="node-ld" data-node="ld_specialist" data-tip="ld">
+          <rect class="node-bg" x="600" y="205" width="120" height="85"/>
+          <text class="node-label" x="660" y="235">LD Specialist</text>
+          <text class="node-desc" x="660" y="255">学习障碍 pri=1.0</text>
+          <text class="node-badge" x="660" y="275">LD+wm/mot/写作</text>
+        </g>
+        <g class="node-group node-metacog" id="node-metacog" data-node="metacog" data-tip="metacog">
+          <rect class="node-bg" x="760" y="205" width="120" height="85"/>
+          <text class="node-label" x="820" y="235">MetaCog</text>
+          <text class="node-desc" x="820" y="255">元认知 pri=0.7</text>
+          <text class="node-badge" x="820" y="275">WM&lt;0.4 时激活</text>
+        </g>
+        <g class="node-group node-parliament" id="node-parliament" data-node="parliament" data-tip="parliament">
+          <rect class="node-bg" x="480" y="325" width="200" height="70"/>
+          <text class="node-label" x="580" y="355">Parliament</text>
+          <text class="node-desc" x="580" y="372">priority × prob</text>
+          <text class="node-badge" x="580" y="388">平局→高优先级胜</text>
+        </g>
+        <g class="node-group node-risk" id="node-risk" data-node="risk" data-tip="risk">
+          <rect class="node-bg" x="900" y="355" width="140" height="65"/>
+          <text class="node-label" x="970" y="383">Risk</text>
+          <text class="node-desc" x="970" y="400">low / mod / high / severe</text>
+        </g>
+      </svg>
+      <div class="parliament-scores" id="parliament-scores"></div>
+    </div>
+  </div>
+
+  <div class="status-panel" id="status-panel">
+    <div class="status-title"><span class="pulse-dot"></span>当前状态</div>
+    <div class="status-content" id="status-content">点击「运行一次」开始演示工作流</div>
+    <div class="agent-scores" id="agent-scores"></div>
+  </div>
+
+  <script>
+    const TOOLTIPS = {
+      rag: '知识检索 kb_store，k=6 depth=2 → rag_context, rag_evidence, rag_semantic, rag_structured',
+      affect: 'EmotionDetector 分析 user_input → emotion  dict，用于 CSM 与干预决策',
+      csm: '① FeatureExtractorLLM 提取认知信号 ② EWMA 更新 4 维 ③ 加载 learner profile ④ 注入 cognitive_state, intervention_flags, trajectory_flags, ld_profile',
+      tutor: '教学辅导，score = 0.6×(1−0.5×WM_load)，WM 越高分数越低',
+      coach: '动机支持，mot 低 / affect 负 / motivation_declining 时优先',
+      critic: '安全审核，pri=0.5 很少赢主位，检测到风险时追加安全备注',
+      ld: 'LD Specialist，profile 含 LD 且 (wm_overload / mot_low / 写作任务) 时 ld_prob=0.85',
+      metacog: '元认知反思，仅当 WM<0.4、affect>0、mot>0.35 且无负面标志时运行',
+      parliament: 'activation_score = priority × prob，平局时 |Δ|<0.05 按 AGENT_PRIORITY 选高者',
+      risk: 'RiskModelLLM → risk_score, risk_level, risk_reasons，low(0-0.3) / mod / high / severe(0.8-1)'
+    };
+    const NODE_TO_DOM = {
+      rag: 'node-rag', affect: 'node-affect', csm_update: 'node-csm',
+      tutor: 'node-tutor', coach: 'node-coach', critic: 'node-critic',
+      ld_specialist: 'node-ld', metacog: 'node-metacog',
+      parliament: 'node-parliament', risk: 'node-risk'
+    };
+    const EDGES = [
+      ['rag', 'affect'], ['affect', 'csm_update'],
+      ['csm_update', 'tutor'], ['csm_update', 'coach'], ['csm_update', 'critic'], ['csm_update', 'ld_specialist'], ['csm_update', 'metacog'],
+      ['tutor', 'parliament'], ['coach', 'parliament'], ['critic', 'parliament'], ['ld_specialist', 'parliament'], ['metacog', 'parliament'],
+      ['parliament', 'risk']
+    ];
+    const AGENT_NAMES = { tutor: 'Tutor', coach: 'Coach', critic: 'Critic', ld_specialist: 'LD Specialist', meta_cognition: 'MetaCog', metacog: 'MetaCog' };
+    const AGENTS = ['tutor', 'coach', 'critic', 'ld_specialist', 'metacog'];
+    const PHASES = [
+      { node: 'rag', nodes: null, edge: 'rag-affect', msg: 'RAG 检索知识库…' },
+      { node: 'affect', nodes: null, edge: 'affect-csm', msg: 'Affect 检测情绪…' },
+      { node: 'csm_update', nodes: null, edge: null, msg: 'CSM 更新认知状态、加载 learner profile…' },
+      { node: null, nodes: AGENTS, edge: null, msg: '5 个 Agent 并行运行…' },
+      { node: 'parliament', nodes: null, edge: 'parliament-risk', msg: 'Parliament 根据优先级选出主输出…' },
+      { node: 'risk', nodes: null, edge: null, msg: 'Risk 模型完成安全筛查' }
+    ];
+
+    function clearAll() {
+      Object.values(NODE_TO_DOM).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active', 'completed');
+      });
+      document.querySelectorAll('.edge').forEach(e => e.classList.remove('active'));
+      document.getElementById('agent-scores').innerHTML = '';
+      document.getElementById('parliament-scores').classList.remove('visible');
+    }
+
+    function setActive(nodeId, edgeId) {
+      clearAll();
+      const node = document.getElementById(NODE_TO_DOM[nodeId]);
+      if (node) node.classList.add('active');
+      if (edgeId) {
+        const edge = document.getElementById('e-' + edgeId);
+        if (edge) edge.classList.add('active');
+      }
+    }
+
+    function setActiveMulti(nodeIds, edgeId) {
+      clearAll();
+      (nodeIds || []).forEach(id => {
+        const node = document.getElementById(NODE_TO_DOM[id]);
+        if (node) node.classList.add('active');
+      });
+      if (edgeId) {
+        const edge = document.getElementById('e-' + edgeId);
+        if (edge) edge.classList.add('active');
+      }
+    }
+
+    function setCompleted(nodeId) {
+      const node = document.getElementById(NODE_TO_DOM[nodeId]);
+      if (node) node.classList.replace('active', 'completed');
+    }
+
+    function setCompletedMulti(nodeIds) {
+      (nodeIds || []).forEach(id => setCompleted(id));
+    }
+
+    function showParliamentResult(winner) {
+      const names = ['tutor','coach','critic','ld_specialist','metacog'];
+      const scores = {};
+      names.forEach(k => { scores[k] = 0.25 + Math.random() * 0.5; });
+      scores[winner] = 0.88 + Math.random() * 0.08;
+      const html = Object.entries(scores).map(([k, v]) =>
+        `<span class="score-chip ${k === winner ? 'highlight' : ''}">${AGENT_NAMES[k] || k}: ${v.toFixed(2)}</span>`
+      ).join('');
+      document.getElementById('agent-scores').innerHTML = html;
+      document.getElementById('status-content').innerHTML =
+        `主输出：<span class="winner">${AGENT_NAMES[winner] || winner}</span>`;
+      // In-diagram score bars
+      const ps = document.getElementById('parliament-scores');
+      const barColors = { tutor:'#7a9a8e', coach:'#7a9a6e', critic:'#d4a574', ld_specialist:'#7a9a8e', metacog:'#b8966a' };
+      ps.innerHTML = '<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px">Parliament 投票结果</div>' +
+        Object.entries(scores).map(([k, v]) =>
+          `<div class="score-row ${k === winner ? 'winner' : ''}">
+            <span class="label">${AGENT_NAMES[k] || k}</span>
+            <span class="bar-wrap"><span class="bar" style="width:0%;background:${barColors[k]||'#8b949e'}" data-w="${v*100}"></span></span>
+            <span style="width:36px;text-align:right;font-family:JetBrains Mono">${v.toFixed(2)}</span>
+          </div>`
+        ).join('');
+      ps.classList.add('visible');
+      setTimeout(() => ps.querySelectorAll('.bar').forEach(b => b.style.width = (b.dataset.w||0)+'%'), 50);
+      setTimeout(() => ps.classList.remove('visible'), 2500);
+    }
+
+    function updateStatus(msg) {
+      document.getElementById('status-content').innerHTML = msg;
+    }
+
+    async function runOnce() {
+      clearAll();
+      const agents = ['tutor', 'coach', 'ld_specialist'];
+      const winner = agents[Math.floor(Math.random() * agents.length)];
+
+      for (let i = 0; i < PHASES.length; i++) {
+        const p = PHASES[i];
+        if (p.nodes) {
+          setActiveMulti(p.nodes, p.edge);
+        } else {
+          setActive(p.node, p.edge);
+        }
+        updateStatus(p.msg || '运行中…');
+        await sleep(p.nodes ? 1200 : 600);
+
+        if (p.nodes) {
+          setCompletedMulti(p.nodes);
+        } else if (p.node === 'parliament') {
+          showParliamentResult(winner);
+          await sleep(500);
+          setCompleted('parliament');
+        } else if (p.node === 'risk') {
+          await sleep(400);
+          setCompleted('risk');
+        } else {
+          setCompleted(p.node);
+        }
+      }
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    let loopTimer = null;
+    function toggleLoop() {
+      const btn = document.getElementById('btn-loop');
+      if (loopTimer) {
+        clearInterval(loopTimer);
+        loopTimer = null;
+        btn.textContent = '循环演示';
+        clearAll();
+        updateStatus('循环已停止');
+        return;
+      }
+      btn.textContent = '停止循环';
+      function run() { runOnce().catch(() => {}); }
+      run();
+      loopTimer = setInterval(run, 8000);
+    }
+
+    document.getElementById('btn-run').addEventListener('click', () => runOnce());
+    document.getElementById('btn-loop').addEventListener('click', toggleLoop);
+
+    // Hover tooltips
+    const tip = document.getElementById('node-tooltip');
+    document.querySelectorAll('.node-group[data-tip]').forEach(g => {
+      g.style.cursor = 'pointer';
+      g.addEventListener('mouseenter', e => {
+        const key = g.dataset.tip;
+        tip.textContent = TOOLTIPS[key] || '';
+        tip.classList.add('visible');
+      });
+      g.addEventListener('mousemove', e => {
+        tip.style.left = (e.clientX + 16) + 'px';
+        tip.style.top = (e.clientY + 12) + 'px';
+      });
+      g.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+    });
+  </script>
+</body>
+</html>

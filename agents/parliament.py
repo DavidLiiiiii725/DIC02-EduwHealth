@@ -15,6 +15,15 @@ from config import AGENT_PRIORITY, AGENT_TIE_THRESHOLD
 
 
 def parliament_node(state: Dict[str, Any]) -> Dict[str, Any]:
+    # AI Hub mode: force classic RAG+LLM Q&A (tutor only)
+    if state.get("hub_mode"):
+        primary = (state.get("tutor_response", "") or "").strip()
+        return {
+            "final_response": primary,
+            "active_agent":   "tutor",
+            "_agent_scores":  {"tutor": 1.0},
+        }
+
     int_flags  = state.get("intervention_flags",  {})
     traj_flags = state.get("trajectory_flags",    {})
     cog_state  = state.get("cognitive_state",     {})

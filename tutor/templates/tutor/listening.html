@@ -1,0 +1,529 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduwHealth 2.0 — ADHD Listening</title>
+  <link rel="stylesheet" href="{% static 'tutor/css/global.css' %}">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    .shell { display:flex; height:100vh; overflow:hidden; }
+    .sidebar { width:200px; min-width:200px; }
+    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+    .topbar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 20px;
+      border-bottom:1px solid var(--border);
+      background:var(--surface);
+      flex-shrink:0;
+    }
+    .content-wrap { flex:1; display:flex; overflow:hidden; }
+    .left {
+      flex:1.4;
+      padding:20px;
+      overflow-y:auto;
+      border-right:1px solid var(--border);
+    }
+    .right {
+      flex:1;
+      padding:20px;
+      overflow-y:auto;
+    }
+    .card {
+      background:var(--surface2);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:16px 18px;
+      font-size:0.9rem;
+      line-height:1.6;
+    }
+    .form-row { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+    .field { display:flex; flex-direction:column; gap:6px; min-width:180px; flex:1; }
+    .label { font-size:0.72rem; color:var(--muted); }
+    .input, .select, .textarea {
+      border-radius:var(--radius-sm);
+      border:1px solid var(--border2);
+      background:var(--surface);
+      color:var(--text);
+      font-size:0.82rem;
+      padding:8px 10px;
+      outline:none;
+      resize:vertical;
+    }
+    .textarea { min-height:70px; }
+    .btn {
+      border:none;
+      border-radius:var(--radius-sm);
+      background:var(--blue);
+      color:#fff;
+      cursor:pointer;
+      font-size:0.82rem;
+      padding:9px 12px;
+      box-shadow:0 0 14px rgba(45,127,255,0.25);
+      white-space:nowrap;
+    }
+    .btn:disabled { opacity:0.55; cursor:default; }
+    .muted { color:var(--muted); font-size:0.75rem; }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 { margin-top:12px; margin-bottom:8px; font-weight:700; }
+    .markdown-content h1 { font-size:1.1rem; }
+    .markdown-content h2 { font-size:1.0rem; }
+    .markdown-content h3 { font-size:0.95rem; }
+    .markdown-content ul, .markdown-content ol { margin-left:20px; margin-bottom:8px; }
+    .markdown-content li { margin-bottom:4px; }
+    .markdown-content strong { font-weight:700; }
+    .markdown-content blockquote { border-left:3px solid var(--border2); padding-left:12px; margin-left:0; color:var(--muted-strong); }
+    .pager {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+      padding-bottom:10px;
+      border-bottom:1px solid var(--border);
+    }
+    .pager-left { display:flex; align-items:center; gap:8px; min-width:0; }
+    .pager-title {
+      font-size:0.78rem;
+      font-weight:700;
+      color:var(--text);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:320px;
+    }
+    .pager-step {
+      font-size:0.7rem;
+      color:var(--muted);
+      border:1px solid var(--border2);
+      padding:3px 8px;
+      border-radius:999px;
+      background:var(--surface);
+      white-space:nowrap;
+    }
+    .pager-actions { display:flex; gap:8px; align-items:center; }
+    .btn-ghost {
+      border:1px solid var(--border2);
+      background:var(--surface);
+      color:var(--text);
+      box-shadow:none;
+    }
+    .dots { display:flex; gap:6px; align-items:center; }
+    .dot {
+      width:7px; height:7px;
+      border-radius:999px;
+      background:var(--border2);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .dot.active { background:var(--blue); transform: scale(1.25); }
+    /* 听力练习音频区 */
+    .audio-card {
+      margin-top:14px;
+      padding-top:14px;
+      border-top:1px solid var(--border);
+    }
+    .audio-card-title { font-size:0.8rem; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+    .audio-passage {
+      background:var(--surface);
+      border:1px solid var(--border2);
+      border-radius:var(--radius-sm);
+      padding:12px 14px;
+      font-size:0.85rem;
+      line-height:1.6;
+      color:var(--text);
+      margin-bottom:12px;
+      max-height:120px;
+      overflow-y:auto;
+    }
+    .audio-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .audio-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 12px; border-radius:var(--radius-sm);
+      border:1px solid var(--border2); background:var(--surface);
+      color:var(--text); font-size:0.8rem; cursor:pointer;
+    }
+    .audio-btn:hover { background:var(--surface2); }
+    .audio-btn.primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+    .audio-speed-chip { padding:4px 10px; font-size:0.75rem; border-radius:999px; border:1px solid var(--border2); background:var(--surface); color:var(--text); cursor:pointer; }
+    .audio-speed-chip.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+    /* 逻辑链板块 */
+    .logic-chain-card {
+      margin-top:14px;
+      padding-top:14px;
+      border-top:1px solid var(--border);
+    }
+    .logic-chain-title { font-size:0.8rem; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+    .logic-chain-content {
+      background:var(--surface);
+      border:1px solid var(--border2);
+      border-radius:var(--radius-sm);
+      padding:14px 16px;
+      font-size:0.85rem;
+      line-height:1.7;
+      color:var(--text);
+      white-space:pre-wrap;
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="sidebar">
+    <div style="padding:20px 16px 24px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+      <div style="font-family:'Lexend',sans-serif;font-size:1rem;font-weight:800;">EduwHealth <span style="color:var(--blue)">2.0</span></div>
+      <div style="font-size:0.62rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.1em;">Cognition-Aware Tutor</div>
+    </div>
+    <nav style="padding:0 10px;flex:1;display:flex;flex-direction:column;gap:2px;">
+      <a href="/chat/"       class="nav-item"><span class="nav-icon">💬</span> Chat</a>
+      <a href="/reading/"    class="nav-item"><span class="nav-icon">📖</span> Reading</a>
+      <a href="/study-plan/" class="nav-item"><span class="nav-icon">🗓️</span> Study Plan</a>
+      <a href="/writing/"    class="nav-item"><span class="nav-icon">✍️</span> Writing</a>
+      <a href="/speaking/"   class="nav-item"><span class="nav-icon">🗣️</span> Speaking</a>
+      <a href="/listening/"  class="nav-item active"><span class="nav-icon">🎧</span> Listening</a>
+      <a href="/dashboard/"  class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+    </nav>
+    <div style="padding:16px;border-top:1px solid var(--border);margin-top:auto;">
+      <a href="/profile/" class="nav-item" style="justify-content:flex-start;">
+        <span class="learner-avatar">{{ learner.display_name|slice:":1" }}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.3;">
+          <span style="font-size:0.8rem;font-weight:500;">{{ learner.display_name }}</span>
+          <span style="font-size:0.65rem;color:var(--muted);">View Profile</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div style="font-size:0.9rem;font-weight:600;">Attention-Difficulty Friendly Listening</div>
+        <div class="muted" style="margin-top:2px;">输出为中文策略卡片，帮助你在真实环境里“更好地听”。</div>
+      </div>
+    </div>
+
+    <div class="content-wrap">
+      <div class="left">
+        <div class="card" style="margin-bottom:14px;">
+          <div style="font-size:0.8rem;font-weight:600;margin-bottom:8px;">本次听力 / 听讲场景</div>
+          <div class="form-row">
+            <div class="field">
+              <div class="label">场景（必填）</div>
+              <input id="scenario" class="input" placeholder="例如：大学大课听讲、线上课程、英语听力真题">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <div class="label">环境（可选）</div>
+              <input id="environment" class="input" placeholder="例如：教室有一点杂音、在家戴耳机、咖啡馆等">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <div class="label">这次最想达成的目标（可选）</div>
+              <textarea id="goal" class="textarea" placeholder="例如：抓住老师讲的 3 个重点；训练自己在有噪音的情况下保持专注不超过 10 分钟崩掉。"></textarea>
+            </div>
+          </div>
+          <div class="form-row" style="align-items:flex-end; justify-content:flex-end;">
+            <button class="btn" id="btn-generate" onclick="generateStrategy()">生成听力策略卡片</button>
+          </div>
+          <div class="muted" style="margin-top:4px;">
+            小提示：随便写也可以，我会自动考虑 ADHD / 焦虑下的注意力、工作记忆和自我倡导。
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="card">
+          <div id="strategy-header" style="font-size:0.8rem;font-weight:600;margin-bottom:8px;">你的专属听力策略卡片</div>
+          <div id="strategy" class="markdown-content">
+            <div class="muted">先在左侧描述一下你即将面对的听力/听讲场景，然后点击“生成听力策略卡片”。</div>
+          </div>
+          <div id="audio-section" class="audio-card" style="display:none;">
+            <div class="audio-card-title">🎧 雅思真题风格示例</div>
+            <div class="audio-passage" id="audio-passage"></div>
+            <div class="audio-controls">
+              <button class="audio-btn primary" id="audio-play-btn" onclick="toggleListeningAudio()">▶ 播放</button>
+              <button class="audio-btn" onclick="stopListeningAudio()">⏹ 停止</button>
+              <button class="audio-speed-chip active" data-speed="0.75" onclick="setListeningSpeed(this)">0.75x</button>
+              <button class="audio-speed-chip" data-speed="1" onclick="setListeningSpeed(this)">1x</button>
+              <button class="audio-speed-chip" data-speed="1.25" onclick="setListeningSpeed(this)">1.25x</button>
+            </div>
+            <div class="muted" style="margin-top:8px;font-size:0.7rem;">使用浏览器 TTS 朗读，建议用 Chrome/Edge 以获得最佳效果。</div>
+          </div>
+          <div id="logic-chain-section" class="logic-chain-card" style="display:none;">
+            <div class="logic-chain-title">🔗 案例音频逻辑链</div>
+            <button class="btn btn-ghost" id="btn-logic-chain" onclick="generateLogicChain()" style="margin-bottom:10px;">生成逻辑链</button>
+            <div id="logic-chain-content" class="logic-chain-content" style="display:none;">
+              <span class="muted">点击上方按钮，提取案例音频的逻辑结构。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CSRF = '{{ csrf_token }}';
+  let LISTENING_CARDS = [];
+  let ACTIVE_IDX = 0;
+  let CURRENT_SCENARIO = '';
+  let SAMPLE_PASSAGE = '';
+  let listeningUtterance = null;
+
+  function splitToCards(markdown) {
+    const raw = (markdown || '').trim();
+    if (!raw) return [];
+
+    // Split by strict H2 titles: lines starting with "## "
+    const lines = raw.split(/\r?\n/);
+    const sections = [];
+    let current = null;
+    for (const line of lines) {
+      const isH2 = line.startsWith('## ');
+      if (isH2) {
+        if (current) sections.push(current);
+        current = { title: line.replace(/^##\s+/, '').trim(), bodyLines: [] };
+      } else {
+        if (!current) {
+          // If model outputs preface text, attach to first section once created.
+          current = { title: '策略卡片', bodyLines: [line] };
+        } else {
+          current.bodyLines.push(line);
+        }
+      }
+    }
+    if (current) sections.push(current);
+
+    return sections
+      .map(s => ({
+        title: s.title || '策略卡片',
+        markdown: (`## ${s.title}\n` + s.bodyLines.join('\n')).trim()
+      }))
+      .filter(s => s.markdown.length > 0);
+  }
+
+  function updateStrategyHeader() {
+    const h = document.getElementById('strategy-header');
+    if (!h) return;
+    if (CURRENT_SCENARIO) {
+      h.textContent = CURRENT_SCENARIO + ' · 你的专属听力策略卡片';
+    } else {
+      h.textContent = '你的专属听力策略卡片';
+    }
+  }
+
+  function renderCard() {
+    const container = document.getElementById('strategy');
+    if (!container) return;
+    if (!LISTENING_CARDS.length) {
+      container.innerHTML = '<div class="muted">还没有内容，请先在左侧填写场景并点击“生成听力策略卡片”。</div>';
+      const as = document.getElementById('audio-section');
+      const ls = document.getElementById('logic-chain-section');
+      if (as) as.style.display = 'none';
+      if (ls) ls.style.display = 'none';
+      return;
+    }
+
+    updateStrategyHeader();
+    const audioSec = document.getElementById('audio-section');
+    if (audioSec && SAMPLE_PASSAGE) {
+      audioSec.style.display = 'block';
+      document.getElementById('audio-passage').textContent = SAMPLE_PASSAGE;
+    }
+    const logicSec = document.getElementById('logic-chain-section');
+    if (logicSec && SAMPLE_PASSAGE) {
+      logicSec.style.display = 'block';
+      document.getElementById('logic-chain-content').style.display = 'none';
+      document.getElementById('logic-chain-content').innerHTML = '<span class="muted">点击上方按钮，提取案例音频的逻辑结构。</span>';
+    }
+
+    const c = LISTENING_CARDS[ACTIVE_IDX];
+    const dots = LISTENING_CARDS.map((_, i) => `<div class="dot ${i === ACTIVE_IDX ? 'active' : ''}"></div>`).join('');
+    const prevDisabled = ACTIVE_IDX <= 0 ? 'disabled' : '';
+    const nextDisabled = ACTIVE_IDX >= LISTENING_CARDS.length - 1 ? 'disabled' : '';
+
+    container.innerHTML = `
+      <div class="pager">
+        <div class="pager-left">
+          <div class="pager-step">${ACTIVE_IDX + 1} / ${LISTENING_CARDS.length}</div>
+          <div class="pager-title">${escapeHtml(c.title || '')}</div>
+        </div>
+        <div class="pager-actions">
+          <button class="btn btn-ghost" ${prevDisabled} onclick="prevCard()">上一步</button>
+          <button class="btn" ${nextDisabled} onclick="nextCard()">下一步</button>
+        </div>
+      </div>
+      <div class="dots" style="margin-bottom:10px;">${dots}</div>
+      <div>${marked.parse(c.markdown)}</div>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return (s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function prevCard() {
+    if (ACTIVE_IDX > 0) {
+      ACTIVE_IDX -= 1;
+      renderCard();
+    }
+  }
+  function nextCard() {
+    if (ACTIVE_IDX < LISTENING_CARDS.length - 1) {
+      ACTIVE_IDX += 1;
+      renderCard();
+    }
+  }
+
+  async function generateStrategy() {
+    const btn = document.getElementById('btn-generate');
+    const scenario = document.getElementById('scenario').value.trim();
+    const environment = document.getElementById('environment').value.trim();
+    const goal = document.getElementById('goal').value.trim();
+
+    if (!scenario) {
+      alert('请至少填写一个“场景”。');
+      return;
+    }
+
+    btn.disabled = true;
+    LISTENING_CARDS = [];
+    ACTIVE_IDX = 0;
+    const container = document.getElementById('strategy');
+    if (container) container.innerHTML = '<div class="muted">生成中，请稍等 3–5 秒……</div>';
+
+    try {
+      const resp = await fetch('/api/listening/strategy/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': CSRF,
+        },
+        body: JSON.stringify({scenario, environment, goal})
+      });
+      const data = await resp.json();
+      if (!data.ok) {
+        if (container) container.innerHTML = '<div class="muted">生成失败：' + escapeHtml(data.error || '服务器错误') + '</div>';
+      } else {
+        CURRENT_SCENARIO = scenario;
+        SAMPLE_PASSAGE = (data.sample_passage || '').trim();
+        LISTENING_CARDS = splitToCards(data.strategy_markdown || '');
+        ACTIVE_IDX = 0;
+        renderCard();
+      }
+    } catch (e) {
+      if (container) container.innerHTML = '<div class="muted">网络连接失败，请稍后重试。</div>';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ── 听力练习音频（TTS） ──
+  function toggleListeningAudio() {
+    if (!window.speechSynthesis) {
+      alert('你的浏览器不支持语音朗读，请使用 Chrome 或 Edge。');
+      return;
+    }
+    if (!SAMPLE_PASSAGE) return;
+
+    const btn = document.getElementById('audio-play-btn');
+    if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+      window.speechSynthesis.pause();
+      btn.textContent = '▶ 播放';
+    } else if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      btn.textContent = '⏸ 暂停';
+    } else {
+      speakPassage(SAMPLE_PASSAGE);
+      btn.textContent = '⏸ 暂停';
+    }
+    window.speechSynthesis.addEventListener('end', function onEnd() {
+      window.speechSynthesis.removeEventListener('end', onEnd);
+      btn.textContent = '▶ 播放';
+    }, { once: true });
+  }
+
+  function speakPassage(text) {
+    if (!text || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-GB';
+    u.rate = parseFloat(document.querySelector('.audio-speed-chip.active')?.dataset?.speed || '1');
+    const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+    if (voices.length) u.voice = voices[0];
+    window.speechSynthesis.speak(u);
+    listeningUtterance = u;
+  }
+
+  function stopListeningAudio() {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const btn = document.getElementById('audio-play-btn');
+      if (btn) btn.textContent = '▶ 播放';
+    }
+  }
+
+  function setListeningSpeed(el) {
+    document.querySelectorAll('.audio-speed-chip').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  async function generateLogicChain() {
+    if (!SAMPLE_PASSAGE) {
+      alert('请先生成听力策略卡片，才能生成逻辑链。');
+      return;
+    }
+    const btn = document.getElementById('btn-logic-chain');
+    const box = document.getElementById('logic-chain-content');
+    if (!btn || !box) return;
+
+    btn.disabled = true;
+    box.style.display = 'block';
+    box.innerHTML = '<span class="muted">生成中……</span>';
+
+    try {
+      const resp = await fetch('{% url "api_listening_logic_chain" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ passage: SAMPLE_PASSAGE }),
+        credentials: 'same-origin'
+      });
+      let data;
+      try {
+        data = await resp.json();
+      } catch (_) {
+        box.innerHTML = '<span class="muted">服务器返回异常，请检查控制台或稍后重试。</span>';
+        return;
+      }
+      if (resp.ok && data.ok && data.logic_chain) {
+        box.textContent = data.logic_chain;
+      } else if (data && data.error) {
+        box.innerHTML = '<span class="muted">' + escapeHtml(data.error) + '</span>';
+      } else {
+        const errMsg = (data && data.error) ? escapeHtml(data.error) : ('HTTP ' + resp.status);
+        box.innerHTML = '<span class="muted">生成失败：' + errMsg + '</span>';
+      }
+    } catch (e) {
+      console.error('Logic chain fetch error:', e);
+      box.innerHTML = '<span class="muted">网络错误，请检查连接后重试。若策略生成正常，可能是本接口未正确部署。</span>';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // 预加载语音列表（Chrome 需异步加载）
+  if (window.speechSynthesis) {
+    speechSynthesis.getVoices();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+    }
+  }
+</script>
+</body>
+</html>
+

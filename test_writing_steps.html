@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Writing Steps Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .card { border: 1px solid #ccc; padding: 20px; margin: 10px 0; border-radius: 8px; }
+    .btn { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    #step-progress-bar { height: 4px; background: blue; transition: width 0.3s; }
+    #step-content { min-height: 200px; padding: 20px; background: #f5f5f5; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Writing Steps Test</h1>
+  
+  <div class="card">
+    <h3>测试任务文本</h3>
+    <textarea id="test-input" rows="10" style="width:100%;">你好！这次我们来写一篇议论文，主题是"公司"，目标是写给家长读者，字数大约1200字。
+
+**第一步：头脑风暴（5分钟）**
+请打开一个空白文档或拿出一张纸。设置一个5分钟的计时器。在这5分钟内，快速写下所有想法。
+
+**第二步：确定核心论点（10分钟）**
+浏览你第一步写下的点子。现在，用10分钟时间，从中提炼出一个核心观点。
+
+**第三步：填充大纲骨架（10分钟）**
+根据你的核心论点，快速搭建一个五段式议论文的骨架。
+
+**第四步：展开第一个论点段（15分钟）**
+现在，专注展开你的"论点一段"。根据你在大纲里写的那句要点，开始写这一段。</textarea>
+    <button class="btn" onclick="testParse()">解析步骤</button>
+  </div>
+
+  <div class="card" id="step-card-container" style="display:none;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+      <h3>分步指导</h3>
+      <div id="step-progress">步骤 1 / 4</div>
+    </div>
+    <div style="height:4px;background:#eee;margin-bottom:15px;">
+      <div id="step-progress-bar" style="width:25%;"></div>
+    </div>
+    <div id="step-content"></div>
+    <div>
+      <button class="btn" id="btn-prev-step" onclick="prevStep()" style="display:none;">← 上一步</button>
+      <button class="btn" id="btn-next-step" onclick="nextStep()">下一步 →</button>
+    </div>
+  </div>
+
+  <script src="../tutor/static/tutor/js/writing-steps.js"></script>
+  <script>
+    function testParse() {
+      const text = document.getElementById('test-input').value;
+      console.log('Testing with text:', text);
+      
+      if (typeof initStepCards === 'function') {
+        initStepCards(text);
+        console.log('initStepCards called, steps:', taskSteps);
+      } else {
+        console.error('initStepCards function not found!');
+      }
+    }
+  </script>
+</body>
+</html>

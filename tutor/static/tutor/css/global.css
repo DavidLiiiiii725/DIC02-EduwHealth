@@ -1,40 +1,65 @@
 /* ═══════════════════════════════════════════════════════════
-   EduwHealth 2.0 — Global Styles
-   Aesthetic: ADHD-friendly high-contrast black/white
-   Font: Lexend — designed for reading accessibility & ADHD
+   EduwHealth — Global Styles (Spark IELTS)
+   ADHD-friendly: 大地色与自然色 — 鼠尾草绿、浅米色、大地棕、柔和暖灰
+   营造平静氛围，减少焦虑
 ═══════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Space+Grotesk:wght@400;500;600&display=swap');
 
 :root {
-  --bg:        #FFFFFF;
-  --surface:   #F5F5F5;
-  --surface2:  #EBEBEB;
-  --border:    #D0D0D0;
-  --border2:   #B8B8B8;
+  /* 大地色与自然色 — 平静、减少焦虑 */
+  --bg:        #f8f6f2;           /* 浅米色 */
+  --surface:   #fffefb;           /* 暖白 */
+  --surface2:  #f0ede6;           /* 柔和暖灰 */
+  --border:    rgba(115,105,90,0.18);
+  --border2:   rgba(115,105,90,0.28);
 
-  --cyan:      #007A73;
-  --blue:      #1A5FCC;
-  --violet:    #5C2EBF;
-  --green:     #1A7A50;
-  --amber:     #A05C00;
-  --red:       #C0002E;
+  --text:      #3d362d;           /* 大地棕 */
+  --muted:     #7a7268;           /* 柔和暖灰 */
 
-  --text:      #111111;
-  --muted:     #555555;
-  --faint:     #E0E0E0;
+  /* 鼠尾草绿 (主色) */
+  --sage:          #8b9a7a;
+  --sage-light:    #e2ead8;
 
-  --radius:    12px;
-  --radius-sm: 8px;
-  --shadow:    0 2px 16px rgba(0,0,0,0.10);
+  /* 大地棕 (强调) */
+  --earth:         #8b7355;
+  --earth-light:   #e8e0d4;
 
-  /* agent colors */
-  --agent-tutor:    var(--blue);
-  --agent-coach:    var(--green);
-  --agent-ld:       var(--cyan);
-  --agent-metacog:  var(--violet);
+  /* 暖灰 / 琥珀棕 */
+  --warm-gray:     #a39d94;
+  --warm-gray-light: #e8e4de;
+  --amber:         #b8966a;
+  --amber-light:   #f5efe6;
+
+  /* 柔和警示色 */
+  --rose:          #9a6b6b;
+  --rose-light:    #f0e4e4;
+
+  /* 兼容旧变量名 */
+  --violet:        var(--sage);
+  --violet-light:  var(--sage-light);
+  --mint:          #7a9a6e;
+  --mint-light:    var(--sage-light);
+  --sky:           #7a9a8e;
+  --sky-light:     #e2ebe8;
+  --aqua:          #8ba89a;
+
+  --cyan:      var(--sky);
+  --blue:      var(--sage);
+  --green:     var(--mint);
+  --red:       var(--rose);
+  --faint:     rgba(61,54,45,0.06);
+
+  --radius:    16px;
+  --radius-sm: 10px;
+  --shadow:    0 2px 12px rgba(61,54,45,0.06);
+
+  --agent-tutor:    var(--sage);
+  --agent-coach:    var(--mint);
+  --agent-ld:       var(--sky);
+  --agent-metacog:  var(--earth);
   --agent-critic:   var(--amber);
   --agent-demo:     var(--muted);
-  --agent-error:    var(--red);
+  --agent-error:    var(--rose);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,7 +67,7 @@
 html { font-size: 16px; }
 
 body {
-  font-family: 'Lexend', sans-serif;
+  font-family: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -57,7 +82,11 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
 
 /* ── Typography ──────────────────────────────────────────── */
-h1, h2, h3 { font-family: 'Lexend', sans-serif; font-weight: 600; line-height: 1.3; }
+h1, h2, h3 {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 800;
+  line-height: 1.3;
+}
 h1 { font-size: 2.0rem; }
 h2 { font-size: 1.4rem; }
 h3 { font-size: 1.1rem; }
@@ -606,3 +635,4 @@ input[type=range]::-webkit-slider-thumb {
   cursor: pointer;
   box-shadow: 0 0 8px rgba(45,127,255,0.5);
 }
+

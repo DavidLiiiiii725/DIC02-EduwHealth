@@ -87,6 +87,10 @@ class MentalHealthRiskDetector:
 
     def _model_assess(self, text: str) -> Dict[str, Any]:
         try:
+            # Truncate text to avoid tensor size mismatch (max 512 tokens ≈ 2000 chars)
+            # Take last 2000 chars to preserve recent context
+            if len(text) > 2000:
+                text = text[-2000:]
             results = self._model(text)[0]
             raw = {r["label"]: r["score"] for r in results}
 

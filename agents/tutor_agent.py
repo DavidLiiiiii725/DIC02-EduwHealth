@@ -25,6 +25,13 @@ def tutor_agent(state: Dict[str, Any], llm) -> Dict[str, Any]:
     # ── Build adaptive instructions based on cognitive state ──────
     adaptive_instructions = []
 
+    if state.get("hub_mode"):
+        adaptive_instructions.append(
+            "AI HUB MODE: Answer the user's question using the retrieved context. "
+            "Be direct and concise (max ~70 words). "
+            "Prefer 2–4 short bullets. No long preambles."
+        )
+
     if int_flags.get("wm_overload"):
         adaptive_instructions.append(
             "IMPORTANT: Working memory is overloaded. "

@@ -15,6 +15,17 @@ class LLMClient:
         else:
             return self._ollama(system, user, temperature)
 
+    def stream_chat(self, system: str, user: str, temperature: float = 1.3):
+        """Generator that yields chunks of the response."""
+        if self.backend == "deepseek":
+            yield from self._deepseek_stream(system, user, temperature)
+        elif self.backend == "ollama":
+            yield from self._ollama_stream(system, user, temperature)
+        else:
+            # Fallback: yield complete response at once
+            result = self.chat(system, user, temperature)
+            yield result
+
     # ── Ollama ────────────────────────────────────────────────────
     def _ollama(self, system: str, user: str, temperature: float) -> str:
         payload = {
@@ -29,6 +40,32 @@ class LLMClient:
         r = requests.post(f"{OLLAMA_HOST}/api/chat", json=payload, timeout=120)
         r.raise_for_status()
         return r.json()["message"]["content"]
+
+    def _ollama_stream(self, system: str, user: str, temperature: float):
+        payload = {
+            "model": OLLAMA_MODEL,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user",   "content": user},
+            ],
+            "stream": True,
+            "options": {"temperature": temperature},
+        }
+        r = requests.post(f"{OLLAMA_HOST}/api/chat", json=payload, timeout=120, stream=True)
+        r.raise_for_status()
+        for chunk in r.iter_lines():
+            if chunk:
+                data = chunk.decode('utf-8')
+                if data.startswith('data:'):
+                    data = data[5:].strip()
+                if data and data != '[DONE]':
+                    try:
+                        import json
+                        content = json.loads(data).get("message", {}).get("content", "")
+                        if content:
+                            yield content
+                    except:
+                        pass
 
     # ── Gemini ────────────────────────────────────────────────────
     def _gemini(self, system: str, user: str, temperature: float) -> str:
@@ -69,4 +106,23 @@ class LLMClient:
         )
 
         return response.choices[0].message.content
+
+    def _deepseek_stream(self, system: str, user: str, temperature=1.3):
+        client = OpenAI(
+            api_key=DEEPSEEK_API_KEY,
+            base_url="https://api.deepseek.com")
+
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "system", "content": system},
+                      {"role": "user", "content": user}],
+            stream=True,
+            temperature=temperature,
+            max_tokens=2048,
+        )
+
+        for chunk in response:
+            content = chunk.choices[0].delta.content
+            if content:
+                yield content
 

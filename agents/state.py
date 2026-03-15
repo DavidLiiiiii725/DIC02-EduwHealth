@@ -10,6 +10,7 @@ class TutorState(TypedDict):
     user_input:  str
     learner_id:  NotRequired[str]       # injected by main.py; defaults to "default"
     turn_number: NotRequired[int]
+    hub_mode:    NotRequired[bool]      # AI Hub: concise RAG+LLM Q&A mode
 
     # ── RAG ───────────────────────────────────────────────────────
     rag_context:    NotRequired[str]

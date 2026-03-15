@@ -1171,6 +1171,127 @@ def reading_agent_assistant_tip(
     )
 
 
+def reading_agent_explain_sentence(
+    sentence: str,
+    passage_context: str,
+    ld_profile: dict,
+) -> str:
+    """解析指定句子（面向学习者的详细讲解）。"""
+    sent = (sentence or "").strip()
+    ctx = (passage_context or "").strip()
+    if not sent:
+        return "我没有拿到要解析的句子内容。你可以把那一句复制粘贴出来，我就能逐步讲解。"
+
+    llm = LLMClient()
+    all_ld = set(ld_profile.get('confirmed', []) + ld_profile.get('suspected', []))
+
+    # ADHD 学习者：更短、更结构化
+    is_adhd = 'adhd' in all_ld
+    style_note = (
+        "用户可能有 ADHD：用更短的句子、更多分点、先给结论再解释；避免大段堆叠。"
+        if is_adhd else
+        "解释要清晰、可执行，避免空泛鼓励。"
+    )
+
+    prompt = f"""
+你是雅思阅读精讲老师。用户看不懂文章中的某一句，请你用中文做“句子级精讲”。
+
+[句子]
+{sent}
+
+[上下文（可参考，可能较长）]
+{ctx[:2200]}
+
+[输出要求]
+- 先用 1 句话给出这句的“最直白中文意思”
+- 再按结构分点讲清：主干（主谓宾/从句）、关键短语、指代关系（this/they/which 等）、逻辑词（however/although/instead 等）
+- 列出 5～10 个关键词/短语：英文 + 中文释义 + 在句中作用
+- 给 2 个同义改写（英文），帮助用户换一种说法理解
+- 最后给 1 个“考试用法提示”：这句常怎么被出题（TFNG/细节/推断），读题时该抓什么
+
+约束：
+- 全部中文解释（英语示例除外）
+- 不要泛泛而谈，要紧扣这句
+- {style_note}
+""".strip()
+
+    try:
+        return llm.chat(
+            system="你是专业的雅思阅读精讲老师，擅长把长难句拆成可理解的结构并教会学生如何抓考点。",
+            user=prompt,
+            temperature=0.4,
+            max_tokens=450,
+        )
+    except Exception as exc:
+        logger.warning("reading_agent_explain_sentence LLM call failed: %s", exc)
+        # 离线兜底：用规则做“像解析”的输出（避免暴露内部状态提示）
+        s = sent
+        s_clean = re.sub(r"\s+", " ", s).strip()
+
+        # 结构切分：按常见断句标点/连词切出短块，帮助用户看清结构
+        chunks = [c.strip() for c in re.split(r"(?:,|;|:|\(|\)|\u2014|\u2013| - )", s_clean) if c.strip()]
+        main_clause = chunks[0] if chunks else s_clean
+
+        # 指代/逻辑词提示
+        logic_markers = ["however", "although", "instead", "therefore", "because", "unlike", "despite", "whereas", "rather than"]
+        ref_markers = ["this", "that", "these", "those", "it", "they", "which", "who", "whom", "whose"]
+        found_logic = [w for w in logic_markers if re.search(rf"\b{re.escape(w)}\b", s_clean, re.IGNORECASE)]
+        found_refs = [w for w in ref_markers if re.search(rf"\b{re.escape(w)}\b", s_clean, re.IGNORECASE)]
+
+        # 关键词：抽取较长单词 + 去停用词（简易）
+        stop = {
+            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by",
+            "is", "are", "was", "were", "be", "been", "being", "as", "than", "then", "that", "this",
+            "these", "those", "it", "its", "they", "their", "them", "which", "who", "when", "where",
+            "what", "how", "can", "could", "may", "might", "will", "would", "should",
+        }
+        words = [w for w in re.findall(r"\b[A-Za-z]{4,}\b", s_clean) if w.lower() not in stop]
+        # 保序去重
+        seen = set()
+        keywords = []
+        for w in words:
+            lw = w.lower()
+            if lw in seen:
+                continue
+            seen.add(lw)
+            keywords.append(w)
+            if len(keywords) >= 8:
+                break
+
+        lines = []
+        lines.append("### 这句在说什么（先抓大意）")
+        lines.append(f"- 先把它当成一句话：作者在表达 **{main_clause}**（先别被后面修饰拖住）。")
+        lines.append("")
+        lines.append("### 结构拆解（把长句拆短）")
+        if chunks and len(chunks) > 1:
+            for i, c in enumerate(chunks, start=1):
+                lines.append(f"- 片段{i}：{c}")
+        else:
+            lines.append(f"- 这句基本是一条主线：{s_clean}")
+        lines.append("")
+        lines.append("### 读题时要盯的信号")
+        if found_logic:
+            lines.append(f"- **逻辑词**：{', '.join(found_logic)}（通常对应转折/因果/对比，答案常躲在它附近）")
+        else:
+            lines.append("- **逻辑词**：先找转折/因果/对比词（例如 however/because/unlike），这类词决定句子“态度/方向”。")
+        if found_refs:
+            lines.append(f"- **指代词**：{', '.join(found_refs)}（问自己：它指代的是前面哪个名词/观点？）")
+        else:
+            lines.append("- **指代词**：注意 this/they/which 等，先把“它指谁”搞清楚，很多题就在这里卡住。")
+        lines.append("")
+        lines.append("### 关键词/短语（先认识再理解）")
+        if keywords:
+            for w in keywords:
+                lines.append(f"- {w}：建议你先在句子里找到它的位置，判断它在修饰谁/描述什么。")
+        else:
+            lines.append("- 这句关键词不明显：你先圈出所有“名词/动词/形容词”，再看它们之间的关系。")
+        lines.append("")
+        lines.append("### 考试用法提示（更像雅思题）")
+        lines.append("- 这类句子常被用来考 **细节定位** 或 **TFNG（是否被明确提到）**。做题顺序：先找逻辑词→再找核心名词→最后确认是否“明确说了/只是暗示/根本没提”。")
+
+        return "\n".join(lines)
+
+
 # ── Question-to-paragraph mapper ──────────────────────────────────
 
 def _score_question_paragraph_overlap(question_text: str, para_body: str) -> float:

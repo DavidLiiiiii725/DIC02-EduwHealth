@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduwHealth 2.0 — Agent Workflow Charts</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f8f6f2;
+      color: #3d362d;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.6;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    h2 {
+      font-size: 1.1rem;
+      margin: 32px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #8b9a7a;
+      color: #8b7355;
+    }
+    .chart {
+      background: #fffefb;
+      border: 1px solid rgba(115,105,90,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    .chart .mermaid { display: flex; justify-content: center; }
+    .subtitle { color: #7a7268; font-size: 0.9rem; margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+  <h1>EduwHealth 2.0 — Agent Workflow Charts</h1>
+  <p class="subtitle">Reading · Writing · Speaking · Listening</p>
+
+  <h2>1. Reading Agent</h2>
+  <div class="chart">
+    <div class="mermaid">
+flowchart TB
+    subgraph Input
+        A[Upload IELTS PDF] --> B[Extract Paragraph Images]
+        B --> C[Extract Questions from PDF]
+        C --> D[Map Questions to Paragraphs]
+    end
+
+    subgraph Preflight
+        D --> E[Preflight Tips]
+        E --> F[Create ReadingAttempt]
+    end
+
+    subgraph SectionLoop["Section-by-Section Loop"]
+        F --> G[Guide Section]
+        G --> H{User Action}
+        H -->|Read & Answer| I[Submit Answer]
+        H -->|Stuck| J[Request Hint]
+        H -->|Ask AI Hub| K[Explain Sentence]
+        
+        I --> L[Evaluate Answer]
+        L --> M{Correct?}
+        M -->|Yes| N[Next Section]
+        M -->|No| O[Show Strategy]
+        O --> H
+        
+        J --> H
+        K --> H
+        
+        N --> P{More Sections?}
+        P -->|Yes| G
+        P -->|No| Q[Complete Attempt]
+    end
+
+    Q --> R[Final Strategy Summary]
+
+    style G fill:#8b9a7a,color:#fff
+    style I fill:#8b9a7a,color:#fff
+    style L fill:#8b9a7a,color:#fff
+    </div>
+  </div>
+
+  <h2>2. Writing Agent</h2>
+  <div class="chart">
+    <div class="mermaid">
+flowchart TB
+    subgraph Input
+        A[User Config] --> B[Generate IELTS Question]
+        B --> C[Generate Step-by-Step Guide]
+    end
+
+    subgraph TaskSetup
+        C --> D[Display Question + Steps]
+        D --> E[Parse Steps for UI]
+    end
+
+    subgraph WritingLoop["Writing Loop"]
+        E --> F[User Draft]
+        F --> G{User Action}
+        G -->|Get Feedback| H[generate_adhd_writing_feedback]
+        G -->|Mind Map| I[Open Mindmap]
+        G -->|Voice Input| J[STT Insert]
+        G -->|AI Hub| K[Chat with draft context]
+        
+        H --> L[Display Feedback + Scores]
+        L --> G
+        I --> G
+        J --> G
+        K --> G
+    end
+
+    F -.-> N[Stuck: 3min no input]
+    N -.-> O[Auto-open AI Hub]
+    O -.-> G
+
+    style C fill:#8b9a7a,color:#fff
+    style H fill:#8b9a7a,color:#fff
+    </div>
+  </div>
+
+  <h2>3. Speaking Agent</h2>
+  <div class="chart">
+    <div class="mermaid">
+flowchart TB
+    subgraph Input
+        A[User Config] --> B[Generate ADHD Speaking Pack]
+    end
+
+    subgraph PackOutput
+        B --> C[Markdown Pack]
+        C --> D[Split into Parts]
+        D --> E[Part-by-Part + Prev/Next]
+    end
+
+    subgraph PracticeLoop["Practice Loop"]
+        E --> F{User Action}
+        F -->|Send to Coach| G[speaking_coach_reply]
+        F -->|Next Part| H[Advance Part]
+        F -->|AI Hub| I[Chat with Part context]
+        
+        G --> J[Micro feedback + Better version + Next prompt]
+        J --> K[Append to History]
+        K --> F
+        
+        H --> E
+        I --> F
+    end
+
+    style B fill:#e8796b,color:#fff
+    style G fill:#e8796b,color:#fff
+    </div>
+  </div>
+
+  <h2>4. Listening Agent</h2>
+  <div class="chart">
+    <div class="mermaid">
+flowchart TB
+    subgraph Input
+        A[User Config] --> B[Generate Listening Strategy]
+    end
+
+    subgraph StrategyOutput
+        B --> C[Markdown Strategy Cards]
+        C --> D[Split to Cards]
+        D --> E[Part-by-Part + Dots]
+    end
+
+    subgraph AudioSection
+        B --> F[Generate Sample Passage]
+        F --> G[Display Passage]
+        G --> H[TTS Playback]
+    end
+
+    subgraph LogicChain
+        H --> I{User Action}
+        I -->|Generate Logic Chain| J[extract_logic_chain]
+        J --> K[Display Logic Chain]
+        K --> I
+    end
+
+    E --> I
+    I -->|Prev/Next| E
+
+    style B fill:#7a9a8e,color:#fff
+    style F fill:#7a9a8e,color:#fff
+    style J fill:#6a8a7e,color:#fff
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1570 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduwHealth 2.0 — ADHD Writing</title>
+  <link rel="stylesheet" href="{% static 'tutor/css/global.css' %}">
+  <script src="{% static 'tutor/js/writing-steps.js' %}" defer></script>
+  <script src="{% static 'tutor/js/writing-steps.js' %}" defer></script>
+  <script src="{% static 'tutor/js/writing-steps.js' %}" defer></script>
+  <script src="{% static 'tutor/js/writing-steps.js' %}" defer></script>
+  <script src="{% static 'tutor/js/writing-steps.js' %}" defer></script>
+  <script src="{% static 'tutor/js/writing-steps.js' %}" defer></script>
+  <script src="{% static 'tutor/js/writing-steps.js' %}" defer></script>
+  <style>
+    .shell { display:flex; height:100vh; overflow:hidden; }
+    .sidebar { width:200px; min-width:200px; }
+    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+    .topbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 20px;
+      border-bottom:1px solid var(--border);
+      background:var(--surface);
+      flex-shrink:0;
+      gap:16px;
+    }
+    .content-wrap { flex:1; display:flex; overflow:hidden; }
+    .left {
+      flex:2;
+      padding:20px;
+      overflow-y:auto;
+      border-right:1px solid var(--border);
+    }
+    .right {
+      flex:1.2;
+      display:flex;
+      flex-direction:column;
+      padding:20px;
+      overflow:hidden;
+      gap:12px;
+    }
+    .card {
+      background:var(--surface2);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:16px 18px;
+      font-size:0.9rem;
+      line-height:1.7;
+    }
+    .form-row { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+    .field { display:flex; flex-direction:column; gap:6px; min-width:180px; flex:1; }
+    .label { font-size:0.72rem; color:var(--muted); }
+    .input, .select, .textarea {
+      border-radius:var(--radius-sm);
+      border:1px solid var(--border2);
+      background:var(--surface);
+      color:var(--text);
+      font-size:0.82rem;
+      padding:8px 10px;
+      outline:none;
+      width:100%;
+    }
+    .textarea { resize:vertical; min-height:120px; }
+    .btn {
+      border:none;
+      border-radius:var(--radius-sm);
+      background:var(--blue);
+      color:#fff;
+      cursor:pointer;
+      padding:8px 12px;
+      font-size:0.82rem;
+      font-weight:600;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .btn:disabled { opacity:0.6; cursor:not-allowed; }
+    .subtle { color:var(--muted); font-size:0.78rem; }
+    .mono {
+      white-space:pre-wrap;
+      word-break:break-word;
+      background:rgba(61,54,45,0.04);
+      border:1px dashed var(--border2);
+      border-radius:12px;
+      padding:12px 14px;
+      font-size:0.86rem;
+    }
+    .sticky-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+
+    /* 顶部提示条：改成更接近 Reading 页 spark-agent-bar 的紧凑信息密度 */
+    .reminder-pill {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border-radius:18px;
+      padding:10px 14px;
+      background:linear-gradient(135deg, #8b9a7a, #7a8b6a);
+      color:#fff;
+      max-width:480px;
+      font-size:0.9rem;
+    }
+
+    .reminder-copy {
+      flex:1;
+      min-width:0;
+    }
+
+    .reminder-copy h3 {
+      margin:0;
+      font-family:'Nunito',system-ui,sans-serif;
+      font-weight:800;
+      font-size:0.9rem;
+      letter-spacing:0.04em;
+      text-transform:uppercase;
+    }
+
+    .reminder-copy p {
+      margin:3px 0 0;
+      font-size:0.8rem;
+      line-height:1.5;
+      opacity:0.95;
+    }
+
+    .reminder-status {
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      align-items:flex-end;
+      font-size:0.7rem;
+    }
+
+    .reminder-chip {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:3px 9px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.22);
+      color:rgba(255,252,248,0.96);
+      backdrop-filter:blur(10px);
+      white-space:nowrap;
+    }
+
+    .metrics-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      font-size:0.72rem;
+      color:var(--muted);
+      align-items:center;
+    }
+
+    .timer-chip {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid var(--border2);
+      font-size:0.72rem;
+    }
+
+    .score-card {
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:0.75rem;
+    }
+
+    .score-row {
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .score-label {
+      min-width:90px;
+      color:var(--muted);
+    }
+
+    .score-bar-track {
+      flex:1;
+      height:4px;
+      border-radius:2px;
+      background:var(--faint);
+      overflow:hidden;
+    }
+
+    .score-bar-fill {
+      height:100%;
+      border-radius:2px;
+      background:var(--blue);
+      transition:width 0.4s ease;
+    }
+
+    .score-value {
+      min-width:32px;
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+    }
+
+    /* 思维导图小画板（覆盖层） */
+    .mindmap-overlay {
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:120;
+    }
+
+    .mindmap-overlay.open {
+      display:flex;
+    }
+
+    .mindmap-board {
+      width:80vw;
+      max-width:960px;
+      height:70vh;
+      background:var(--surface);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      box-shadow:0 18px 40px rgba(61,54,45,0.2);
+      display:flex;
+      flex-direction:column;
+    }
+
+    .mindmap-board.expanded {
+      width:92vw;
+      height:82vh;
+    }
+
+    .mindmap-toolbar {
+      padding:8px 12px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      font-size:0.8rem;
+    }
+
+    .mindmap-toolbar-buttons {
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .mindmap-toolbar button {
+      border-radius:var(--radius-sm);
+      border:1px solid var(--border2);
+      background:var(--surface2);
+      padding:4px 10px;
+      font-size:0.75rem;
+      cursor:pointer;
+      color:var(--muted);
+    }
+
+    .mindmap-toolbar button.primary {
+      background:var(--blue);
+      color:#fff;
+      border-color:var(--blue);
+    }
+
+    #mindmap-canvas {
+      flex:1;
+      background:var(--bg);
+      cursor:crosshair;
+    }
+
+    .mindmap-node-label {
+      font-size:0.75rem;
+      fill:var(--text);
+    }
+
+    .stt-note {
+      font-size:0.7rem;
+      color:var(--muted);
+    }
+
+    .spelling-hints {
+      font-size:0.75rem;
+      color:var(--muted);
+      margin-top:4px;
+    }
+
+    .spelling-chip {
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px dashed var(--border2);
+      margin-right:4px;
+      margin-bottom:3px;
+      cursor:pointer;
+    }
+
+    .adaptive-timer-time {
+      font-family:'Lexend',sans-serif;
+      font-size:1.3rem;
+      font-weight:600;
+      color:var(--earth);
+      letter-spacing:0.06em;
+    }
+
+    .adaptive-timer-note {
+      font-size:0.72rem;
+      margin-top:2px;
+    }
+
+    .topbar-timer {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      padding:6px 10px;
+      border-radius:var(--radius-sm);
+      border:1px dashed var(--border2);
+      background:rgba(255,255,255,0.6);
+      min-width:210px;
+    }
+
+    .topbar-timer-label {
+      font-size:0.72rem;
+      color:var(--muted);
+    }
+
+    .topbar-timer-main {
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .topbar-timer-toggle {
+      border:none;
+      border-radius:999px;
+      padding:4px 10px;
+      font-size:0.72rem;
+      cursor:pointer;
+      background:var(--blue);
+      color:#fff;
+    }
+
+    /* AI Hub typing indicator + bionic reading，用于 Writing 页浮窗 */
+    .typing-indicator {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px 0;
+    }
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+      animation: typingBounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes typingBounce {
+      0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+
+    .bionic strong {
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="sidebar">
+    <div style="padding:20px 16px 24px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+      <div style="font-family:'Lexend',sans-serif;font-size:1rem;font-weight:800;">EduwHealth <span style="color:var(--blue)">2.0</span></div>
+    </div>
+    <nav style="padding:0 10px;flex:1;display:flex;flex-direction:column;gap:2px;">
+      <a href="/chat/"       class="nav-item"><span class="nav-icon">💬</span> Chat</a>
+      <a href="/reading/"    class="nav-item"><span class="nav-icon">📖</span> Reading</a>
+      <a href="/study-plan/" class="nav-item"><span class="nav-icon">🗓️</span> Study Plan</a>
+      <a href="/writing/"    class="nav-item active"><span class="nav-icon">✍️</span> Writing</a>
+      <a href="/speaking/"   class="nav-item"><span class="nav-icon">🗣️</span> Speaking</a>
+      <a href="/listening/"  class="nav-item"><span class="nav-icon">🎧</span> Listening</a>
+      <a href="/dashboard/"  class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+    </nav>
+    <div style="padding:16px;border-top:1px solid var(--border);margin-top:auto;">
+      <a href="/profile/" class="nav-item" style="justify-content:flex-start;">
+        <span class="learner-avatar">{{ learner.display_name|slice:":1" }}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.3;">
+          <span style="font-size:0.8rem;font-weight:500;">{{ learner.display_name }}</span>
+          <span style="font-size:0.65rem;color:var(--muted);">View Profile</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="pulse" style="background:var(--green)"></div>
+        <div style="font-family:'Lexend',sans-serif;font-weight:700;">Dysgraphia 友好写作</div>
+        <span class="tag tag-blue">分步写作</span>
+      </div>
+      <div class="topbar-timer">
+        <div class="topbar-timer-label">IELTS 模拟倒计时</div>
+        <div class="topbar-timer-main">
+          <span class="adaptive-timer-time" id="adaptive-timer-display">--:--</span>
+          <button type="button" id="adaptive-timer-toggle" class="topbar-timer-toggle">暂停</button>
+        </div>
+        <div class="adaptive-timer-note" id="adaptive-timer-note">首次练习建议用时 30 分钟</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <div class="reminder-pill">
+          <div class="reminder-copy">
+            <h3>Writing plan is ready</h3>
+            <p id="reminder-text">今天按小步骤完成一篇练习，系统会根据你的速度自动调节时长。</p>
+          </div>
+          <div class="reminder-status">
+            <div class="reminder-chip">
+              <span>模式：</span><span>分步写作</span>
+            </div>
+            <div class="reminder-chip">
+              <span>时间：</span><span>约 30 分钟</span>
+            </div>
+          </div>
+        </div>
+        <div class="subtle">写不动时也没关系，先写下 2–3 个关键想法就好。</div>
+      </div>
+    </div>
+
+    <div class="content-wrap">
+      <div class="left">
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-family:'Lexend',sans-serif;font-weight:700;">生成写作任务</div>
+            <div class="toggle-group" id="task-size-toggle">
+              <button type="button" class="toggle-chip active" data-size="big" onclick="setTaskSize('big')">大作文</button>
+              <button type="button" class="toggle-chip" data-size="small" onclick="setTaskSize('small')">小作文</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <div class="label">主题（可空）</div>
+              <input class="input" id="topic" placeholder="例如：如何理解 ADHD" />
+            </div>
+            <div class="field">
+              <div class="label">文体</div>
+              <select class="select" id="genre">
+                <option value="科普短文">科普短文</option>
+                <option value="议论文">议论文</option>
+                <option value="记叙文">记叙文</option>
+                <option value="演讲稿">演讲稿</option>
+                <option value="公众号文章">公众号文章</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="label">目标读者</div>
+              <select class="select" id="audience">
+                <option value="普通大众">普通大众</option>
+                <option value="学生">学生</option>
+                <option value="家长">家长</option>
+                <option value="老师">老师</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="label">目标字数</div>
+              <select class="select" id="target_words">
+                <option value="300">300</option>
+                <option value="600" selected>600</option>
+                <option value="900">900</option>
+                <option value="1200">1200</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="label">难度</div>
+              <select class="select" id="difficulty">
+                <option value="easy">easy</option>
+                <option value="normal" selected>normal</option>
+                <option value="hard">hard</option>
+              </select>
+            </div>
+          </div>
+          <div class="sticky-actions">
+            <button class="btn" id="btn-generate" onclick="generateTask()">
+              <span id="gen-spinner" class="spinner" style="display:none;"></span>
+              生成任务与大纲
+            </button>
+            <button class="btn" style="background:var(--earth);" onclick="copyAll()">复制全部到草稿区</button>
+          </div>
+          <div class="subtle" style="margin-top:10px;">
+            建议节奏：先列 3 个要点 → 再补充每段细节 → 最后统一润色。
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px;">
+          <div style="font-family:'Lexend',sans-serif;font-weight:700;margin-bottom:10px;">📝 写作题目</div>
+          <div id="ielts-question-block" style="margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="ielts-question-badge" class="tag tag-muted" style="display:none;">雅思真题</span>
+              <span id="ielts-question-source" class="subtle" style="display:none;"></span>
+            </div>
+            <div id="ielts-question-text" style="margin-top:6px;font-size:0.86rem;line-height:1.6;"></div>
+          </div>
+        </div>
+
+        <!-- 分步卡片式任务展示 -->
+        <div class="card" id="step-card-container" style="margin-bottom:12px;display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div>
+              <div style="font-family:'Lexend',sans-serif;font-weight:700;">🎯 如何完成这篇作文</div>
+              <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">把大任务拆成小步骤，一步一步来</div>
+            </div>
+            <div id="step-progress" style="font-size:0.75rem;color:var(--muted);">步骤 1 / 4</div>
+          </div>
+          
+          <!-- 进度条 -->
+          <div style="height:4px;background:var(--faint);border-radius:2px;margin-bottom:16px;overflow:hidden;">
+            <div id="step-progress-bar" style="height:100%;background:var(--blue);width:25%;transition:width 0.3s ease;"></div>
+          </div>
+
+          <!-- 当前步骤内容 -->
+          <div id="step-content" style="font-size:0.9rem;line-height:1.7;margin-bottom:16px;min-height:200px;">
+            <!-- 步骤内容会动态插入这里 -->
+          </div>
+
+          <!-- 导航按钮 -->
+          <div style="display:flex;gap:8px;justify-content:space-between;">
+            <button class="btn" id="btn-prev-step" onclick="prevStep()" style="background:var(--muted);display:none;">
+              ← 上一步
+            </button>
+            <button class="btn" id="btn-next-step" onclick="nextStep()">
+              下一步 →
+            </button>
+          </div>
+        </div>
+
+        <!-- 原始完整任务（折叠显示） -->
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-family:'Lexend',sans-serif;font-weight:700;">完整任务说明</div>
+            <button class="btn" style="padding:4px 10px;font-size:0.75rem;background:var(--muted);" onclick="toggleFullPrompt()">
+              <span id="toggle-prompt-text">展开</span>
+            </button>
+          </div>
+          <div class="mono" id="out-prompt" style="display:none;">（点击“生成写作任务”后查看完整说明）</div>
+        </div>
+
+      </div>
+
+      <div class="right">
+        <div class="card" style="flex:1; display:flex; flex-direction:column; gap:10px; overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div style="font-family:'Lexend',sans-serif;font-weight:700;">作答区</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button class="btn" type="button" id="mindmap-toggle">思维导图</button>
+              <button class="btn" id="btn-feedback" onclick="getFeedback()">
+                <span id="fb-spinner" class="spinner" style="display:none;"></span>
+                获取反馈
+              </button>
+            </div>
+          </div>
+          <div class="metrics-row">
+            <div class="timer-chip">
+              ⏱ <span id="writing-timer-display">--:--</span>
+            </div>
+            <div>当前字数：<span id="draft-word-count">0</span></div>
+          </div>
+          <textarea class="textarea" id="draft" placeholder="先写 2–3 个要点，或直接粘贴你的草稿。" style="flex:1;"></textarea>
+          <div>
+            <button class="btn" type="button" id="stt-btn">🎙 语音输入</button>
+            <div class="stt-note" id="stt-status">点击开始录音，结束后把识别结果插入草稿。</div>
+          </div>
+          <div class="spelling-hints" id="spelling-hints"></div>
+          <div class="subtle">提示：卡住时先写 3 件想让读者记住的事，停笔一会儿后系统会自动给灵感。</div>
+        </div>
+
+        <div class="card" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div style="font-family:'Lexend',sans-serif;font-weight:700;">反馈与分数</div>
+            <button type="button" class="btn" style="padding:4px 10px;font-size:0.75rem;" onclick="startNextEssay()">下一篇</button>
+          </div>
+          <div class="score-card" id="ielts-score-card">
+            <div class="score-row">
+              <div class="score-label">Task Response</div>
+              <div class="score-bar-track"><div class="score-bar-fill" id="score-tr-bar" style="width:0%"></div></div>
+              <div class="score-value" id="score-tr-val">-</div>
+            </div>
+            <div class="score-row">
+              <div class="score-label">Coherence & Cohesion</div>
+              <div class="score-bar-track"><div class="score-bar-fill" id="score-cc-bar" style="width:0%"></div></div>
+              <div class="score-value" id="score-cc-val">-</div>
+            </div>
+            <div class="score-row">
+              <div class="score-label">Lexical Resource</div>
+              <div class="score-bar-track"><div class="score-bar-fill" id="score-lr-bar" style="width:0%"></div></div>
+              <div class="score-value" id="score-lr-val">-</div>
+            </div>
+            <div class="score-row">
+              <div class="score-label">Grammar Range & Acc.</div>
+              <div class="score-bar-track"><div class="score-bar-fill" id="score-gra-bar" style="width:0%"></div></div>
+              <div class="score-value" id="score-gra-val">-</div>
+            </div>
+            <div class="score-row">
+              <div class="score-label">Overall (实验)</div>
+              <div class="score-bar-track"><div class="score-bar-fill" id="score-overall-bar" style="width:0%"></div></div>
+              <div class="score-value" id="score-overall-val">-</div>
+            </div>
+          </div>
+          <div class="mono" id="out-feedback">（在左侧生成任务、粘贴或输入草稿后，点击“获取反馈”）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Writing 页的轻量 AI Hub 浮窗（右侧悬浮） -->
+<div class="ai-hub-float" id="ai-hub-float-writing" style="position:fixed;right:24px;top:60%;transform:translateY(-50%);z-index:60;font-family:'Space Grotesk',system-ui,sans-serif;"
+     onmousedown="hubDragStartWriting(event)" ontouchstart="hubDragStartWriting(event)">
+  <button id="ai-hub-toggle-writing" class="ai-hub-toggle" onclick="toggleFloatHubWriting()" style="border:none;border-radius:999px;background:var(--violet);color:#fff;width:42px;height:42px;box-shadow:0 10px 26px rgba(139,154,122,0.5);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">
+    💬
+  </button>
+  <div class="ai-hub-panel" id="ai-hub-panel-writing" style="display:none;position:absolute;right:50px;top:50%;transform:translateY(-50%);width:300px;background:#ffffff;border-radius:18px;border:1px solid var(--border);box-shadow:0 18px 45px rgba(61,54,45,0.12);padding:10px 12px;">
+    <div style="font-size:0.9rem;font-weight:600;color:var(--text);margin-bottom:6px;">Quick help while writing</div>
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">Ask for ideas, wording or structure.</div>
+    <div id="float-messages-writing" style="max-height:210px;overflow-y:auto;font-size:0.82rem;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:4px;align-items:flex-end;">
+      <textarea id="float-input-writing" rows="2" placeholder="Describe where you are stuck…" style="flex:1;font-size:0.82rem;border-radius:10px;border:1px solid var(--border2);padding:6px 8px;font-family:'Space Grotesk',system-ui,sans-serif;resize:none;"></textarea>
+      <button onclick="sendFloatMessageWriting()" style="border:none;border-radius:10px;background:var(--violet);color:#fff;padding:6px 10px;font-size:0.8rem;cursor:pointer;">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+
+// 基础工具
+function setLoading(btnId, spinnerId, on) {
+  const btn = document.getElementById(btnId);
+  const sp = document.getElementById(spinnerId);
+  if (!btn || !sp) return;
+  btn.disabled = !!on;
+  sp.style.display = on ? '' : 'none';
+}
+
+function getText(id) {
+  const el = document.getElementById(id);
+  return (el && el.textContent || '').trim();
+}
+
+function setText(id, v) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = (v || '').trim() || '（空）';
+}
+
+// ── Writing 页 AI Hub 浮窗工具 ─────────────────────────────
+
+function toggleFloatHubWriting() {
+  const panel = document.getElementById('ai-hub-panel-writing');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'block' : 'none';
+}
+
+function hubSummarize(text, maxItems) {
+  maxItems = maxItems || 6;
+  if (!text) return '';
+  let t = String(text).trim().replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+  const lines = t.split('\n').map(s => s.trim()).filter(Boolean);
+  const hasBullets = lines.some(l => /^[-*•\d]+[\.\)]/.test(l) || /^[-*•]/.test(l));
+  if (hasBullets) {
+    return lines.slice(0, maxItems).join('\n');
+  }
+  const sentences = t.split(/(?<=[。！？!?\.])\s+/).map(s => s.trim()).filter(Boolean);
+  return sentences.slice(0, maxItems).join(' ');
+}
+
+function hubEscapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function hubBionic(text) {
+  if (!text) return '';
+  const tokens = text.split(/(\s+)/);
+  const parts = tokens.map(tok => {
+    if (/^\s+$/.test(tok)) return tok;
+    if (tok.length <= 2 || /^[^A-Za-z0-9]+$/.test(tok)) {
+      return hubEscapeHtml(tok);
+    }
+    const splitIdx = Math.ceil(tok.length * 0.5);
+    const pre = hubEscapeHtml(tok.slice(0, splitIdx));
+    const rest = hubEscapeHtml(tok.slice(splitIdx));
+    return '<strong>' + pre + '</strong>' + rest;
+  });
+  return '<span class="bionic">' + parts.join('') + '</span>';
+}
+
+function addFloatMessageWriting(text, role) {
+  const box = document.getElementById('float-messages-writing');
+  if (!box) return;
+  const div = document.createElement('div');
+  div.style.alignSelf = role === 'user' ? 'flex-end' : 'flex-start';
+  div.style.maxWidth = '90%';
+  div.style.padding = '4px 6px';
+  div.style.borderRadius = '8px';
+  div.style.background = role === 'user' ? 'var(--violet)' : 'var(--surface2)';
+  div.style.color = role === 'user' ? '#fff' : 'var(--text)';
+  if (role === 'assistant') {
+    const summary = hubSummarize(text || '', 6);
+    div.innerHTML = hubBionic(summary);
+  } else {
+    div.textContent = text;
+  }
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+let floatTypingElWriting = null;
+function showFloatTypingWriting() {
+  const box = document.getElementById('float-messages-writing');
+  if (!box || floatTypingElWriting) return;
+  const div = document.createElement('div');
+  div.style.alignSelf = 'flex-start';
+  div.style.maxWidth = '90%';
+  div.style.padding = '4px 6px';
+  div.style.borderRadius = '8px';
+  div.style.background = 'var(--surface2)';
+  div.style.color = 'var(--text)';
+  div.innerHTML =
+    '<div class="typing-indicator">' +
+    '<div class="typing-dot"></div>' +
+    '<div class="typing-dot"></div>' +
+    '<div class="typing-dot"></div>' +
+    '</div>';
+  floatTypingElWriting = div;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function hideFloatTypingWriting() {
+  if (floatTypingElWriting && floatTypingElWriting.parentNode) {
+    floatTypingElWriting.parentNode.removeChild(floatTypingElWriting);
+  }
+  floatTypingElWriting = null;
+}
+
+let hubDraggingWriting = false;
+let hubStartXWriting = 0;
+let hubStartYWriting = 0;
+let hubOrigLeftWriting = 0;
+let hubOrigTopWriting = 0;
+
+function hubDragStartWriting(e) {
+  const floatEl = document.getElementById('ai-hub-float-writing');
+  if (!floatEl) return;
+  if (e.type === 'mousedown' && e.button !== 0) return;
+  hubDraggingWriting = true;
+  const rect = floatEl.getBoundingClientRect();
+  hubOrigLeftWriting = rect.left;
+  hubOrigTopWriting = rect.top;
+  const point = e.touches ? e.touches[0] : e;
+  hubStartXWriting = point.clientX;
+  hubStartYWriting = point.clientY;
+  document.addEventListener('mousemove', hubDragMoveWriting);
+  document.addEventListener('mouseup', hubDragEndWriting);
+  document.addEventListener('touchmove', hubDragMoveWriting, { passive: false });
+  document.addEventListener('touchend', hubDragEndWriting);
+}
+
+function hubDragMoveWriting(e) {
+  if (!hubDraggingWriting) return;
+  const floatEl = document.getElementById('ai-hub-float-writing');
+  if (!floatEl) return;
+  const point = e.touches ? e.touches[0] : e;
+  const dx = point.clientX - hubStartXWriting;
+  const dy = point.clientY - hubStartYWriting;
+  let newLeft = hubOrigLeftWriting + dx;
+  let newTop = hubOrigTopWriting + dy;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const rect = floatEl.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  newLeft = Math.max(8, Math.min(vw - w - 8, newLeft));
+  newTop = Math.max(8, Math.min(vh - h - 8, newTop));
+  floatEl.style.left = newLeft + 'px';
+  floatEl.style.top = newTop + 'px';
+  floatEl.style.right = 'auto';
+  floatEl.style.transform = 'translateY(0)';
+  if (e.cancelable) e.preventDefault();
+}
+
+function hubDragEndWriting() {
+  if (!hubDraggingWriting) return;
+  hubDraggingWriting = false;
+  document.removeEventListener('mousemove', hubDragMoveWriting);
+  document.removeEventListener('mouseup', hubDragEndWriting);
+  document.removeEventListener('touchmove', hubDragMoveWriting);
+  document.removeEventListener('touchend', hubDragEndWriting);
+}
+
+async function sendFloatMessageWriting() {
+  const input = document.getElementById('float-input-writing');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  addFloatMessageWriting(text, 'user');
+  input.value = '';
+
+  let context = '';
+  const draft = document.getElementById('draft');
+  if (draft) {
+    context = draft.value || '';
+  }
+
+  try {
+    showFloatTypingWriting();
+    const resp = await fetch('/api/chat/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+      body: JSON.stringify({
+        message: text,
+        context,
+        channel: 'hub',
+      })
+    });
+    const data = await resp.json();
+    hideFloatTypingWriting();
+    if (data && data.response) {
+      addFloatMessageWriting(data.response, 'assistant');
+    } else {
+      addFloatMessageWriting('Sorry, I could not get a reply right now.', 'assistant');
+    }
+  } catch (e) {
+    hideFloatTypingWriting();
+    addFloatMessageWriting('Connection issue — try again in a moment.', 'assistant');
+  }
+}
+
+// 更新雅思题目展示区
+function updateIeltsQuestion(data) {
+  const block = document.getElementById('ielts-question-block');
+  const badge = document.getElementById('ielts-question-badge');
+  const sourceEl = document.getElementById('ielts-question-source');
+  const textEl = document.getElementById('ielts-question-text');
+  if (!block || !badge || !sourceEl || !textEl) return;
+
+  if (!data || !data.ok || !data.question) {
+    badge.style.display = 'none';
+    sourceEl.style.display = 'none';
+    textEl.textContent = '';
+    return;
+  }
+
+  badge.textContent = data.is_real_past_paper ? '雅思真题' : '基于真题改写';
+  badge.style.display = 'inline-flex';
+  if (data.source) {
+    sourceEl.textContent = data.source;
+    sourceEl.style.display = 'inline';
+  } else {
+    sourceEl.style.display = 'none';
+  }
+  textEl.textContent = data.question;
+}
+
+// 大/小作文切换
+window.TASK_SIZE = 'big';
+
+function setTaskSize(size) {
+  window.TASK_SIZE = size === 'small' ? 'small' : 'big';
+  const chips = document.querySelectorAll('#task-size-toggle .toggle-chip');
+  chips.forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.size === window.TASK_SIZE);
+  });
+  // 轻量联动：根据大小作文调整推荐字数默认值（用户仍可手动改）
+  const targetSelect = document.getElementById('target_words');
+  if (targetSelect) {
+    if (window.TASK_SIZE === 'small' && targetSelect.value === '600') {
+      targetSelect.value = '300';
+    } else if (window.TASK_SIZE === 'big' && targetSelect.value === '300') {
+      targetSelect.value = '600';
+    }
+  }
+}
+
+function renderAI(id, text) {
+  if (window.AIHub && typeof window.AIHub.renderAITextInto === 'function') {
+    window.AIHub.renderAITextInto(id, text || '');
+  } else {
+    setText(id, text);
+  }
+}
+
+// 写作任务生成
+async function generateTask() {
+  setLoading('btn-generate', 'gen-spinner', true);
+  try {
+    const payload = {
+      topic: document.getElementById('topic').value,
+      genre: document.getElementById('genre').value,
+      audience: document.getElementById('audience').value,
+      target_words: parseInt(document.getElementById('target_words').value || '600', 10),
+      difficulty: document.getElementById('difficulty').value,
+      task_size: window.TASK_SIZE || 'big',
+    };
+
+    const taskResp = await fetch('/api/writing/generate/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', 'X-CSRFToken': CSRF},
+      body: JSON.stringify(payload),
+    });
+
+    const taskData = await taskResp.json();
+
+    if (!taskResp.ok || !taskData.ok) {
+      setText('out-prompt', taskData.error || '生成失败，请重试。');
+      return;
+    }
+    
+    const promptText = taskData.prompt || '';
+    setText('out-prompt', promptText);
+    // outline removed
+
+    // 初始化步骤卡片
+    if (typeof initStepCards === 'function') {
+      initStepCards(promptText);
+    }
+
+    // 显示雅思题目（从同一个接口返回）
+    if (taskData.ielts_question) {
+      updateIeltsQuestion({
+        ok: true,
+        is_real_past_paper: false,
+        source: taskData.ielts_source || 'AI Generated',
+        question: taskData.ielts_question
+      });
+    }
+  } catch (e) {
+    setText('out-prompt', '网络或服务异常，请稍后重试。');
+  } finally {
+    setLoading('btn-generate', 'gen-spinner', false);
+  }
+}
+
+function copyAll() {
+  const prompt = getText('out-prompt');
+  const checklist = getText('out-checklist');
+  const pack = [
+    '【写作任务】', prompt,
+    '',
+    '【检查清单】', checklist,
+    '',
+    '【我的草稿】',
+  ].join('\n');
+  const ta = document.getElementById('draft');
+  if (!ta) return;
+  ta.value = (ta.value || '').trim()
+    ? (pack + '\n' + ta.value)
+    : pack;
+  ta.focus();
+}
+
+// 反馈 + 评分
+async function getFeedback() {
+  setLoading('btn-feedback', 'fb-spinner', true);
+  try {
+    const resp = await fetch('/api/writing/feedback/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', 'X-CSRFToken': CSRF},
+      body: JSON.stringify({
+        prompt: getText('out-prompt'),
+        genre: document.getElementById('genre').value,
+        draft: document.getElementById('draft').value,
+      })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      setText('out-feedback', data.error || '反馈失败，请重试。');
+      return;
+    }
+    renderAI('out-feedback', data.feedback || '');
+    updateMockScores(document.getElementById('draft').value || '');
+    recordWritingSessionHistory();
+  } catch (e) {
+    setText('out-feedback', '网络或服务异常，请稍后重试。');
+  } finally {
+    setLoading('btn-feedback', 'fb-spinner', false);
+  }
+}
+
+// Mock IELTS 评分
+function mockIELTSScores(text) {
+  const words = (text.trim().match(/\S+/g) || []).length;
+  const paragraphs = text.split(/\n{2,}/).filter(p => p.trim()).length;
+
+  let tr = 5.0;
+  if (words >= 250) tr += 1.0;
+  if (words >= 350) tr += 0.5;
+  tr = Math.min(9, tr);
+
+  let cc = 5.0 + Math.min(2, paragraphs * 0.5);
+  let lr = 5.0 + Math.min(2, Math.floor(words / 120) * 0.5);
+  let gra = 5.0 + Math.min(2, Math.floor(words / 150) * 0.5);
+
+  const overall = 0.35 * tr + 0.30 * cc + 0.20 * lr + 0.15 * gra;
+  return {
+    words,
+    tr: +tr.toFixed(1),
+    cc: +cc.toFixed(1),
+    lr: +lr.toFixed(1),
+    gra: +gra.toFixed(1),
+    overall: +overall.toFixed(1),
+  };
+}
+
+function setScoreBar(idBar, idVal, score) {
+  const bar = document.getElementById(idBar);
+  const val = document.getElementById(idVal);
+  if (!bar || !val) return;
+  const pct = Math.max(0, Math.min(9, score)) / 9 * 100;
+  bar.style.width = pct + '%';
+  val.textContent = score.toFixed(1);
+}
+
+function updateMockScores(text) {
+  const s = mockIELTSScores(text || '');
+  const wc = document.getElementById('draft-word-count');
+  if (wc) wc.textContent = s.words;
+  setScoreBar('score-tr-bar', 'score-tr-val', s.tr);
+  setScoreBar('score-cc-bar', 'score-cc-val', s.cc);
+  setScoreBar('score-lr-bar', 'score-lr-val', s.lr);
+  setScoreBar('score-gra-bar', 'score-gra-val', s.gra);
+  setScoreBar('score-overall-bar', 'score-overall-val', s.overall);
+}
+
+function recordWritingSessionHistory() {
+  const draft = document.getElementById('draft');
+  if (!draft) return;
+  const text = draft.value || '';
+  const scores = mockIELTSScores(text);
+  const elapsedMs = timerTotalMs - timerRemainingMs;
+  const record = {
+    timestamp: Date.now(),
+    words: scores.words,
+    score: scores.overall,
+    durationMs: elapsedMs,
+  };
+  let arr = [];
+  try {
+    arr = JSON.parse(window.localStorage.getItem('writing_sessions') || '[]');
+  } catch (e) {
+    arr = [];
+  }
+  arr.push(record);
+  if (arr.length > 30) arr = arr.slice(-30);
+  window.localStorage.setItem('writing_sessions', JSON.stringify(arr));
+}
+
+function startNextEssay() {
+  // 1. 先把当前这篇记录进历史
+  recordWritingSessionHistory();
+
+  // 2. 计算上一轮之前的平均分，与当前分比较，如果有进步则缩短基准时间 2 分钟
+  let arr = [];
+  try {
+    arr = JSON.parse(window.localStorage.getItem('writing_sessions') || '[]');
+  } catch (e) {
+    arr = [];
+  }
+  if (arr.length >= 1) {
+    const last = arr[arr.length - 1];
+    const prev = arr.slice(0, -1);
+    let prevAvg = 0;
+    if (prev.length) {
+      prevAvg = prev.reduce((s, r) => s + (r.score || 0), 0) / prev.length;
+    }
+    if (!prev.length || last.score > prevAvg) {
+      let base = 30;
+      try {
+        base = parseInt(window.localStorage.getItem('writing_base_minutes') || '30', 10);
+      } catch (e) {
+        base = 30;
+      }
+      base = Math.max(8, base - 2);
+      window.localStorage.setItem('writing_base_minutes', String(base));
+    }
+  }
+
+  // 3. 清空当前草稿与评分显示
+  const draft = document.getElementById('draft');
+  if (draft) draft.value = '';
+  updateMockScores('');
+  const fb = document.getElementById('out-feedback');
+  if (fb) fb.textContent = '（粘贴草稿后点“获取反馈”）';
+
+  // 4. 重启自适应计时器
+  initAdaptiveTimer();
+}
+
+// 自适应计时器
+let timerTotalMs = 0;
+let timerRemainingMs = 0;
+let timerRunning = false;
+let timerHandle = null;
+
+function updateTimerDisplay() {
+  const el = document.getElementById('writing-timer-display');
+  const big = document.getElementById('adaptive-timer-display');
+  if (!el && !big) return;
+  const totalSec = Math.max(0, Math.floor(timerRemainingMs / 1000));
+  const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+  const s = String(totalSec % 60).padStart(2, '0');
+  const text = `${m}:${s}`;
+  if (el) el.textContent = text;
+  if (big) big.textContent = text;
+}
+
+function startTimer() {
+  if (timerHandle) clearInterval(timerHandle);
+  timerRunning = true;
+  timerHandle = setInterval(() => {
+    if (!timerRunning) return;
+    timerRemainingMs -= 1000;
+    if (timerRemainingMs <= 0) {
+      timerRemainingMs = 0;
+      timerRunning = false;
+      clearInterval(timerHandle);
+    }
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function initAdaptiveTimer() {
+  let baseMinutes = 30;
+  try {
+    baseMinutes = parseInt(window.localStorage.getItem('writing_base_minutes') || '30', 10);
+  } catch (e) {
+    baseMinutes = 30;
+  }
+  let minutes = baseMinutes;
+  try {
+    const raw = window.localStorage.getItem('writing_sessions');
+    if (raw) {
+      const arr = JSON.parse(raw);
+      const recent = arr.slice(-5);
+      if (recent.length) {
+        const avgScore = recent.reduce((s, r) => s + (r.score || 0), 0) / recent.length;
+        const avgWords = recent.reduce((s, r) => s + (r.words || 0), 0) / recent.length;
+        if (avgScore >= 6.5 && avgWords >= 250) {
+          // 进步明显：适当缩短建议时间，提高挑战
+          minutes = Math.max(baseMinutes * 0.6, baseMinutes * 0.8);
+        } else if (avgScore <= 5.5 || avgWords < 200) {
+          // 成绩偏低：略微放宽时间
+          minutes = Math.min(baseMinutes * 1.2, baseMinutes * 1.4);
+        }
+      }
+    }
+  } catch (e) {}
+  timerTotalMs = minutes * 60 * 1000;
+  timerRemainingMs = timerTotalMs;
+  updateTimerDisplay();
+  startTimer();
+
+  const note = document.getElementById('adaptive-timer-note');
+  if (note) {
+    if (minutes === baseMinutes) {
+      note.textContent = `首次练习建议用时 ${baseMinutes} 分钟`;
+    } else if (minutes < baseMinutes) {
+      note.textContent = `你的最近表现不错，建议挑战用时约 ${Math.round(minutes)} 分钟`;
+    } else {
+      note.textContent = `为了减轻压力，当前建议用时约 ${Math.round(minutes)} 分钟`;
+    }
+  }
+}
+
+function toggleAdaptiveTimerPause() {
+  const btn = document.getElementById('adaptive-timer-toggle');
+  if (!btn) return;
+  if (timerRemainingMs <= 0) {
+    return;
+  }
+  timerRunning = !timerRunning;
+  btn.textContent = timerRunning ? '暂停' : '继续';
+}
+
+// 卡顿检测
+let lastWordCount = 0;
+let lastStableWordCount = 0;
+let lastStableTimeMs = Date.now();
+
+function onDraftInputChanged() {
+  const draft = document.getElementById('draft');
+  if (!draft) return;
+  const text = draft.value || '';
+  const words = (text.trim().match(/\S+/g) || []).length;
+  const wc = document.getElementById('draft-word-count');
+  if (wc) wc.textContent = words;
+  lastWordCount = words;
+  // 每次输入都更新最近活动时间，但“稳定基线”单独在轮询里处理
+  updateMockScores(text);
+}
+
+setInterval(() => {
+  const draft = document.getElementById('draft');
+  if (!draft) return;
+  const text = draft.value || '';
+  const words = (text.trim().match(/\S+/g) || []).length;
+  const now = Date.now();
+
+  if (words <= 0) {
+    lastStableWordCount = 0;
+    lastStableTimeMs = now;
+    return;
+  }
+
+  // 如果字数变化很大，说明用户在积极写作，重置基线
+  if (Math.abs(words - lastStableWordCount) > 10) {
+    lastStableWordCount = words;
+    lastStableTimeMs = now;
+    return;
+  }
+
+  // 3 分钟内字数变化不超过 10 个单词，认为“卡住”
+  if (now - lastStableTimeMs >= 3 * 60 * 1000 && (words - lastStableWordCount) <= 10) {
+    lastStableTimeMs = now;
+    lastStableWordCount = words;
+
+    const snippet = text.split(/\s+/).slice(-60).join(' ');
+    const topicEl = document.getElementById('topic');
+    const topic = topicEl ? topicEl.value : '';
+    const prompt = `我在写一篇关于「${topic || '当前话题'}」的作文，过去 3 分钟几乎写不动了。根据下面这段最近的内容，请给我 3 个不同的续写思路，并各举 1-2 句示例：\n\n${snippet}`;
+
+    // 自动弹出 Writing 页的 AI Hub 浮窗并发送求助
+    toggleFloatHubWriting();
+    const input = document.getElementById('float-input-writing');
+    if (input) {
+      input.value = prompt;
+      sendFloatMessageWriting();
+    }
+  }
+}, 30000);
+
+// 拼写辅助（简单 mock）
+const COMMON_MISSPELL = {
+  'teh': 'the',
+  'becuse': 'because',
+  'recieve': 'receive',
+  'definately': 'definitely',
+};
+
+function checkSpelling(text) {
+  const words = text.split(/\s+/);
+  const diffs = [];
+  words.forEach((w) => {
+    const lower = w.toLowerCase();
+    if (COMMON_MISSPELL[lower]) {
+      diffs.push({ from: w, suggestion: COMMON_MISSPELL[lower] });
+    }
+  });
+  return { diffs };
+}
+
+let spellingTimer = null;
+
+function autoCorrectSpelling(text) {
+  if (!text) return text;
+  let corrected = text;
+  Object.keys(COMMON_MISSPELL).forEach((wrong) => {
+    const right = COMMON_MISSPELL[wrong];
+    const re = new RegExp(`\\b${wrong}\\b`, 'gi');
+    corrected = corrected.replace(re, (m) => {
+      // 保留首字母大小写
+      if (m[0] === m[0].toUpperCase()) {
+        return right.charAt(0).toUpperCase() + right.slice(1);
+      }
+      return right;
+    });
+  });
+  return corrected;
+}
+
+function updateSpellingHints() {
+  const draft = document.getElementById('draft');
+  const box = document.getElementById('spelling-hints');
+  if (!draft || !box) return;
+  const text = draft.value || '';
+  const { diffs } = checkSpelling(text);
+  if (!diffs.length) {
+    box.textContent = '';
+    return;
+  }
+  box.textContent = '可能的拼写修正：';
+  diffs.forEach(d => {
+    const chip = document.createElement('span');
+    chip.className = 'spelling-chip';
+    chip.textContent = `${d.from} → ${d.suggestion}`;
+    chip.addEventListener('click', () => {
+      const re = new RegExp(`\\b${d.from}\\b`, 'g');
+      draft.value = (draft.value || '').replace(re, d.suggestion);
+      onDraftInputChanged();
+      updateSpellingHints();
+    });
+    box.appendChild(chip);
+  });
+}
+
+function onDraftInput() {
+  const draft = document.getElementById('draft');
+  if (draft) {
+    const before = draft.value || '';
+    const after = autoCorrectSpelling(before);
+    if (after !== before) {
+      draft.value = after;
+    }
+  }
+  onDraftInputChanged();
+  if (spellingTimer) clearTimeout(spellingTimer);
+  spellingTimer = setTimeout(updateSpellingHints, 400);
+}
+
+// STT mock
+let sttState = 'idle';
+
+function setSttState(state) {
+  sttState = state;
+  const status = document.getElementById('stt-status');
+  const btn = document.getElementById('stt-btn');
+  if (!status || !btn) return;
+  if (state === 'listening') {
+    status.textContent = '🎙 正在倾听中……再次点击结束。';
+    btn.textContent = '■ 停止';
+  } else if (state === 'ready') {
+    status.textContent = '识别结果已插入草稿（当前为模拟数据）。';
+    btn.textContent = '🎙 重新录制';
+  } else {
+    status.textContent = '点击开始，结束后可把识别结果插入到光标处。';
+    btn.textContent = '🎙 语音输入（实验）';
+  }
+}
+
+function startMockSTT() {
+  const draft = document.getElementById('draft');
+  if (!draft) return;
+  if (sttState === 'listening') {
+    const fake = 'First I want to explain the background, then compare two viewpoints, and end with my own suggestion.';
+    draft.value += (draft.value ? '\n' : '') + fake;
+    onDraftInputChanged();
+    setSttState('ready');
+    return;
+  }
+  setSttState('listening');
+  setTimeout(() => {
+    if (sttState === 'listening') {
+      const fake = 'I think the main idea is that healthy routines can boost our focus and mood.';
+      draft.value += (draft.value ? '\n' : '') + fake;
+      onDraftInputChanged();
+      setSttState('ready');
+    }
+  }, 5000);
+}
+
+// ── 思维导图：简单小画板（可添加节点和箭头） ──
+
+let mmMode = 'idle'; // 'add-node' | 'connect'
+let mmNodes = [];
+let mmEdges = [];
+let mmSelectedNodeId = null;
+let mmNextId = 1;
+
+function openMindmap() {
+  const overlay = document.getElementById('mindmap-overlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+  const board = document.getElementById('mindmap-board');
+  if (board) board.classList.remove('expanded');
+  drawMindmap();
+}
+
+function closeMindmap() {
+  const overlay = document.getElementById('mindmap-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('open');
+  mmMode = 'idle';
+  mmSelectedNodeId = null;
+}
+
+function toggleMindmapSize() {
+  const board = document.getElementById('mindmap-board');
+  if (!board) return;
+  board.classList.toggle('expanded');
+}
+
+function mindmapSetMode(mode) {
+  mmMode = mode;
+  mmSelectedNodeId = null;
+}
+
+function mindmapClear() {
+  mmNodes = [];
+  mmEdges = [];
+  mmSelectedNodeId = null;
+  mmNextId = 1;
+  drawMindmap();
+}
+
+function onMindmapCanvasClick(evt) {
+  const svg = document.getElementById('mindmap-canvas');
+  if (!svg) return;
+  const rect = svg.getBoundingClientRect();
+  const x = evt.clientX - rect.left;
+  const y = evt.clientY - rect.top;
+
+  if (mmMode === 'add-node') {
+    const label = prompt('节点内容：', '想法 ' + mmNextId) || ('节点 ' + mmNextId);
+    mmNodes.push({ id: mmNextId++, x, y, label });
+    drawMindmap();
+  }
+}
+
+function onMindmapNodeClick(id) {
+  if (mmMode !== 'connect') return;
+  if (mmSelectedNodeId == null) {
+    mmSelectedNodeId = id;
+  } else {
+    if (mmSelectedNodeId !== id) {
+      mmEdges.push({ from: mmSelectedNodeId, to: id });
+      drawMindmap();
+    }
+    mmSelectedNodeId = null;
+  }
+}
+
+function ensureArrowMarker(svg) {
+  let defs = svg.querySelector('defs');
+  if (!defs) {
+    defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    svg.appendChild(defs);
+  }
+  let marker = svg.querySelector('#arrowhead');
+  if (!marker) {
+    marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+    marker.setAttribute('id', 'arrowhead');
+    marker.setAttribute('markerWidth', '6');
+    marker.setAttribute('markerHeight', '6');
+    marker.setAttribute('refX', '5');
+    marker.setAttribute('refY', '3');
+    marker.setAttribute('orient', 'auto');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M0,0 L6,3 L0,6 z');
+    path.setAttribute('fill', 'var(--blue)');
+    marker.appendChild(path);
+    defs.appendChild(marker);
+  }
+}
+
+function drawMindmap() {
+  const svg = document.getElementById('mindmap-canvas');
+  if (!svg) return;
+  svg.innerHTML = '';
+  ensureArrowMarker(svg);
+
+  // Draw edges
+  mmEdges.forEach(edge => {
+    const from = mmNodes.find(n => n.id === edge.from);
+    const to = mmNodes.find(n => n.id === edge.to);
+    if (!from || !to) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', from.x);
+    line.setAttribute('y1', from.y);
+    line.setAttribute('x2', to.x);
+    line.setAttribute('y2', to.y);
+    line.setAttribute('stroke', 'var(--blue)');
+    line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('marker-end', 'url(#arrowhead)');
+    svg.appendChild(line);
+  });
+
+  // Draw nodes
+  mmNodes.forEach(node => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('data-id', node.id);
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', node.x);
+    circle.setAttribute('cy', node.y);
+    circle.setAttribute('r', '14');
+    circle.setAttribute('fill', 'var(--surface2)');
+    circle.setAttribute('stroke', 'var(--border2)');
+    circle.setAttribute('stroke-width', '1.2');
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', node.x);
+    text.setAttribute('y', node.y + 4);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('class', 'mindmap-node-label');
+    text.textContent = node.label;
+    g.appendChild(circle);
+    g.appendChild(text);
+    g.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onMindmapNodeClick(node.id);
+    });
+    svg.appendChild(g);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const draft = document.getElementById('draft');
+  if (draft) {
+    draft.addEventListener('input', onDraftInput);
+  }
+  const sttBtn = document.getElementById('stt-btn');
+  if (sttBtn) {
+    sttBtn.addEventListener('click', startMockSTT);
+  }
+  const mmToggle = document.getElementById('mindmap-toggle');
+  if (mmToggle) {
+    mmToggle.addEventListener('click', () => {
+      openMindmap();
+    });
+  }
+
+  // 顶部 Dysgraphia 友好小贴士轮播
+  const REMINDER_TIPS = [
+    '✋ 每 10 分钟停下手，做 3 次手腕拉伸。',
+    '🧠 先口述 3 个要点，再写成完整句子，减轻书写负担。',
+    '⌨️ 先不管错别字，先把想法写完，最后一起修改。',
+    '📏 拉大行距、缩短每行文字，让版面更“稀疏”一点。',
+    '🎯 每次只专注一小段，不需要一次写完整篇。'
+  ];
+  let reminderIndex = 0;
+  const reminderEl = document.getElementById('reminder-text');
+  if (reminderEl) {
+    setInterval(() => {
+      reminderIndex = (reminderIndex + 1) % REMINDER_TIPS.length;
+      reminderEl.textContent = REMINDER_TIPS[reminderIndex];
+    }, 5000);
+  }
+
+  initAdaptiveTimer();
+
+  const pauseBtn = document.getElementById('adaptive-timer-toggle');
+  if (pauseBtn) {
+    pauseBtn.addEventListener('click', toggleAdaptiveTimerPause);
+  }
+});
+</script>
+<div class="mindmap-overlay" id="mindmap-overlay" role="dialog" aria-label="写作思维导图">
+  <div class="mindmap-board" id="mindmap-board">
+    <div class="mindmap-toolbar">
+      <div style="font-weight:600;">思维导图小画板</div>
+      <div class="mindmap-toolbar-buttons">
+        <button type="button" class="primary" onclick="mindmapSetMode('add-node')">添加节点</button>
+        <button type="button" onclick="mindmapSetMode('connect')">添加箭头</button>
+        <button type="button" onclick="mindmapClear()">清空</button>
+        <button type="button" onclick="toggleMindmapSize()">放大/缩小</button>
+        <button type="button" onclick="closeMindmap()">关闭</button>
+      </div>
+    </div>
+    <svg id="mindmap-canvas" onclick="onMindmapCanvasClick(event)"></svg>
+  </div>
+</div>
+</body>
+</html>
+

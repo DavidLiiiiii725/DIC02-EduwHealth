@@ -4,8 +4,8 @@
 # ─────────────────────────────────────────────
 
 # ── LLM ──────────────────────────────────────
-# 切换这里: "ollama" 或 "gemini" or deepseek
-LLM_BACKEND = "ollama"
+# 切换这里: "ollama" 或 "gemini" or "deepseek"
+LLM_BACKEND = "deepseek"
 
 OLLAMA_MODEL = "phi3:mini"
 OLLAMA_HOST  = "http://localhost:11434"
@@ -13,7 +13,7 @@ OLLAMA_HOST  = "http://localhost:11434"
 GEMINI_API_KEY = ""   # 粘贴你的 key
 GEMINI_MODEL   = "gemini-2.0-flash"  # 免费额度最高，速度最快
 
-DEEPSEEK_API_KEY = ""
+DEEPSEEK_API_KEY = "sk-d644c9118a0d455395aa01b96ec3e3d5"
 DEEPSEEK_MODEL   = "deepseek-chat"
 # ── Legacy thresholds (kept for backward compat) ──
 EMOTION_THRESHOLD = 0.4

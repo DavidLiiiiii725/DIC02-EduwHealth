@@ -6,44 +6,169 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EduwHealth 2.0 — Dashboard</title>
 <link rel="stylesheet" href="{% static 'tutor/css/global.css' %}">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 .page-wrap  { display:flex; height:100vh; overflow:hidden; }
-.page-main  { flex:1; overflow-y:auto; padding:32px 40px; }
+.page-main  { flex:1; overflow:hidden; padding:16px 20px; }
 .page-title { font-family:'Lexend',sans-serif; font-size:1.8rem; font-weight:600; margin-bottom:4px; }
-.page-sub   { color:var(--muted); font-size:0.8rem; margin-bottom:32px; }
+.page-sub   { color:var(--muted); font-size:0.8rem; margin-bottom:16px; }
 
-.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+.dashboard-scale {
+  transform: scale(0.9);
+  transform-origin: top left;
+  width: calc(100% / 0.9);
+}
+
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:8px; }
 .stat-card {
   background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--radius); padding:16px 18px;
+  border-radius:var(--radius); padding:12px 14px;
 }
-.stat-val { font-family:'Lexend',sans-serif; font-size:1.8rem; font-weight:600; }
-.stat-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); margin-top:4px; }
-.stat-delta { font-size:0.72rem; margin-top:6px; }
+.stat-val { font-family:'Lexend',sans-serif; font-size:1.5rem; font-weight:600; }
+.stat-label { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); margin-top:2px; }
+.stat-delta { font-size:0.7rem; margin-top:4px; }
 
-.charts-row { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:24px; }
-.chart-card {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--radius); padding:20px;
+.overview-row {
+  display:grid;
+  grid-template-columns:2fr 2fr;
+  gap:14px;
+  margin-top:12px;
 }
-.chart-title { font-size:0.75rem; font-weight:500; margin-bottom:16px; color:var(--text); }
 
-.session-list { display:flex; flex-direction:column; gap:8px; }
-.session-row {
-  display:flex; align-items:center; gap:12px;
-  padding:12px 16px;
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--radius-sm);
-  cursor:pointer; transition:border-color 0.15s;
+.dashboard-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px 16px;
 }
-.session-row:hover { border-color:var(--blue); }
-.session-row-date { font-size:0.72rem; color:var(--muted); min-width:80px; }
-.session-row-turns { font-size:0.72rem; min-width:50px; }
-.session-row-bars { flex:1; display:flex; flex-direction:column; gap:4px; }
-.mini-bar-wrap { display:flex; align-items:center; gap:6px; font-size:0.6rem; color:var(--muted); }
-.mini-bar-track { flex:1; height:3px; background:var(--faint); border-radius:2px; }
-.mini-bar-fill  { height:100%; border-radius:2px; }
+
+.section-title {
+  font-size:0.78rem;
+  font-weight:600;
+  margin-bottom:10px;
+  color:var(--text);
+}
+
+.progress-track {
+  position:relative;
+  width:100%;
+  height:6px;
+  border-radius:999px;
+  background:var(--faint);
+  overflow:hidden;
+  margin-bottom:6px;
+}
+.progress-fill {
+  position:absolute;
+  left:0; top:0; bottom:0;
+  width:0;
+  border-radius:999px;
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
+  transition:width 0.6s ease;
+}
+.progress-caption {
+  font-size:0.7rem;
+  color:var(--muted);
+}
+
+.skill-rows { display:flex; flex-direction:column; gap:6px; }
+.skill-row { display:flex; flex-direction:column; gap:3px; }
+.skill-label-wrap {
+  display:flex;
+  justify-content:space-between;
+  font-size:0.68rem;
+  color:var(--muted);
+}
+.skill-label {
+  text-transform:uppercase;
+  letter-spacing:0.12em;
+}
+.skill-value {
+  font-variant-numeric:tabular-nums;
+}
+.skill-bar-track {
+  height:4px;
+  border-radius:99px;
+  background:var(--faint);
+  overflow:hidden;
+}
+.skill-bar-fill {
+  height:100%;
+  border-radius:99px;
+  width:0;
+  transition:width 0.6s ease;
+}
+
+.dashboard-recommend {
+  margin-top:14px;
+}
+.recommend-title {
+  font-size:0.8rem;
+  font-weight:600;
+  margin-bottom:6px;
+}
+.recommend-body {
+  font-size:0.78rem;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+.lower-row {
+  display:grid;
+  grid-template-columns:2fr 2fr;
+  gap:14px;
+  margin-top:14px;
+}
+
+.weekly-bars {
+  display:flex;
+  align-items:flex-end;
+  gap:6px;
+  height:90px;
+  margin-bottom:6px;
+}
+.weekly-bar-item {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+}
+.weekly-bar {
+  width:10px;
+  border-radius:999px;
+  background:linear-gradient(180deg,var(--blue),var(--cyan));
+}
+.weekly-bar-label {
+  font-size:0.6rem;
+  color:var(--muted);
+  text-align:center;
+}
+
+.pill-row {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-bottom:6px;
+}
+.pill {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:var(--faint);
+  font-size:0.7rem;
+  color:var(--muted);
+}
+.pill-value {
+  font-variant-numeric:tabular-nums;
+}
+
+.muted-note {
+  font-size:0.68rem;
+  color:var(--muted);
+}
 
 .detail-panel {
   position:fixed; right:0; top:0; height:100vh; width:380px;
@@ -69,76 +194,138 @@
     <nav style="padding:0 10px;display:flex;flex-direction:column;gap:2px;">
       <a href="/chat/"      class="nav-item"><span class="nav-icon">💬</span> Chat</a>
       <a href="/reading/"   class="nav-item"><span class="nav-icon">📖</span> Reading</a>
-      <a href="/profile/"   class="nav-item"><span class="nav-icon">👤</span> Profile</a>
+      <a href="/study-plan/" class="nav-item"><span class="nav-icon">🗓️</span> Study Plan</a>
+      <a href="/writing/"   class="nav-item"><span class="nav-icon">✍️</span> Writing</a>
+      <a href="/speaking/"  class="nav-item"><span class="nav-icon">🗣️</span> Speaking</a>
+      <a href="/listening/" class="nav-item"><span class="nav-icon">🎧</span> Listening</a>
       <a href="/dashboard/" class="nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
     </nav>
+
+    <!-- Learner Profile at bottom left -->
+    <div style="margin-top:auto;padding:16px 12px;border-top:1px solid var(--border);">
+      <a href="/profile/" class="nav-item" style="justify-content:flex-start;">
+        <span class="learner-avatar">{{ learner.display_name|slice:":1" }}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.3;">
+          <span style="font-size:0.8rem;font-weight:500;">{{ learner.display_name }}</span>
+          <span style="font-size:0.65rem;color:var(--muted);">View Profile</span>
+        </div>
+      </a>
+    </div>
   </div>
 
   <div class="page-main">
-    <div class="page-title">Dashboard</div>
-    <div class="page-sub">{{ learner.display_name }} · Learning analytics and session history</div>
+    <div class="dashboard-scale">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">{{ learner.display_name }} · Learning analytics and session history</div>
 
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-val" style="color:var(--blue)">{{ sessions|length }}</div>
-        <div class="stat-label">Total Sessions</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" style="color:var(--green)">{{ total_turns }}</div>
-        <div class="stat-label">Total Turns</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" style="color:var(--cyan)">{{ avg_motivation }}</div>
-        <div class="stat-label">Avg Motivation</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" style="color:var(--amber)">{{ avg_wm }}</div>
-        <div class="stat-label">Avg WM Load</div>
-      </div>
-    </div>
-
-    <!-- Charts row -->
-    <div class="charts-row">
-      <div class="chart-card">
-        <div class="chart-title">Cognitive State Over Sessions</div>
-        <canvas id="line-chart" height="160"></canvas>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Agent Usage</div>
-        <canvas id="pie-chart" height="160"></canvas>
-      </div>
-    </div>
-
-    <!-- Session list -->
-    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.14em;color:var(--muted);margin-bottom:12px;">Session History</div>
-    <div class="session-list">
-      {% if sessions %}
-      {% for s in sessions %}
-      <div class="session-row" onclick="loadSession({{ s.id }})">
-        <div class="session-row-date">{{ s.started_at|date:"m/d H:i" }}</div>
-        <div class="session-row-turns" style="color:var(--muted)">{{ s.total_turns }} turns</div>
-        <div class="session-row-bars">
-          {% with sd=session_data_json %}
-          <div class="mini-bar-wrap">
-            <span style="min-width:28px">WM</span>
-            <div class="mini-bar-track"><div class="mini-bar-fill" style="width:40%;background:var(--blue)"></div></div>
-          </div>
-          <div class="mini-bar-wrap">
-            <span style="min-width:28px">Mot</span>
-            <div class="mini-bar-track"><div class="mini-bar-fill" style="width:65%;background:var(--green)"></div></div>
-          </div>
-          {% endwith %}
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--blue)">{{ sessions|length }}</div>
+          <div class="stat-label">Total Sessions</div>
         </div>
-        {% if s.ended_at %}<span class="tag tag-muted">ended</span>{% else %}<span class="tag tag-green">active</span>{% endif %}
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--green)">{{ total_turns }}</div>
+          <div class="stat-label">Total Turns</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--cyan)">{{ avg_motivation }}</div>
+          <div class="stat-label">Avg Motivation</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--amber)">{{ avg_wm }}</div>
+          <div class="stat-label">Avg WM Load</div>
+        </div>
       </div>
-      {% endfor %}
-      {% else %}
-      <div style="padding:40px;text-align:center;color:var(--muted);font-size:0.8rem;">No sessions yet. Start a chat to see data here.</div>
-      {% endif %}
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;">
+        WM = working memory load (0–1, higher = more cognitive effort). Motivation/Affect are averaged across all sessions.
+      </div>
+
+      <!-- Overview row: progress + brain state -->
+      <div class="overview-row">
+        <div class="dashboard-card">
+          <div class="section-title">练习进度（大致）</div>
+          <div class="progress-track">
+            <div class="progress-fill" id="overall-progress-fill"></div>
+          </div>
+          <div class="progress-caption" id="overall-progress-caption">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="section-title">大脑状态概览</div>
+          <div class="skill-rows">
+            <div class="skill-row">
+              <div class="skill-label-wrap">
+                <span class="skill-label">WM LOAD</span>
+                <span class="skill-value" id="skill-wm-label"></span>
+              </div>
+              <div class="skill-bar-track">
+                <div class="skill-bar-fill" id="skill-wm"></div>
+              </div>
+            </div>
+            <div class="skill-row">
+              <div class="skill-label-wrap">
+                <span class="skill-label">MOTIVATION</span>
+                <span class="skill-value" id="skill-mot-label"></span>
+              </div>
+              <div class="skill-bar-track">
+                <div class="skill-bar-fill" id="skill-mot"></div>
+              </div>
+            </div>
+            <div class="skill-row">
+              <div class="skill-label-wrap">
+                <span class="skill-label">AFFECT</span>
+                <span class="skill-value" id="skill-aff-label"></span>
+              </div>
+              <div class="skill-bar-track">
+                <div class="skill-bar-fill" id="skill-aff"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today / this week suggestion -->
+      <div class="dashboard-card dashboard-recommend">
+        <div class="recommend-title">今天的温和建议</div>
+        <div class="recommend-body" id="recommend-body">
+          <!-- Filled by JS based on WM / motivation -->
+        </div>
+      </div>
+
+      <!-- Lower row: recent intensity + task mix -->
+      <div class="lower-row">
+        <div class="dashboard-card">
+          <div class="section-title">最近会话强度</div>
+          <div class="weekly-bars" id="weekly-bars">
+            <!-- Filled by JS -->
+          </div>
+          <div class="muted-note">每一条代表一次最近的练习，会话越长条越高。</div>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="section-title">AI 自适应反馈</div>
+          <div style="margin-bottom:8px;font-size:0.76rem;color:var(--muted);">
+            告诉我们：在练习过程中，AI 助手哪里让你感觉有帮助？哪里会让你更累或不舒服？你的反馈会用来慢慢调整陪练方式。
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <textarea id="dashboard-feedback-input"
+                      placeholder="例如：我更喜欢短一点的回答 / 希望多提醒我休息 / 某些提示会让我分心……"
+                      style="min-height:80px;border-radius:var(--radius-sm);border:1px solid var(--border);padding:8px 10px;font-size:0.8rem;width:100%;background:var(--bg);color:var(--text);resize:vertical;"></textarea>
+            <button type="button"
+                    id="dashboard-feedback-button"
+                    class="btn btn-primary"
+                    style="align-self:flex-end;padding:6px 14px;font-size:0.78rem;">
+              提交反馈，让 AI 更懂你
+            </button>
+            <div class="muted-note" id="dashboard-feedback-status"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
 <!-- Session detail panel -->
 <div class="detail-panel" id="detail-panel">
@@ -148,48 +335,6 @@
 </div>
 
 <script>
-const SESSION_DATA   = {{ session_data_json|safe }};
-const AGENT_COUNTS   = {{ agent_counts_json|safe }};
-
-// ── Line chart ────────────────────────────────────────────────
-const lineCtx = document.getElementById('line-chart').getContext('2d');
-new Chart(lineCtx, {
-  type: 'line',
-  data: {
-    labels: SESSION_DATA.map(s => s.date),
-    datasets: [
-      { label:'WM Load',   data:SESSION_DATA.map(s=>s.avg_wm),  borderColor:'#2D7FFF', backgroundColor:'rgba(45,127,255,0.05)', tension:0.4, pointRadius:3 },
-      { label:'Motivation',data:SESSION_DATA.map(s=>s.avg_mot), borderColor:'#00E5A0', backgroundColor:'rgba(0,229,160,0.05)',  tension:0.4, pointRadius:3 },
-      { label:'Affect',    data:SESSION_DATA.map(s=>s.avg_aff), borderColor:'#00D4C8', backgroundColor:'rgba(0,212,200,0.05)',  tension:0.4, pointRadius:3 },
-    ]
-  },
-  options: {
-    responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{ labels:{ color:'#4A6680', font:{size:11,family:'Lexend'} } } },
-    scales:{
-      x:{ ticks:{color:'#4A6680',font:{size:10}}, grid:{color:'#1C2E4A'} },
-      y:{ ticks:{color:'#4A6680',font:{size:10}}, grid:{color:'#1C2E4A'}, min:0, max:1 }
-    }
-  }
-});
-
-// ── Pie chart ─────────────────────────────────────────────────
-const pieCtx = document.getElementById('pie-chart').getContext('2d');
-const agentColors = { tutor:'#2D7FFF', coach:'#00E5A0', ld_specialist:'#00D4C8', meta_cognition:'#7C4DFF', critic:'#FFB340', demo:'#4A6680', unknown:'#1C2E4A' };
-new Chart(pieCtx, {
-  type: 'doughnut',
-  data: {
-    labels: Object.keys(AGENT_COUNTS),
-    datasets: [{ data: Object.values(AGENT_COUNTS), backgroundColor: Object.keys(AGENT_COUNTS).map(k=>agentColors[k]||'#4A6680'), borderWidth:0, hoverOffset:4 }]
-  },
-  options: {
-    responsive:true, maintainAspectRatio:false,
-    plugins:{
-      legend:{ position:'bottom', labels:{ color:'#4A6680', font:{size:10,family:'Lexend'}, padding:12 } }
-    }
-  }
-});
-
 // ── Session detail ─────────────────────────────────────────────
 async function loadSession(id) {
   const resp = await fetch(`/api/session/${id}/history/`);
@@ -219,6 +364,130 @@ function closeDetail() {
 function escHtml(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 }
+
+// ── Dashboard visualisation (simple, ADHD-friendly) ────────────
+(function() {
+  const sessionData = {{ session_data_json|safe }};
+  const totalTurns  = {{ total_turns|default:0 }};
+  const avgWm       = {{ avg_wm|default:0 }};
+  const avgMot      = {{ avg_motivation|default:0 }};
+  const agentCounts = {{ agent_counts_json|safe }};
+
+  // Overall progress: compare to a soft target of 200 turns
+  (function() {
+    const targetTurns = 200;
+    const ratio = Math.max(0, Math.min(1, totalTurns / targetTurns));
+    const fill    = document.getElementById('overall-progress-fill');
+    const caption = document.getElementById('overall-progress-caption');
+    if (!fill || !caption) return;
+    const pct = (ratio * 100).toFixed(0);
+    fill.style.width = pct + '%';
+    caption.textContent = `你已完成约 ${pct}% 的推荐练习量（${totalTurns} 轮对话，参考目标约 ${targetTurns} 轮）。这不是正式分数，只是帮你感受练习大致进度。`;
+  })();
+
+  // Brain state bars: WM / Motivation / Affect (affect from per-session data)
+  (function() {
+    let avgAff = 0;
+    if (sessionData && sessionData.length) {
+      const sumAff = sessionData.reduce((sum, s) => sum + (s.avg_aff || 0), 0);
+      avgAff = sumAff / sessionData.length;
+    }
+    function setSkill(idBase, value) {
+      const bar   = document.getElementById(idBase);
+      const label = document.getElementById(idBase + '-label');
+      if (!bar || !label) return;
+      const pct = Math.round((value || 0) * 100);
+      const safePct = Math.max(4, Math.min(100, pct));
+      bar.style.width = safePct + '%';
+      label.textContent = pct + '%';
+    }
+    setSkill('skill-wm',  avgWm);
+    setSkill('skill-mot', avgMot);
+    setSkill('skill-aff', avgAff);
+  })();
+
+  // Recent intensity bars: last up to 7 sessions by turns
+  (function() {
+    const container = document.getElementById('weekly-bars');
+    if (!container || !sessionData || !sessionData.length) return;
+    const recent = sessionData.slice(0, 7).reverse();
+    const maxTurns = Math.max(...recent.map(s => s.turns || 1));
+    container.innerHTML = recent.map(s => {
+      const h = 30 + 50 * (maxTurns ? (s.turns || 0) / maxTurns : 0);
+      const dateLabel = s.date || '';
+      return `
+        <div class="weekly-bar-item">
+          <div class="weekly-bar" style="height:${h}px;"></div>
+          <div class="weekly-bar-label">${dateLabel}</div>
+        </div>
+      `;
+    }).join('');
+  })();
+
+  // Task / agent mix pills
+  // AI adaptive feedback textbox: send free-form feedback to backend
+  (function() {
+    const input  = document.getElementById('dashboard-feedback-input');
+    const button = document.getElementById('dashboard-feedback-button');
+    const status = document.getElementById('dashboard-feedback-status');
+    if (!input || !button || !status) return;
+
+    async function sendFeedback() {
+      const text = input.value.trim();
+      if (!text) {
+        status.textContent = '先写一点内容再提交～';
+        return;
+      }
+      button.disabled = true;
+      status.textContent = '正在发送，请稍等…';
+      try {
+        const resp = await fetch('/api/dashboard/feedback/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+          status.textContent = '已收到，谢谢你的反馈，AI 会慢慢根据这些意见调整。';
+          input.value = '';
+        } else {
+          status.textContent = data.error || '提交失败，可以稍后再试。';
+        }
+      } catch (e) {
+        status.textContent = '网络可能有点问题，稍后再试一次。';
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    button.addEventListener('click', sendFeedback);
+  })();
+
+  // Gentle recommendation text based on WM / motivation
+  (function() {
+    const el = document.getElementById('recommend-body');
+    if (!el) return;
+    const lines = [];
+    if (avgWm > 0.7) {
+      lines.push('最近任务对大脑有点吃力，今天可以选择轻量一点的练习（短篇阅读 / 听力精听），避免一次做太久。');
+    } else if (avgWm < 0.4) {
+      lines.push('你的大脑负荷整体在舒适区，可以尝试一小段稍有挑战的练习，例如计时完成一组题目。');
+    } else {
+      lines.push('大脑负荷在可接受范围内，可以保持现在的节奏，中间记得安排 5 分钟小休息。');
+    }
+
+    if (avgMot < 0.4) {
+      lines.push('动机有点低，建议先从你最感兴趣的话题开始，例如选一篇你喜欢主题的文章或口语话题，让自己先“热起来”。');
+    } else if (avgMot > 0.7) {
+      lines.push('动机不错，可以把最难的任务安排在前 20 分钟完成，用今天的好状态攻克难点。');
+    } else {
+      lines.push('动机中等，可以搭配“容易 + 稍难”的任务，让自己既有成就感又有一点挑战。');
+    }
+
+    lines.push('如果今天状态不好，也完全可以只做一小段练习，系统会根据你当前的数据慢慢调整节奏。');
+    el.textContent = lines.join(' ');
+  })();
+})();
 </script>
 </body>
 </html>

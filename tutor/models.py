@@ -138,3 +138,29 @@ class ReadingStrategyExperiment(models.Model):
 
     def __str__(self):
         return f"Experiment {self.strategy_variant} — attempt {self.attempt_id}"
+
+
+# ── ADHD Speaking ────────────────────────────────────────────────
+
+class SpeakingPractice(models.Model):
+    """
+    ADHD 友好的口语练习记录。
+
+    - pack_markdown: 当天训练包（英文 Markdown）
+    - history: 练习对话历史（用于页面右侧陪练）
+    """
+    learner = models.ForeignKey(LearnerProfile, on_delete=models.CASCADE, related_name='speaking_practices')
+    topic = models.CharField(max_length=200, blank=True, default='')
+    scenario = models.CharField(max_length=200, blank=True, default='')
+    english_level = models.CharField(max_length=50, blank=True, default='A2-B1')
+    minutes_budget = models.PositiveSmallIntegerField(default=8)
+    pack_markdown = models.TextField(blank=True, default='')
+    history = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"SpeakingPractice {self.id} — {self.learner.display_name}"

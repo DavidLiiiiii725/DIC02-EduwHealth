@@ -65,9 +65,20 @@
     <nav style="padding:0 10px;display:flex;flex-direction:column;gap:2px;">
       <a href="/chat/"      class="nav-item"><span class="nav-icon">💬</span> Chat</a>
       <a href="/reading/"   class="nav-item"><span class="nav-icon">📖</span> Reading</a>
-      <a href="/profile/"   class="nav-item active"><span class="nav-icon">👤</span> Profile</a>
+      <a href="/study-plan/" class="nav-item"><span class="nav-icon">🗓️</span> Study Plan</a>
+      <a href="/writing/"   class="nav-item"><span class="nav-icon">✍️</span> Writing</a>
+      <a href="/speaking/"  class="nav-item"><span class="nav-icon">🗣️</span> Speaking</a>
       <a href="/dashboard/" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
     </nav>
+    <div style="padding:16px;border-top:1px solid var(--border);margin-top:auto;">
+      <a href="/profile/" class="nav-item" style="justify-content:flex-start;">
+        <span class="learner-avatar">{{ learner.display_name|slice:":1" }}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.3;">
+          <span style="font-size:0.8rem;font-weight:500;">{{ learner.display_name }}</span>
+          <span style="font-size:0.65rem;color:var(--muted);">View Profile</span>
+        </div>
+      </a>
+    </div>
   </div>
 
   <div class="page-main">

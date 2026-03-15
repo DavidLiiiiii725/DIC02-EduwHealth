@@ -71,39 +71,52 @@ One sentence per question is enough.
 def metacog_agent(state: Dict[str, Any], llm) -> Dict[str, Any]:
     """
     LangGraph-compatible node.
-    Only generates a response when the moment is right (checked by Orchestrator).
-    If activated, selects the appropriate reflection prompt type.
+    Generates a concise, ADHD-friendly reflection that directly uses
+    the retrieved passage / notes in ``rag_context``.
     """
     ld_profile  = state.get("ld_profile", {})
-    cog_state   = state.get("cognitive_state", {})
-    user_input  = state.get("user_input", "")
+    rag_context = state.get("rag_context", "") or ""
 
     confirmed = set(ld_profile.get("confirmed", []))
     suspected = set(ld_profile.get("suspected", []))
     all_ld    = confirmed | suspected
 
-    # Select prompt based on primary LD
     if "adhd" in all_ld:
-        reflection_prompt = _CLICK_OR_CLUNK
-        prompt_type = "click_or_clunk"
-    elif "motivation_disorder" in all_ld:
-        reflection_prompt = _ATTRIBUTION_RETRAINING
-        prompt_type = "attribution_retraining"
-    elif "executive_function" in all_ld:
-        reflection_prompt = _PROCESS_AWARENESS
-        prompt_type = "process_awareness"
+        prompt_type = "adhd_reflection"
     else:
-        reflection_prompt = _GENERAL_METACOG
-        prompt_type = "general_metacog"
+        prompt_type = "general_reflection"
 
     system = (
         "You are a metacognitive coach for a student with learning differences. "
-        "Present the reflection prompt below in a warm, non-judgmental tone. "
-        "Do not add extra questions. Keep the message exactly as structured. "
-        "After the prompt, add one short encouragement sentence."
+        "Write very short, concrete reflections that can be read at a glance. "
+        "Always ground your answer in the retrieved passage and notes. "
+        "Do not add extra sections or disclaimers."
     )
 
-    response = llm.chat(system=system, user=reflection_prompt, temperature=0.5)
+    user_prompt = f"""You are given retrieved context from the learner's notes and current passage (rag_context).
+
+rag_context:
+{rag_context}
+
+Using ONLY this context, write a concise reflection in English following EXACTLY this structure:
+
+Main Learning Reflection Prompt:
+- I've come to understand <one clear concept or skill from the passage> and how it applies in real life situations such as <one short, specific example>.
+
+Fuzzy Areas Check:
+- One part that still feels unclear to me is <name ONE specific idea, step, or detail from the passage>.
+
+Encouragement:
+- <ONE short, kind sentence that encourages continued effort.>
+
+Strict rules:
+- Replace every <...> with concrete content grounded in rag_context.
+- Do NOT output placeholders like [insert ...], '(Student fills in ...)', or '...'.
+- Keep each bullet to at most two short sentences.
+- Keep the whole answer brief enough to read at a glance.
+"""
+
+    response = llm.chat(system=system, user=user_prompt, temperature=0.4)
 
     return {
         "metacog_response": response,
